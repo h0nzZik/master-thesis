@@ -1,6 +1,7 @@
 \documentclass{fithesis3}
 %\usepackage{cmap}
 \usepackage[T1]{fontenc}
+\usepackage{syntax}
 %\usepackage{mathtime}
 
 %\usepackage[utf8]{inputenc}
@@ -25,5 +26,46 @@ faculty = {fi},
 }
 
 \begin{document}
+
+Some ideas about K framework. Verifier for all languages. Etc. Also note that transitions in C++ semantics are often more low level then the usual (programmer's) reasoning about the code. By the way, K supports reduction contexts (for operational semantics).
+
+\section{K framework}
+How it differs from classical operational semantics? I will start with that (small-step) and then show some sugar K framework offers.
+
+We need an intro to semantics and various styles of them. Then an example of small-step operational semantics of simple language from some basic course. Then rewrite it using K. We have to also mention that K framework can parse concrete syntax but it can also be used with an external parser.
+
+
+\section{Operational semantics}
+One way of giving a semantics to given programming language is to use operational semantics. 
+
+Operational semantics assign to program a transition system, where transitions correspond to computational steps (of some abstract machine?). (Informal semantics of many programming languages is defined in this way.)
+
+Here follows a textbook example of it. Only a fragment of a language.
+
+
+\paragraph{Grammar}
+\setlength{\grammarparsep}{20pt plus 1pt minus 1pt} % increase separation between rules
+%\setlength{\grammarindent}{9em} % increase separation between LHS/RHS 
+
+\begin{grammar}
+
+<expr> ::= \ldots
+<bexpr> ::= <expr> `==' <expr> 
+\alt <bexpr> `and' <bexpr>
+\alt `not' <bexpr>
+\alt \ldots
+
+<stmt> ::= `if' <bexpr> `then' <stmt> `else' <stmt> `fi'
+\alt `skip'
+\alt \ldots
+
+\end{grammar}
+
+
+\section{C++14}
+Other C++ Also tell something about other approaches to verifying C++ (which is my main motivation for having the semantics).
+
+\section{The C/C++ semantics}
+Something about organizational structure of the project. How the semantics matches the standard. Translation from concrete C/C++ syntax to K's one. CIL (I'have never used it) and clang-kast. Kast format.
 
 \end{document}
