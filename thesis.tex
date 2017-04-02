@@ -1,16 +1,46 @@
 \documentclass{fithesis3}
 %\usepackage{cmap}
 \usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
 \usepackage{syntax}
+%\usepackage{minted}
+\usepackage{amsthm}
+\usepackage{mathpartir}
 %\usepackage{mathtime}
 
-%\usepackage[utf8]{inputenc}
-%\usepackage[english]{babel}
+\usepackage[english]{babel}
+\usepackage{float} % floating figures
 %\usepackage{amsmath}
 %\usepackage{amsfonts}
 %\usepackage{amssymb}
 %\usepackage{makeidx}
 %\usepackage{graphicx}
+
+%%%%%%%%%%%%%% < K Pygments > %%%%%%%%%%%%
+\usepackage{minted}
+\usepackage{tcolorbox}
+
+\tcbuselibrary{minted}
+
+\makeatletter
+%\minted@define@switch{kwrename}{-F kwrenamefilter}
+%\minted@define@opt{kwrename}{-F kwrenamefilter}{#1}
+\makeatother
+
+\newtcblisting{kcode}[1][]{
+    listing engine=minted,
+    minted language=extk,
+%    minted options={kwrename,#1}
+}
+%%%%%%%%%%%%%% </K Pygments > %%%%%%%%%%%%
+
+
+
+\floatstyle{boxed} 
+\restylefloat{figure}
+
+
+%%%%%%%%%%%%%% Thesis metadata %%%%%%%%%%%%%%%
 \thesissetup{
 title = {An Executable Formal Semantics of C++},
 TeXtitle = {An Executable Formal Semantics of C++},
@@ -25,41 +55,63 @@ faculty = {fi},
 %thanks = {Special thanks to...}
 }
 
+
 \begin{document}
 
-Some ideas about K framework. Verifier for all languages. Etc. Also note that transitions in C++ semantics are often more low level then the usual (programmer's) reasoning about the code. By the way, K supports reduction contexts (for operational semantics).
+Some ideas about K framework. Verifier for all languages. Etc. Also note that transitions in C++ semantics are often more low level then the usual (programmer's) reasoning about the code. By the way, K supports reduction contexts (for operational semantics). And some K paper says that it is possible to use various styles of semantics, e.g. Big Step, reduction contexts, \ldots . Link to K tutorial.
+
+\section{Operational semantics (and K framework)}
+Goal: to show, how K framework fits to operational semantics. How various K construct support specifying syntax, rewrite rules, configurations, ...
+% K chooses operational approach
+One particular kind of programming language semantics is called operational semantics. Operational semantics assigns to every program a (possibly labeled) transition system, whose states correspond to program configurations and transitions to computational steps (of some abstract machine?). Existence of transitions between given configurations is then determined by some deductive system (citation needed) (Informal semantics of many programming languages is defined in this way.) 
+
+
+% nahradit 'consider' with something different. It is just an example. I do not want to emphasize the idea that something had to be done first.
+In order to describe semantics of a language, one has to describe its abstract syntax first. This can be done using BNF notation, as suggested in figure~\ref{IMPSyntaxOnPaper}. Consider for example the well-known IMP language with basic arithmetic and boolean operators, variables and simple control flow constructs., 
+
+\begin{figure}[H]
+\begin{grammar}
+<bexpr> ::= <bool> | <expr> `==' <expr> | \ldots
+%\alt <bexpr> `and' <bexpr>
+%\alt `not' <bexpr>
+%\alt \ldots
+
+<stmt> ::= `if' <bexpr> `then' <stmt> `else' <stmt> `fi' | `skip' | \ldots
+%\alt \ldots
+
+\end{grammar}
+\caption{
+	A part of an abstract syntax of the IMP language. (How it is written on paper.)
+	% In the definition, $<bool>$ denotes the syntatic domain.. oh no.
+}
+\label{IMPSyntaxOnPaper}
+\end{figure}
+
+\paragraph{Rules}
+
+\begin{figure}[H]
+
+\caption{Some rules }
+
+\[
+\inferrule
+{\Delta \vdash B \\ B \vdash \Gamma}
+{\Delta \vdash \Gamma}
+\]
+
+\end{figure}
+
+\begin{kcode}
+    // Your K code here.
+    syntax A ::= B
+    rule <k> x + y => z </k><env> something </env>
+\end{kcode}
 
 \section{K framework}
+K framework idea - see their image.
 How it differs from classical operational semantics? I will start with that (small-step) and then show some sugar K framework offers.
 
 We need an intro to semantics and various styles of them. Then an example of small-step operational semantics of simple language from some basic course. Then rewrite it using K. We have to also mention that K framework can parse concrete syntax but it can also be used with an external parser.
-
-
-\section{Operational semantics}
-One way of giving a semantics to given programming language is to use operational semantics. 
-
-Operational semantics assign to program a transition system, where transitions correspond to computational steps (of some abstract machine?). (Informal semantics of many programming languages is defined in this way.)
-
-Here follows a textbook example of it. Only a fragment of a language.
-
-
-\paragraph{Grammar}
-\setlength{\grammarparsep}{20pt plus 1pt minus 1pt} % increase separation between rules
-%\setlength{\grammarindent}{9em} % increase separation between LHS/RHS 
-
-\begin{grammar}
-
-<expr> ::= \ldots
-<bexpr> ::= <expr> `==' <expr> 
-\alt <bexpr> `and' <bexpr>
-\alt `not' <bexpr>
-\alt \ldots
-
-<stmt> ::= `if' <bexpr> `then' <stmt> `else' <stmt> `fi'
-\alt `skip'
-\alt \ldots
-
-\end{grammar}
 
 
 \section{C++14}
@@ -67,5 +119,6 @@ Other C++ Also tell something about other approaches to verifying C++ (which is 
 
 \section{The C/C++ semantics}
 Something about organizational structure of the project. How the semantics matches the standard. Translation from concrete C/C++ syntax to K's one. CIL (I'have never used it) and clang-kast. Kast format.
+Translation semantics. Linking semantics. Execution semantics.
 
 \end{document}
