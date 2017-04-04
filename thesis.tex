@@ -1,39 +1,33 @@
+%%%%% Definitions of If- toggles
+\newif\ifshowkexamples
+
+
+%%%%% 
+%\showkexamplestrue
+
+%%%%%
 \documentclass{fithesis3}
 %\usepackage{cmap}
 \usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
-\usepackage{syntax}
-%\usepackage{minted}
+%\usepackage{syntax}
 \usepackage{amsthm}
 \usepackage{mathpartir}
+\usepackage{listings}
 %\usepackage{mathtime}
 
 \usepackage[english]{babel}
 \usepackage{float} % floating figures
 %\usepackage{amsmath}
 %\usepackage{amsfonts}
-%\usepackage{amssymb}
+\usepackage{amssymb} % \rightsquigarrow etc
 %\usepackage{makeidx}
 %\usepackage{graphicx}
 
-%%%%%%%%%%%%%% < K Pygments > %%%%%%%%%%%%
-\usepackage{minted}
-\usepackage{tcolorbox}
-
-\tcbuselibrary{minted}
-
-\makeatletter
-%\minted@define@switch{kwrename}{-F kwrenamefilter}
-%\minted@define@opt{kwrename}{-F kwrenamefilter}{#1}
-\makeatother
-
-\newtcblisting{kcode}[1][]{
-    listing engine=minted,
-    minted language=extk,
-%    minted options={kwrename,#1}
-}
-%%%%%%%%%%%%%% </K Pygments > %%%%%%%%%%%%
-
+%\usepackage{k}
+\usepackage[tight]{k}
+% For unknown reason, the drawing is too 'white'
+%\usepackage[style=math]{k}
 
 
 \floatstyle{boxed} 
@@ -55,65 +49,147 @@ faculty = {fi},
 %thanks = {Special thanks to...}
 }
 
+%% Some math aliases
+\newcommand{\var}[1]{\mathit{#1}}
+
+
+% Notes about the 'k' package
+% \ka{rule x => y} - inline K in ascii format
+% \begin{asciik} rule x => y \end{asciik} - K ascii environment
+% Displaying open/closed bubbles
+% \kall{1}{2}{3}, \kprefix{1}{2}{3}, \ksuffix{1}{2}{3}, and \kmiddle{1}{2}{3}
 
 \begin{document}
 
-Some ideas about K framework. Verifier for all languages. Etc. Also note that transitions in C++ semantics are often more low level then the usual (programmer's) reasoning about the code. By the way, K supports reduction contexts (for operational semantics). And some K paper says that it is possible to use various styles of semantics, e.g. Big Step, reduction contexts, \ldots . Link to K tutorial.
+Some ideas about \K framework. Verifier for all languages. Etc. Also note that transitions in C++ semantics are often more low level then the usual (programmer's) reasoning about the code. By the way, \K supports reduction contexts (for operational semantics). And some \K paper says that it is possible to use various styles of semantics, e.g. Big Step, reduction contexts, \ldots . Link to \K tutorial. K AST (kast).
 
-\section{Operational semantics (and K framework)}
-Goal: to show, how K framework fits to operational semantics. How various K construct support specifying syntax, rewrite rules, configurations, ...
-% K chooses operational approach
-One particular kind of programming language semantics is called operational semantics. Operational semantics assigns to every program a (possibly labeled) transition system, whose states correspond to program configurations and transitions to computational steps (of some abstract machine?). Existence of transitions between given configurations is then determined by some deductive system (citation needed) (Informal semantics of many programming languages is defined in this way.) 
+\ifshowkexamples
+Some K examples:
+
+% When style is 'math', it has to be in $$.
+$\kall{name}{content}{X > 3}$,
+
+\kprefix{name}{content}{X > 3},
+
+\ksuffix{name}{content}{X > 3},
+
+and \kmiddle{name}{content}{X > 3}.
+
+$\mmiddle{blue}{content}{X > 3}$
+\bmiddle{blue}{content}{X > 3}.
+
+\fi
+
+\section{Related work}
+
+Norrish - small step structural C++ semantics in HOL (isabelle/coq?)
+
+\section{C++}
+
+About standards. How they are accessible etc.
+
+\K framework idea - see their image.
+
+We have to also mention that K framework can parse concrete syntax but it can also be used with an external parser.
 
 
-% nahradit 'consider' with something different. It is just an example. I do not want to emphasize the idea that something had to be done first.
-In order to describe semantics of a language, one has to describe its abstract syntax first. This can be done using BNF notation, as suggested in figure~\ref{IMPSyntaxOnPaper}. Consider for example the well-known IMP language with basic arithmetic and boolean operators, variables and simple control flow constructs., 
+\newpage
+\section{\K framework}
 
-\begin{figure}[H]
-\begin{grammar}
-<bexpr> ::= <bool> | <expr> `==' <expr> | \ldots
-%\alt <bexpr> `and' <bexpr>
-%\alt `not' <bexpr>
-%\alt \ldots
+The purpose of this section is to give an overview of \K semantic framework. First subsection shows, how \K can be used to describe language semantics in an operational manner; the second subsections contains an overview of various \K tools, including debugger, as well as a brief introduction of \K abstract syntax; the last subsection discuss in more detail various aspects of \K, including matching and reachability logic.
 
-<stmt> ::= `if' <bexpr> `then' <stmt> `else' <stmt> `fi' | `skip' | \ldots
-%\alt \ldots
+\subsection{\K and operational semantics}
+%Goal: to show, how K framework fits to operational semantics. How various K construct support specifying syntax, rewrite rules, configurations, ...
 
-\end{grammar}
-\caption{
-	A part of an abstract syntax of the IMP language. (How it is written on paper.)
-	% In the definition, $<bool>$ denotes the syntatic domain.. oh no.
-}
-\label{IMPSyntaxOnPaper}
+%(Informal semantics of many programming languages is defined in this way.) 
+
+
+%TODO add a note about ascii/latex K
+%\begin{asciik}
+%| "if" BExp "then" Stmt "else" Stmt "fi" [strict(1)]
+%\end{asciik}
+
+In \K framework, languages are described using small-step operational semantics. Small step operational semantics assigns to every program a transition system $( \var{Cfg}, \rightarrow )$ over the set of program configurations, whose transitions correspond to computational steps. Existence of transitions between given configurations is then determined e.g. by some deductive system (in case of structural operational semantics), or by pattern matching rewriting rules to the configurations (in case of \K).
+
+
+%TODO reference some courses and lecture notes for small-step structural operational semantics
+%TODO cite the k tutorial
+
+Program configurations for small-step semantics can consist of a ,,program'' part and a ,,data'' part. Consider simple imperative language IMP. In textbook small-step SOS, the set of program configurations $\var{Cfg}$ can be defined as $\var{Pgm} \times \Sigma$, where $\var{Pgm}$ is a set of programs and $\Sigma$ is the set of functions from variable names to (syntactic) integers; thus, configurations are tuples. In \K, configurations are made of \textit{cells} nested in a tree-like manner; the cells contain a values of various predefined (numbers, lists, \ldots) or user-defined syntactic sorts. Every configuration is then a (ground) term.
+
+The configuration for IMP can be defined as in figure~\ref{ImpConfigurationInK}. The \texttt{k} cell contains the ,,program'' part - a list of computations yet to be computed. The \texttt{state} cell holds a map from variable names to values; the syntactic sorts of its keys and values are not specified. The \texttt{state} cell initially holds an empty map, while \texttt{k} cell initially contains the abstract syntax tree of whole program.
+
+The abstract syntax is defined using BNF notation inside \texttt{syntax} declarations (see figure~\ref{ImpSyntaxInK}). \K also supports attaching various attributes; some of them (e.g associativity attributes) are needed to support automatic generation of concrete syntax parser, some of the other have a semantic impact (strictness attributes etc). Note that the user-defined syntactic constructs can be used anywhere in configuration, not just in \texttt{k} cell.
+
+\begin{figure}
+\caption{Definition of program configuration in the syntax of \K. }
+\label{ImpConfigurationInK}
+\begin{asciik}
+configuration <T> <k> \$PGM:Pgm </k> <state> .Map </state> </T>
+\end{asciik}
 \end{figure}
 
-\paragraph{Rules}
+\begin{figure}
+\caption{Part of IMP syntax in \K. The syntactic categories $\var{Id}$, $\var{Int}$ are predefined as well as some operations on them. }
+\label{ImpSyntaxInK}
+\begin{asciik}
+syntax AExp ::= Id | Int
 
-\begin{figure}[H]
+syntax BExp  ::= Bool
+| AExp "<=" AExp [seqstrict]
 
-\caption{Some rules }
-
-\[
-\inferrule
-{\Delta \vdash B \\ B \vdash \Gamma}
-{\Delta \vdash \Gamma}
-\]
-
+syntax Stmt  ::= "skip"
+| Id "=" AExp
+| "if" BExp "then" Stmt "else" Stmt "fi" [strict(1)]
+\end{asciik}
 \end{figure}
 
-\begin{kcode}
-    // Your K code here.
-    syntax A ::= B
-    rule <k> x + y => z </k><env> something </env>
-\end{kcode}
 
-\section{K framework}
-K framework idea - see their image.
-How it differs from classical operational semantics? I will start with that (small-step) and then show some sugar K framework offers.
-
-We need an intro to semantics and various styles of them. Then an example of small-step operational semantics of simple language from some basic course. Then rewrite it using K. We have to also mention that K framework can parse concrete syntax but it can also be used with an external parser.
+%TODO note about syntactic domains Id and Bool.
 
 
+%TODO say that configuration cells have their own sort
+
+%The $<k>$ cell contains a sequence of commands to execute. $c_1 \rightsquigarrow c_2$.
+
+% Nejdrive tak intuitivne
+The transition system is induced by rewriting rules; those have the form of $l \Rightarrow r \texttt{ if } b$, where $l$ and $r$ are matching-logic patterns \footnote{Patterns are basically terms with free variables. Details about matching logic are given in \ref{MatchingLogic}.},
+%(terms with free variables) of the same sort, 
+and $b$ is a first-order formula over free variables of $l$. Whenever the pattern $l$ \textit{matches} a configuration such that $b$ evaluates to $\var{true}$, the rule gets applied and generates a new configuration. One such rule in the IMP language may be
+\begin{asciik}[basicstyle=\small]
+rule <T><k> X:Id => I ...</k>
+     <state>... X |-> I ...</state></T>
+\end{asciik}
+
+
+%FIXME the rule does not match always,
+
+% Pozdeji presneji.
+%The transition system contains transition between configurations $C_1$ and $C_2$, if there
+%The rule gets applied whenever the pattern $l$ \textit{matches} the current configuration, i.e. it is possible to substitute free variables in $l$ for ground terms such that the result is identical to the configuration, and $b$ (after the same substitution) holds.  Due to the mechanism called ,,configuration abstraction'', rules can be unified with a subtree of the configuration, thus avoiding a use of unnecessary subterms in the rule.
+
+Many rules care about only a small fraction of the configuration. \K framework therefore implements a mechanism called ,,configuration abstraction'', which allows rules to mention only the necessary configuration cells; \K then desugars them. For example, in the above rule it is possible to remove the $<T>$ cell.
+
+
+%$\kprefix{k}{\reduce{X:Id}{I}...}{}$
+%$\kall{1}{2}{3}$
+
+%TODO cite some source of matching logic, configuration abstraction etc.
+
+%TODO contexts, heating/cooling rules, strictness
+
+%TODO difference between \K source code and latex drawing (it is used everywhere).
+
+%TODO structural frames (I heard about them in the Java semantics)
+
+
+
+Those three kinds of \K declarations are sufficient to give a semantics to given language; however, \K provides some additional construct, which makes writing the semantics easier. Those will be discussed in latter sections
+
+\subsection{\K Abstract syntax}
+TODO: something about k abstract syntax format, concrete syntax parser, the possibility to use external parsers. This is what we do in the C++ semantics.
+
+\newpage
 \section{C++14}
 Other C++ Also tell something about other approaches to verifying C++ (which is my main motivation for having the semantics).
 
