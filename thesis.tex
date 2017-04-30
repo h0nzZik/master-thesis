@@ -66,193 +66,47 @@ faculty = {fi},
 \begin{document}
 
 \chapter{Introduction}
+
 % Uz tady bych chtel nastinit vztahy mezi K frameworkem, operacni semantikou a C++. Ale jenom zlehka, aby ctenar mel intuitivni predstavu o tom, o cem bude zbytek textu, stejne jako to, cim jsem ja prispel. Hlavne by tu mela byt motivace. co delam? Rozsiruji formalni semantiku jazyka C++ v K, ktera jeste neni dokoncena. Proc to delam? Asi se ztotoznuji s tim, ze verifikacni metody a semantika mohou byt oddelene, a ze mit formalni semantiku, o niz je mozne strojove uvazovat, je uzitecne. Na jakou praci navazuju?
 
 % Pry bych mel uvest, co je zname a co je nezname. Mno zname je vsechno - je mozne vytvorit semantiku realneho jazyka, jak bylo demostrovano na pripade C, Javy, JavaScriptu etc. Jen je potreba to udelat pro C++. 
 
+\section{Motivation}
+
 \section{Related work}
-% Videl jsem nejakou semantiku C++ v Coq myslim.
+% Jak k semantice C/C++, tak k jejich verifikaci
 For example, Javascript semantics \cite{park-stefanescu-rosu-2015-pldi}.
+%Other C++ Also tell something about other approaches to verifying C++ (which is my main motivation for having the semantics).
+Norrish - small step structural C++ semantics in HOL (isabelle/coq?)
+
 
 \chapter{Background}
 % Ok,  Co musi ctenar vedet? Musi mit nejakou predstavu o operacni semantice, pak o tom, jak lze v K popisovat jazyky. Potom musi trochu znat C++, ze mame nejakou kompilaci, linkovani, ze je to kompatabilni s C castecne na zdrojove, castecne na link-time urovni.
 
 \section{Operational semantics}
+Mozna neni nutne. Ctenari pravdepodobne budou znat. Odkazy na nejake dokuemnty/kurzy?
 
 
 \section{K framework}
-% Protoze moji motivaci je v konecnem dusledku verifikace, mel bych zminit, ze existuje matching logika a hlavne reachability logika spolu s odvozovacim systemem. Idealne se zase odvolat do nejakeho paperu. Urcite bych to nepopisoval.
-
-% Taky bych chtel popsat, jake nastroje K framework nabizi, z ceho se sklada apod. Ale ze aktualni prochazi rekonstrukci, takze nektere vlastnosti nefunguji. Pdf dokumentace ze semantiky. Obycejny interpreter, model checker, ...
-
-% Mozna i nejake jazykove vyrazy toho jazyka. Kontexty, [function] - sam tomu presne nerozumim.
-
-\subsection{Semantics in K}
-\subsection{Matching and reachability logic}
-
-\section{C++}
-
-% Popisu C++ bude trochu odpovidat struktura projektu C/C++ semantiky. Mame tam oddelenou statickou a dynamickou semantiku. Jak to souvisi se standardem? Je toto oddeleni bezne? Maji to ostatni K semantiky?
-% Taky v te semantice vyznacujeme, co je undefined, unspecified, implementation defined behaviour. I semantika enumu to vyuziva
-
-% Kde se nachazi normativni dokumenty? Na jakem je zalozena ta semantika? Neco k jejich strukture?
-
-\subsection{Standard documents}
-
-
-\subsection{Phases of translation}
-\label{txt:phases-of-translation}
-% Jeden odstavec neformalniho popisu, jeden odstavec formalniho
-Real-world C++ programs usually consist of multiple source files. To build the program, the source files are compiled one by one and resulting object files are then linked together. It is also possible to link compiled C file with the C++ program. Building a program is a multiple-step process.
-
-% Nejaky priklad
-
-Although C/C++ standards does not go to implementation details, they contain the idea of translation phases and separate translation. Translation unit (according to ???) is a source file with its \textit{include} files included. Section 2.2 of the C++14 standard identifies 9 translation phases; the first five or six of them are usually refferred to as \textit{preprocessing phases} (or one \textit{preprocessing phase}) , in the seventh phase the compilation of single translation unit takes place, phase number eight deals with template instantiation and in the ninth phase the whole program is linked together. In C language the phases are similar (but phase eight is missing).
-
-\subsection{Basic concepts}
-
-% Zminit nekde to, ze C++ hodne mluvi o tom, kdy je program nedefinovany... jak o tom mluvi v "Defining the Undefinedness of C ∗"
-
-\chapter{C++ semantics in K}
-% Neco o historii projektu, ze prvne byla C semantika (2012). Jak to pasuje do K frameworku i do jazyka C++. Ze 'oni' (kdo?) udrzuji fork K a ocaml backend. 
-% Je nejaka moznost, jak vypnout diagnostiku u toho CLang parseru? Jo popsat K AST format.
-
-% Taky tadu musim podrobneji rozebrat, co jsem vlastne udelal. Mno zatim toho moc neni.
-% Taky za na tom RuntimeVerification, inc. stavi nejake produkty - RV-match?
-
-% Co je vlastne spolecneho s C semantikou?
-% point to https://github.com/kframework/c-semantics
-
-\section{Structure of the project}
-
-%Ze ta semantika se sklada z vice 'projektu'? Nebo 'semantik'? Nebo jak oni to nazyvaji. kcc/k++ skripty. Jo a parser zalozeny na CLang. Language definitions
-
-% Tady bych chtel popsat, jake vsechny soucasti ta semantika pouziva. K framework a utility z neho (krun). ocaml backend. A zminim se i o rv-match? Kazdopadne je treba se zminit o tom, ze mame vicero zkompilovanych semantik, protoze se na ne pak odkazuji.
-
-The project of C/C++ semantics is made of multiple modules, which are introduced in this section. 
-%It also depends on some external tools.
-Its main user interface consists of a script named kcc, which implements a semantics-based compiler. In fact, the script mimincs the interface of the gnu gcc compiler and supports many of gcc's command-line parameters. It is possible to use it to build programs instead of gcc; however, the generated executables are many times slower then the ones built with gcc.
-
-The figure~\ref{fig:cpp-program-example} contains a simple program, consisting of one C and one C++ source file. When compiled with gcc, it first compiles both source files separately, storing the resulting object code in separate object files, and then links the object files to final executable. The kcc script invoked by command
-\begin{lstlisting}[language=bash]
-$ kcc foo.c main.cpp -o hello
-\end{lstlisting}
-works similarly. Analogically to gcc, the build process can be decomposed into the following commands:
-\begin{lstlisting}[language=bash]
-$ kcc -c foo.c -o foo.o
-$ kcc -c main.cpp -o main.o
-$ kcc foo.o main.o -o hello
-\end{lstlisting}
-% NOTE: we may use just CC there and refer to gcc or kcc? But what about g++?
-
-When the first two commands are executed, a \textit{translation} takes place, whereas executing the third command performs \textit{linking}. During the translation, all translations phases described in C/C++ standard (see section~\ref{txt:phases-of-translation}) are performed, except the last one (the eight in case of C, the ninth in case of C++), which is performed during the linking.
-
-During the translation, kcc first uses the gcc compiler (gcc -E) to perform the preprocessing phases. The preprocessed files are then converted to K AST using separate parsers. (The project contains two tools for this purpose: the older one, \textit{cparser}, is based on OCaml CIL library\footnote{https://github.com/cil-project/cil} and supports only C language; the newer \textit{clang-kast} based on Clang\footnote{http://clang.llvm.org/} llvm fronted was created specifically for the C++ semantics, but it might be used for C in future.)
-Resulting K AST files are then \textit{krun} using a \textit{static semantics} module for the appropriate language; the result is then stored in object files, again with use of the K AST format.
-
-In the linking phase, kcc first joins all the compiled object files together. The joined object file is then krun using combined C and C++ \textit{execution semantics} module, but with use of a K ocaml backend. This backend first compiles the program to an ocaml source file, which is then compiled with regular ocaml compiler (ocamlopt) to native code stored in ELF format. The resulting executable can be then normally run.
-
-\begin{lstlisting}[language=bash]
-$ ./hello
-\end{lstlisting}
-
-% which drives semantics-based compilation and mimics the interface of gcc.
-% Like GCC does, the script is able to compile C/C++ source files to intermediate format (conceptually similar object file) and to link the resulting files together.
-
-
-\begin{figure}
-\centering
-\begin{subfigure}{.5\textwidth}
-  \centering
-
-\begin{lstlisting}{language=C++}
-class C{};
-extern "C" int foo(int);
-int main() {
-	return foo(5);
-}
-\end{lstlisting}
-
-  \caption{Main C++ source file (main.cpp)}
-  %\label{fig:sub1}
-\end{subfigure}%
-%\unskip\ \vrule\
-\begin{subfigure}{.5\textwidth}
-  \centering
-\begin{lstlisting}{language=C}
-struct S{int a};
-S s {.a = 3};
-int foo(int x) {
-	return x * s.a;
-}
-\end{lstlisting}
-  \caption{C99 source file (foo.c)}
-  %\label{fig:sub2}
-\end{subfigure}
-\caption{A mixed C/C++ program. Note that the C source file uses a feature (designated initializers), which is not supported in C++, and vice versa.}
-\label{fig:cpp-program-example}
-\end{figure}
-
-
-To sum up, the C/C++ semantics project consists of: one parser for C and another one for C++; one K module implementing static semantics of C and another one for C++; a separate module for the dynamic semantics of both C and C++; and a script kcc, which drives the compilation.
-
-%As described in (???), K framework is able to generate a compiler/interpreter for given language definition. 
-
-% Taky bych mel rict, co vlastne dela takova semantika v K. Ona dostane nejakou inicialni konfiguraci, bezi, a na konci skonci v cilove konfiguraci. Takovymto zpusobem je mozne napsat semantiku, ktera jakoby preklada kod. Jedna takova semantika muze odpovidat fazi prekladu translacni jednotky...
-
-%C and C++ languages have a lot in common. It is easy to use them together in one project. Some C sources can be compiled as C++ and it 'works'; of course, many can not. It is possible to link C libraries to C++ programs, and even to call C++ functions from C.
-
-%Jak funguje ten preklad: to by asi melo byt v kapitole o C++. Standard v 2.2 definuje 9 fazi prekladu. Prvnich 6 je takzvany preprocesing, potom 7 - preklad translacni jednotky. Taky tu jsou instanciacni jednotky - to je pro sablony? 8 - kmobinace translacni a instanciacnich jednotek. 9 - linkovani. Linkovani je pak popsano v 3.5. C to ma podobne.ioi
-
-%The K C++ semantics emerged from the project of C semantics and it shares a repo with it. It consists of the following parts: clang-based C++ parser, linking semantics, ... and a set of scripts driving the compilation. Static semantics 
-
-
-% Naznacit, co patri kam. Jako ze name lookup je soucasti staticke semantiky, vyhodnocovani vyrazu je soucasti dynamicke (prestoze nektere casti jsou i soucasti staticke, a pribude constexpr). Ridici smycky - dynamicke.
-
-% TODO data flow diagram jako je v Defining the Undefinedness of C.
-
-% Kdyz tedy mluvime o kompilaci, asi bych mel zminit, ze K umoznuje 'snadno' udelat ze semantiky interpreter.
-	
-\chapter{Zbytek}
-
-Some ideas about \K framework. Verifier for all languages. Etc. Also note that transitions in C++ semantics are often more low level then the usual (programmer's) reasoning about the code. By the way, \K supports reduction contexts (for operational semantics). And some \K paper says that it is possible to use various styles of semantics, e.g. Big Step, reduction contexts, \ldots . Link to \K tutorial. K AST (kast).
-
-\ifshowkexamples
-Some K examples:
-
-% When style is 'math', it has to be in $$.
-$\kall{name}{content}{X > 3}$,
-
-\kprefix{name}{content}{X > 3},
-
-\ksuffix{name}{content}{X > 3},
-
-and \kmiddle{name}{content}{X > 3}.
-
-$\mmiddle{blue}{content}{X > 3}$
-\bmiddle{blue}{content}{X > 3}.
-
-\fi
-
-\section{Related work}
-
-Norrish - small step structural C++ semantics in HOL (isabelle/coq?)
-
-\section{C++}
-
-About standards. How they are accessible etc.
-
-\K framework idea - see their image.
-
-We have to also mention that K framework can parse concrete syntax but it can also be used with an external parser.
-
-
-\newpage
-\section{\K framework}
 
 The purpose of this section is to give an overview of \K semantic framework. First subsection shows, how \K can be used to describe language semantics in an operational manner; the second subsections contains an overview of various \K tools, including debugger, as well as a brief introduction of \K abstract syntax; the last subsection discuss in more detail various aspects of \K, including matching and reachability logic.
 
-\subsection{\K and operational semantics}
+\subsection{Idea}
+Mozna neni treba, mozna ze 
+\K framework idea - see their image.
+
+%We have to also mention that K framework can parse concrete syntax but it can also be used with an external parser.
+
+
+% KAst
+% 
+
+% Taky bych chtel popsat, jake nastroje K framework nabizi, z ceho se sklada apod. Ale ze aktualni prochazi rekonstrukci, takze nektere vlastnosti nefunguji. Pdf dokumentace ze semantiky. Obycejny interpreter, model checker, ...
+
+
+
+\subsection{K And Operational semantics}
+
 %Goal: to show, how K framework fits to operational semantics. How various K construct support specifying syntax, rewrite rules, configurations, ...
 
 %(Informal semantics of many programming languages is defined in this way.) 
@@ -340,15 +194,177 @@ Many rules care about only a small fraction of the configuration. \K framework t
 
 Those three kinds of \K declarations are sufficient to give a semantics to given language; however, \K provides some additional construct, which makes writing the semantics easier. Those will be discussed in latter sections
 
-\subsection{\K Abstract syntax}
+
+% Mozna i nejake jazykove vyrazy toho jazyka. Kontexty, [function] - sam tomu presne nerozumim.
+\subsection{Parsing and K AST}
 TODO: something about k abstract syntax format, concrete syntax parser, the possibility to use external parsers. This is what we do in the C++ semantics.
 
-\newpage
-\section{C++14}
-Other C++ Also tell something about other approaches to verifying C++ (which is my main motivation for having the semantics).
+\subsection{Semantics in K}
+\subsection{Matching and reachability logic}
 
-\section{The C/C++ semantics}
-Something about organizational structure of the project. How the semantics matches the standard. Translation from concrete C/C++ syntax to K's one. CIL (I'have never used it) and clang-kast. Kast format.
-Translation semantics. Linking semantics. Execution semantics.
+%Protoze moji motivaci je v konecnem dusledku verifikace, mel bych zminit, ze existuje matching logika a hlavne reachability logika spolu s odvozovacim systemem. Idealne se zase odvolat do nejakeho paperu. Urcite bych to nepopisoval.
+
+\section{C++}
+
+% Popisu C++ bude trochu odpovidat struktura projektu C/C++ semantiky. Mame tam oddelenou statickou a dynamickou semantiku. Jak to souvisi se standardem? Je toto oddeleni bezne? Maji to ostatni K semantiky?
+% Taky v te semantice vyznacujeme, co je undefined, unspecified, implementation defined behaviour. I semantika enumu to vyuziva
+
+% Kde se nachazi normativni dokumenty? Na jakem je zalozena ta semantika? Neco k jejich strukture?
+
+\subsection{Standard documents}
+
+About standards. How they are accessible etc.
+
+\subsection{Phases of translation}
+\label{txt:phases-of-translation}
+% Jeden odstavec neformalniho popisu, jeden odstavec formalniho
+Real-world C++ programs usually consist of multiple source files. To build the program, the source files are compiled one by one and resulting object files are then linked together. It is also possible to link compiled C file with the C++ program. Building a program is a multiple-step process.
+
+% Nejaky priklad
+
+Although C/C++ standards does not go to implementation details, they contain the idea of translation phases and separate translation. Translation unit (according to ???) is a source file with its \textit{include} files included. Section 2.2 of the C++14 standard identifies 9 translation phases; the first five or six of them are usually refferred to as \textit{preprocessing phases} (or one \textit{preprocessing phase}) , in the seventh phase the compilation of single translation unit takes place, phase number eight deals with template instantiation and in the ninth phase the whole program is linked together. In C language the phases are similar (but phase eight is missing).
+
+\subsection{Interoperability with C}
+
+\subsection{Basic concepts}
+
+% Zminit nekde to, ze C++ hodne mluvi o tom, kdy je program nedefinovany... jak o tom mluvi v "Defining the Undefinedness of C ∗"
+
+\chapter{C++ semantics in K}
+% Neco o historii projektu, ze prvne byla C semantika (2012). Jak to pasuje do K frameworku i do jazyka C++. Ze 'oni' (kdo?) udrzuji fork K a ocaml backend. 
+% Je nejaka moznost, jak vypnout diagnostiku u toho CLang parseru? Jo popsat K AST format.
+
+% Taky tadu musim podrobneji rozebrat, co jsem vlastne udelal. Mno zatim toho moc neni.
+% Taky za na tom RuntimeVerification, inc. stavi nejake produkty - RV-match?
+
+% Co je vlastne spolecneho s C semantikou?
+% point to https://github.com/kframework/c-semantics
+% TODO data flow diagram jako je v Defining the Undefinedness of C.
+
+
+\section{Intro, history}
+
+\section{Basic usage}
+
+\section{Structure of the project}
+
+%Ze ta semantika se sklada z vice 'projektu'? Nebo 'semantik'? Nebo jak oni to nazyvaji. kcc/k++ skripty. Jo a parser zalozeny na CLang. Language definitions
+
+% Tady bych chtel popsat, jake vsechny soucasti ta semantika pouziva. K framework a utility z neho (krun). ocaml backend. A zminim se i o rv-match? Kazdopadne je treba se zminit o tom, ze mame vicero zkompilovanych semantik, protoze se na ne pak odkazuji.
+
+The project of C/C++ semantics is made of multiple modules, which are introduced in this section. 
+%It also depends on some external tools.
+Its main user interface consists of a script named kcc, which implements a semantics-based compiler. In fact, the script mimincs the interface of the gnu gcc compiler and supports many of gcc's command-line parameters. It is possible to use it to build programs instead of gcc; however, the generated executables are many times slower then the ones built with gcc.
+
+The figure~\ref{fig:cpp-program-example} contains a simple program, consisting of one C and one C++ source file. When compiled with gcc, it first compiles both source files separately, storing the resulting object code in separate object files, and then links the object files to final executable. The kcc script invoked by command
+\begin{lstlisting}[language=bash]
+$ kcc foo.c main.cpp -o hello
+\end{lstlisting}
+works similarly. Analogically to gcc, the build process can be decomposed into the following commands:
+\begin{lstlisting}[language=bash]
+$ kcc -c foo.c -o foo.o
+$ kcc -c main.cpp -o main.o
+$ kcc foo.o main.o -o hello
+\end{lstlisting}
+% NOTE: we may use just CC there and refer to gcc or kcc? But what about g++?
+
+When the first two commands are executed, a \textit{translation} takes place, whereas executing the third command performs \textit{linking}. During the translation, all translations phases described in C/C++ standard (see section~\ref{txt:phases-of-translation}) are performed, except the last one (the eight in case of C, the ninth in case of C++), which is performed during the linking.
+
+During the translation, kcc first uses the gcc compiler (gcc -E) to perform the preprocessing phases. The preprocessed files are then converted to K AST using separate parsers. (The project contains two tools for this purpose: the older one, \textit{cparser}, is based on OCaml CIL library\footnote{https://github.com/cil-project/cil} and supports only C language; the newer \textit{clang-kast} based on Clang\footnote{http://clang.llvm.org/} llvm fronted was created specifically for the C++ semantics, but it might be used for C in future.)
+Resulting K AST files are then \textit{krun} using a \textit{static semantics} module for the appropriate language; the result is then stored in object files, again with use of the K AST format.
+
+In the linking phase, kcc first joins all the compiled object files together. The joined object file is then krun using combined C and C++ \textit{execution semantics} module, but with use of a K ocaml backend. This backend first compiles the program to an ocaml source file, which is then compiled with regular ocaml compiler (ocamlopt) to native code stored in ELF format. The resulting executable can be then normally run.
+
+\begin{lstlisting}[language=bash]
+$ ./hello
+\end{lstlisting}
+
+% which drives semantics-based compilation and mimics the interface of gcc.
+% Like GCC does, the script is able to compile C/C++ source files to intermediate format (conceptually similar object file) and to link the resulting files together.
+
+
+\begin{figure}
+\centering
+\begin{subfigure}{.5\textwidth}
+  \centering
+
+\begin{lstlisting}{language=C++}
+class C{};
+extern "C" int foo(int);
+int main() {
+	return foo(5);
+}
+\end{lstlisting}
+
+  \caption{Main C++ source file (main.cpp)}
+  %\label{fig:sub1}
+\end{subfigure}%
+%\unskip\ \vrule\
+\begin{subfigure}{.5\textwidth}
+  \centering
+\begin{lstlisting}{language=C}
+struct S{int a};
+S s {.a = 3};
+int foo(int x) {
+	return x * s.a;
+}
+\end{lstlisting}
+  \caption{C99 source file (foo.c)}
+  %\label{fig:sub2}
+\end{subfigure}
+\caption{A mixed C/C++ program. Note that the C source file uses a feature (designated initializers), which is not supported in C++, and vice versa.}
+\label{fig:cpp-program-example}
+\end{figure}
+
+
+To sum up, the C/C++ semantics project consists of: one parser for C and another one for C++; one K module implementing static semantics of C and another one for C++; a separate module for the dynamic semantics of both C and C++; and a script kcc, which drives the compilation.
+
+%As described in (???), K framework is able to generate a compiler/interpreter for given language definition. 
+
+% Taky bych mel rict, co vlastne dela takova semantika v K. Ona dostane nejakou inicialni konfiguraci, bezi, a na konci skonci v cilove konfiguraci. Takovymto zpusobem je mozne napsat semantiku, ktera jakoby preklada kod. Jedna takova semantika muze odpovidat fazi prekladu translacni jednotky...
+
+%C and C++ languages have a lot in common. It is easy to use them together in one project. Some C sources can be compiled as C++ and it 'works'; of course, many can not. It is possible to link C libraries to C++ programs, and even to call C++ functions from C.
+
+%Jak funguje ten preklad: to by asi melo byt v kapitole o C++. Standard v 2.2 definuje 9 fazi prekladu. Prvnich 6 je takzvany preprocesing, potom 7 - preklad translacni jednotky. Taky tu jsou instanciacni jednotky - to je pro sablony? 8 - kmobinace translacni a instanciacnich jednotek. 9 - linkovani. Linkovani je pak popsano v 3.5. C to ma podobne.ioi
+
+%The K C++ semantics emerged from the project of C semantics and it shares a repo with it. It consists of the following parts: clang-based C++ parser, linking semantics, ... and a set of scripts driving the compilation. Static semantics 
+
+
+% Naznacit, co patri kam. Jako ze name lookup je soucasti staticke semantiky, vyhodnocovani vyrazu je soucasti dynamicke (prestoze nektere casti jsou i soucasti staticke, a pribude constexpr). Ridici smycky - dynamicke.
+
+
+% Kdyz tedy mluvime o kompilaci, asi bych mel zminit, ze K umoznuje 'snadno' udelat ze semantiky interpreter.
+
+% Taky to mozna muzeme nazvat 'implementace'
+\chapter{Contribution and evaluation}
+	
+
+TODO mention some GCC/clang tests
+
+\chapter{Conclusion}
+	
+\chapter{Zbytek}
+
+Some ideas about \K framework. Verifier for all languages. Etc. Also note that transitions in C++ semantics are often more low level then the usual (programmer's) reasoning about the code. By the way, \K supports reduction contexts (for operational semantics). And some \K paper says that it is possible to use various styles of semantics, e.g. Big Step, reduction contexts, \ldots . Link to \K tutorial. K AST (kast).
+
+\ifshowkexamples
+Some K examples:
+
+% When style is 'math', it has to be in $$.
+$\kall{name}{content}{X > 3}$,
+
+\kprefix{name}{content}{X > 3},
+
+\ksuffix{name}{content}{X > 3},
+
+and \kmiddle{name}{content}{X > 3}.
+
+$\mmiddle{blue}{content}{X > 3}$
+\bmiddle{blue}{content}{X > 3}.
+
+\fi
+
+
+
 
 \end{document}
