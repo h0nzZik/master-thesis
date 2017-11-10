@@ -72,10 +72,10 @@ faculty = {fi},
 
 \chapter{Introduction}
 
-// TODO uhladit
+%// TODO uhladit
 Software verification is hard. Formal methods for software verification are being developed. But there are not many high quality tools on the market. One problem might be that in order to develop production-ready tool, it is not enough to understand formal methods. Knowledge of precise semantics of the selected programming language is needed. In recent years, K framework is gaining popuparity. Separation of expertise...?
 
-K framework has been successfully used to give formal semantics to a varienty of languages, including Java\cite{bogdanas-rosu-2015-popl}, Python, Javascript\cite{park-stefanescu-rosu-2015-pldi}, and C \cite{ellison-2012-thesis}\cite{hathhorn-ellison-rosu-2015-pldi,}, all of which is publicly available. The C semantics has been used to create RV-Match\cite{guth-hathhorn-saxena-rosu-2016-cav}, a ,,tool for checking C programs for
+K framework has been successfully used to give formal semantics to a varienty of languages, including Java\cite{bogdanas-rosu-2015-popl}, Python, Javascript\cite{park-stefanescu-rosu-2015-pldi}, and C\cite{ellison-2012-thesis}\cite{hathhorn-ellison-rosu-2015-pldi}, all of which is publicly available. The C semantics has been used to create RV-Match\cite{guth-hathhorn-saxena-rosu-2016-cav}, a ,,tool for checking C programs for
 undefined behavior and other common programmer mistakes''.  At the time of writing, the C semantics is being extended to support C++; the C++ support is also the focus of this thesis.
 
 The thesis originally aimed to implement whichever language features needed to be done, as the C++ language is complex and the C++ semantics is still highly incomplete. As the work progressed, two features were selected to be implemented: \textit{enumerations} and \textit{constant expressions}. Enumerations were chosen because of their relative simplicity: it is a purely compile-time feature, which does not interfere much with other language features; it exists in the language from its beginning, and \textit{scoped enumerations} introduced in C++11 are even simplier both from language and user point of view. Though legacy enumerations needs to be still supported. \textit{Constant expressions}, on the contrary, had undergone a deep change in C++11, which allowed a restricted set of runtime computations to happen in the compilation time; the future revisions released the restrictions to the point that in C++17, almost arbitrary side effect free computations can happen in the time of compilation. One could reasonably expect that in order to implement constant expressions, a more fundamental change to the semantics have to be done.
@@ -104,6 +104,88 @@ The purpose of this text is to describe the implementation of the aforementioned
 % Uz tady bych chtel nastinit vztahy mezi K frameworkem, operacni semantikou a C++. Ale jenom zlehka, aby ctenar mel intuitivni predstavu o tom, o cem bude zbytek textu, stejne jako to, cim jsem ja prispel. Hlavne by tu mela byt motivace. co delam? Rozsiruji formalni semantiku jazyka C++ v K, ktera jeste neni dokoncena. Proc to delam? Asi se ztotoznuji s tim, ze verifikacni metody a semantika mohou byt oddelene, a ze mit formalni semantiku, o niz je mozne strojove uvazovat, je uzitecne. Na jakou praci navazuju?
 
 % Pry bych mel uvest, co je zname a co je nezname. Mno zname je vsechno - je mozne vytvorit semantiku realneho jazyka, jak bylo demostrovano na pripade C, Javy, JavaScriptu etc. Jen je potreba to udelat pro C++. 
+
+% TODO muzu dat jako prilohu k diplomce virtualku s nainstalovanym prostredim?
+% TODO zminit prekazky pri vyvoji: pomala kompilace, nedeterminismus?
+
+\chapter{K C/C++ semantics}
+
+% TODO tady nejakou historii; veci ohledne buildu do samostatne sekce
+
+% TODO muzu si nejak zadefinovat pojem 'the Project' nebo tak? Abych to nemusel porad opakovat
+
+\section{Build notes}
+The project of K C/C++ semantics is hosted on GitHub\footnote{\url{https://github.com/kframework/c-semantics}}. It can be built easily by simply following the build instructions in the repository; however, the process deserves a few things to be mentioned here.
+%TODO preformulovat lepe ^^^^^
+
+\begin{itemize}
+\item At the time of writing, there are currently two implementations of K framework: UIUC-K\footnote{\url{https://github.com/kframework/k}}, developed by University of Illinois at Urbana–Champaign, and RV-K\footnote{\url{https://github.com/runtimeverification/k}}, developed by RuntimeVerification Inc; the latter is the one used by the project. The RV-K builds and runs without problems, with two minor exceptions:
+\begin{itemize}
+\item It does not support examples included in the K tutorial.
+\item It requires libflex\footnote{\url{https://github.com/westes/flex}} to be present/installed.
+\end{itemize}
+\item The project uses clang as a library to parse C++ sources; however, the currently required version 3.9 is a bit outdated.
+\item The officially supported operating system is Ubuntu 16.4 LTS; however, it works without problems on Fedora 26.
+\item The build can take up to thirty minutes on this text's author's machine.
+\end{itemize}
+
+\section{Basic usage}
+
+Main user interface of the project consists of a script \kcc, which implements a compiler based on the C/C++ semantics. The script mimincs the interface of the gnu gcc compiler and supports many of gcc's command-line parameters. It is therefore possible to use it to build programs instead of gcc; however, the generated executables are many times slower then the ones built using gcc.
+
+\begin{figure}[h]
+\begin{lstlisting}[language=bash, basicstyle=\footnotesize\ttfamily]
+$ cat hello.C
+extern "C" int puts(char const *s);
+int main() {
+	puts("Hello world");
+}
+$ kcc hello.C -o hello
+$ ./hello
+Hello world
+\end{lstlisting}
+\end{figure}
+
+In K framework, a semantics of programming language L assigns/induces to every program in L a transition system over the set of program configurations. /* specifically for C++ */ The generated executable file \texttt{hello} is then a perl script, which walks through the transition system in a step-by-step manner. The walk starts in an initial configuration and ends in a configuration for which no further transition is defined. The script then examines the final configuration and stops, possibly printing an error message in case the walk ended abnormally.
+
+It is possible to specify an exact number of computational steps to take by setting the variable \texttt{DEPTH} to the desired value. In this particular example, the executable is able to print only an incomplete portion of the text; then the error message is printed. 
+
+\begin{figure}[h]
+\begin{lstlisting}[language=bash, basicstyle=\footnotesize\ttfamily]
+$ env DEPTH=675 ./hello
+Hello woError: Execution failed.
+\end{lstlisting}
+\end{figure}
+
+The last configuration can be also inspected manually. If the executable is run with \texttt{VERBOSE} environment variable set, the configuration (as well as other potentially useful data) is dumped to standard output. This feature was found to be very useful for debugging the C++ semantics.
+
+The full list of accepted environment variables can be obtained by setting the environment variable \texttt{HELP}.
+
+% Konvence v textu: \texttt na nazvy entit (programu, bunek v konfiguraci, sortu), \textit na nove (poprve se vyskytujici?) vyrazy a na ty, ktere potrebuji zvyraznit
+
+\section{Under the hood}
+
+But how do \kcc and the generated perl script work internally? K framework provides a tool \kompile in order to compile a programming language semantics, and another tool \krun, which is used to run a program against the semantics of the program's language. More precisely, \krun 
+\begin{enumerate}
+\item takes a program and \textit{compiled} programming language semantics as an input,
+\item parses the program,
+\item creates an initial configuration from the parsed program,
+\item traverses the induced transition system from the initial configuration until a terminal configuration is reached,
+\item and outputs the terminal configuration.
+\end{enumerate}
+The \krun tool can be also configured to traverse the transition system in a different manner, e.g. to perform a search for a specific \textit{pattern}, or to stop the traversal after specified number of steps.
+
+The project of C/C++ semantics internally consists of multiple K semantics, all of which need to be compiled with \kompile. When \kcc is invoked on a C++ program, a clang-based tool \clangKast is used to convert each source file into K's internal representation (\kast). Every converted file is then individually used as an input to \krun with \textit{static C++ semantics}; the resulting terminal configuration can be thought of as an equivalent of an object file. The outputs are then joined together with runtime library and the result is wrapped in a generated Perl script. The script then, when executed, runs the linked program using \krun and \textit{executable C/C++ semantics}, possibly passing its command line arguments to the program.
+
+% TODO most of this thesis is concerned with the static semantics
+% TODO vsechny tyhle kroky se daji zjistit pomoci kcc -d
+
+% TODO zminit K Java, ktera proste poskytuje jeden prikaz na spusteni
+
+% TODO tutorial
+
+
+\chapter{-------------------------}
 
 \section{Motivation}
 
