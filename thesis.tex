@@ -56,10 +56,11 @@ faculty = {fi},
 
 %% Some math aliases
 \newcommand{\var}[1]{\mathit{#1}}
-\newcommand{\kcc}{\textit{kcc} }
-\newcommand{\kast}{\textit{kast} }
-\newcommand{\krun}{\textit{krun} }
-\newcommand{\kompile}{\textit{kompile} }
+\newcommand{\kcc}{\texttt{kcc} }
+\newcommand{\kast}{\texttt{kast} }
+\newcommand{\krun}{\texttt{krun} }
+\newcommand{\kompile}{\texttt{kompile} }
+\newcommand{\clangKast}{\texttt{clang-kast} }
 
 % Notes about the 'k' package
 % \ka{rule x => y} - inline K in ascii format
@@ -70,6 +71,35 @@ faculty = {fi},
 \begin{document}
 
 \chapter{Introduction}
+
+// TODO uhladit
+Software verification is hard. Formal methods for software verification are being developed. But there are not many high quality tools on the market. One problem might be that in order to develop production-ready tool, it is not enough to understand formal methods. Knowledge of precise semantics of the selected programming language is needed. In recent years, K framework is gaining popuparity. Separation of expertise...?
+
+K framework has been successfully used to give formal semantics to a varienty of languages, including Java\cite{bogdanas-rosu-2015-popl}, Python, Javascript\cite{park-stefanescu-rosu-2015-pldi}, and C \cite{ellison-2012-thesis}\cite{hathhorn-ellison-rosu-2015-pldi,}, all of which is publicly available. The C semantics has been used to create RV-Match\cite{guth-hathhorn-saxena-rosu-2016-cav}, a ,,tool for checking C programs for
+undefined behavior and other common programmer mistakes''.  At the time of writing, the C semantics is being extended to support C++; the C++ support is also the focus of this thesis.
+
+The thesis originally aimed to implement whichever language features needed to be done, as the C++ language is complex and the C++ semantics is still highly incomplete. As the work progressed, two features were selected to be implemented: \textit{enumerations} and \textit{constant expressions}. Enumerations were chosen because of their relative simplicity: it is a purely compile-time feature, which does not interfere much with other language features; it exists in the language from its beginning, and \textit{scoped enumerations} introduced in C++11 are even simplier both from language and user point of view. Though legacy enumerations needs to be still supported. \textit{Constant expressions}, on the contrary, had undergone a deep change in C++11, which allowed a restricted set of runtime computations to happen in the compilation time; the future revisions released the restrictions to the point that in C++17, almost arbitrary side effect free computations can happen in the time of compilation. One could reasonably expect that in order to implement constant expressions, a more fundamental change to the semantics have to be done.
+% (TODO tohle asi prijde dat do vice minuleho casu).
+ During the implementation it went out that the two features play together rather nicely: C++ allows enumerators to be initialized with constant expressions, so enumerations can be used to test the implementation of constant expressions.
+%"ukazalo se"
+%(TODO zminit, ze za tim je ten 'constexpr' keyword).
+
+The purpose of this text is to describe the implementation of the aforementioned features. The rest of the document is organized as follows:
+\begin{enumerate}
+\item introduction of the project of C/C++ semantics
+\item description of the involved concepts
+\item outline of the general architecture of the project
+\item discussion of implementation of enums
+\item discussion of implementation of constant expressions
+\end{enumerate}
+% at first, the project of C/C++ semantics is introduced; then the concepts involved are described in greater depth; then a general architecture of the project of C/C++ semantics is outlined, followed by a more detailed description of the parts related to the selected features. A discussion of details of the implementation...
+
+%However, the implementation efforts also revealed a lack of developer documentation for the project. TODO podporit, vyjmenovat duvody
+
+%TODO pouzit figure 2 z PLDI'15, ACM. 2015. Ok tady je nejaka dokumentace.
+
+%The purpose of this text is twofold. Firstly, to document the already existing architecture of the project of C/C++ semantics.  Secondly, to discuss the implementation of features, which have been developed as a part of this thesis.
+
 
 % Uz tady bych chtel nastinit vztahy mezi K frameworkem, operacni semantikou a C++. Ale jenom zlehka, aby ctenar mel intuitivni predstavu o tom, o cem bude zbytek textu, stejne jako to, cim jsem ja prispel. Hlavne by tu mela byt motivace. co delam? Rozsiruji formalni semantiku jazyka C++ v K, ktera jeste neni dokoncena. Proc to delam? Asi se ztotoznuji s tim, ze verifikacni metody a semantika mohou byt oddelene, a ze mit formalni semantiku, o niz je mozne strojove uvazovat, je uzitecne. Na jakou praci navazuju?
 
@@ -292,7 +322,7 @@ The full list of accepted environment variables can be obtained by setting the e
 
 \section{Under the hood}
 
-But how do \kcc and the generated perl script work internally? K framework provides a tool \texttt{kompile} in order to compile a programming language semantics, and another tool \texttt{krun}, which is used to run a program against the semantics of the program's language. More precisely, \texttt{krun} 
+But how do \kcc and the generated perl script work internally? K framework provides a tool \kompile in order to compile a programming language semantics, and another tool \krun, which is used to run a program against the semantics of the program's language. More precisely, \krun 
 \begin{enumerate}
 \item takes a program and \textit{compiled} programming language semantics as an input,
 \item parses the program,
@@ -300,9 +330,9 @@ But how do \kcc and the generated perl script work internally? K framework provi
 \item traverses the induced transition system from the initial configuration until a terminal configuration is reached,
 \item and outputs the terminal configuration.
 \end{enumerate}
-The \texttt{krun} tool can be also configured to traverse the transition system in a different manner, e.g. to perform a search for a specific \textit{pattern}, or to stop the traversal after specified number of steps.
+The \krun tool can be also configured to traverse the transition system in a different manner, e.g. to perform a search for a specific \textit{pattern}, or to stop the traversal after specified number of steps.
 
-The project of C/C++ semantics internally consists of multiple K semantics, all of which need to be compiled with \kompile. When \kcc is invoked on a C++ program, a clang-based tool \texttt{clang-kast} is used to convert each source file into K's internal representation (\kast). Every converted file is then individually used as an input to \krun with \textit{static C++ semantics}; the resulting terminal configuration can be thought of as an equivalent of an object file. The outputs are then joined together with runtime library and the result is wrapped in a generated Perl script. The script then, when executed, runs the linked program using \krun and \texttt{executable C/C++ semantics}, possibly passing its command line arguments to the program.
+The project of C/C++ semantics internally consists of multiple K semantics, all of which need to be compiled with \kompile. When \kcc is invoked on a C++ program, a clang-based tool \clangKast is used to convert each source file into K's internal representation (\kast). Every converted file is then individually used as an input to \krun with \textit{static C++ semantics}; the resulting terminal configuration can be thought of as an equivalent of an object file. The outputs are then joined together with runtime library and the result is wrapped in a generated Perl script. The script then, when executed, runs the linked program using \krun and \textit{executable C/C++ semantics}, possibly passing its command line arguments to the program.
 
 % TODO most of this thesis is concerned with the static semantics
 % TODO vsechny tyhle kroky se daji zjistit pomoci kcc -d
@@ -561,7 +591,7 @@ $\mmiddle{blue}{content}{X > 3}$
 
 \fi
 
-
-
+\bibliographystyle{plain}
+\bibliography{references} 
 
 \end{document}
