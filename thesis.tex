@@ -308,6 +308,127 @@ Large portions of the configuration were replaced by elipsis (\ldots) and the fo
 
 % Zminit problem, na ktery jsem narazil pri implementaci constexpr ConditionalOp. Totiz PRExpr je PRVal jen behem prekladu. Hmmm... mozna by to nemelo byt PRVal nikdy. Nebo.. ja nevim! Spis by mela exekucni semantika, nebo alespon ty spolecne casti, nepouzivat PRVal na poznani toho, jestli je vyraz vyhodnoceny.
 
+
+\chapter{Implementation}
+
+This chapter focuses on those parts of the C/C++ semantics project, which are related to the goal and contribution of this thesis. It describes the implementation of the main features, shows relations between the implementation, standard and general architecture of the semantics, and highlights some aspect of the C++ language one may perhaps oversee when using the language as a programmer. The last section of this chapter then gives a short evaluation of the implementation.
+
+%Cells - semantic components.
+%Co se ukládá do konfigurace? Kam se to ukládá? 
+	
+%TODO mention some GCC/clang tests
+
+%Jo a K ma taky schopnost reflektovat konfiguraci...
+
+\section{Enumerations}
+
+%This section contains
+
+%Vsechny ty veci se ukladaji k nejake translacni jednotce...
+
+%Take opaque enum declaration - celkem novinka
+%1) Uvodni odstavec o enumech
+
+%Enumerations are a part of C++ language from its beginings.
+
+
+%Enums may be declared in namespaces (including global namespace), functions and classes.
+
+
+%Taky ze je to vyhradne translacni zalezitost. V behove semantice se moc neprojevuji, az na to, ze se obcas delaji nejake ty kontroly na meze. Takze se projevuji jen nedefinovanym chovanim.
+
+%Before using a name of an enumeration (or any other named entity) in a translation unit, the name have to be declared first.
+%Enumerations (as well as all other named entities) must be declared in the translation unit prior their first use. An enumeration can be introduced either by its full declaration, or by an \textit{opaque enum declaration}(see n4296 7.2). After such declaration, the enumeration is considered to be a complete type.
+
+%Co všechno bylo potřeba udělat? Nechat clang-kast, ať generuje požadované informace. Deklarace. Konverze.  Operátory (neimplementoval jsem já). Lookup enumerátorů.
+
+% The modifications include: generating AST nodes for enumeration declarations in clang-kast, processing them in the static semantics, enumeratpr lookup.  
+
+% Popsat co me vedlo k tomu, ze jsem se pustil zrovna do enumu. Ze je to pomerne samostatna vec, nezavisla na vetsine ostatnich featur C++, a je jednoducha.
+
+In order to implement enumerations, various\footnote{But not many. Is this ok?} parts of the semantics had to be modified. The translation tool clang-kast was slightly modified to produce AST nodes for enumeration declarations; to process the declarations in the semantics, a new file was added to static semantics and a new set of cells was added to common part of configuration. It was also needed to implement enumerator lookup, which required addition of a few cells to configuration and a slight modification of some of the name lookup rules. The semantics was to some extent already prepared to work with enumerations, and some of the relevant rules (e.g. for conversions) needed no change. To ensure correctness of implementation, several test cases were added to the test suite. Overall, most of the modifications were additive, and only little of the existing code needed to be changed. During the implementation process, a few minor bugs were discovered and fixed. 
+
+% TODO zminit ze jsem chtel implementovat i operatory na enumech, ale nedal jsem to a udelal to Dwight.
+%It was also needed to add a support for operations
+
+\subsubsection{Declaration}
+%TODO reference the standard
+
+Enumeration declaration, including the \textit{opaque declaration}, is implemented in module \texttt{CPP-DECL-ENUM} of the semantics.
+%cpp14/language/translation/decl/enum.k. In K abstract syntax, full enumeration declarations are represented by "EnumDef" node, whereas opaque enum declarations are represented by node "OpaqueEnumDeclaration". 
+Every enumeration declaration is processed as follows:
+\begin{enumerate}
+\item A new \texttt{cppenum} cell is created in the current translation unit. An error is reported if there already exist an enumeration with the same name, unless the declaratation is opaque.
+\item The enumeration being declared is added to environment, so that it could be later looked up.
+\item For full declarations, the enumerators are processed in the order of their declarations. Processed enumerators are stored in sub-cells of the \texttt{cppenum} cell; for unscoped enumerations, the enumerators are also added to the scope surrounding the enumeration declaration.
+\item For unscoped enumerations without a fixed underlying type, the set of enumeration values and the underlying type is computed and stored in the \texttt{cppenum} cell.
+\end{enumerate}
+
+For declarations of enumerations with no fixed underlying type, the standard keeps one aspect of the declaration unspecified. Prior the closing bracket of the enumerator declaration
+\footnote{And inside the enumeration declaration in particular.},
+the type of an enumerator with initializer is the type of the initializer, and type of an enumerator without initializer is the type of previous enumerator, whenever possible. If there is no initializer specified for the first enumerator, the type of the enumerator is unspecified; it is also unspecified for enumerators (without initializers) whose value does not fit into the type of previous enumerator. 
+For example, in the declaration on figure~\ref{fig:ugly-enum}, the type of enumerator \lstinline{A} in the declaration of \lstinline{B} is not specified, and therefore the value of \lstinline{B} is not specified, too. Similarly, the value of enumerator \lstinline{D} on most platforms does not fit to unsigned char, which is the type of enumerator \lstinline{C}, and its type is thus unspecified. Note that the types of enumerators are unspecified only inside of the declaration of the enumeration, i.e. prior the closing bracket of the declaration. Type of every enumerator after the complete declaration is always the type of the enumeration, so this unspecified behaviour is usually not a problem in practice, unless one writes code similar to the one in image~\ref{fig:ugly-enum}.
+
+\begin{figure}[h]
+\begin{lstlisting}[language=C++]
+enum E {
+	A, B=sizeof(A), C=(unsigned char)255, D
+};
+\end{lstlisting}
+\caption{Declaration of an enumeration with unspecified values of enumerators.}
+\label{fig:ugly-enum}
+\end{figure}
+
+However, the semantics should be aware of this behaviour. Many real-world programs use enumerations whose enumerators does not have initializers, since the value of the enumerators is by default numbered from zero. Earlier versions of the semantics caused the semantic-based compiler kcc to stop the compilation whenever an undefined or unspecified behaviour was encoutered, which would be an unforunate thing to do for such programs. For this reason, the project maintainer added an error-reporting and recovery support to the semantics \footnote{\url{https://github.com/kframework/c-semantics/commit/584fa6ff4a90aca45de99d6b210177258ebd96d4}}. The current version of the semantics issues a warning, whenever this unspecified behaviour occur. Ideally, the warning would be suppressed if the unspecified type is never used, but this enhancement was not implemented.
+
+% Also, enumerations may be declared in block, class or namespace scope. There was no problem in supporting all three.
+
+% The error-reporting support was added in 584fa6ff4a90aca45de99d6b210177258ebd96d4 by Dwight Guth.
+% Rict, ze psat tu semantiku je jako psat interpreter.
+% Rikat, ze to je 'uvnitr enumerace' je nepresne. Protoze na ten enumerator se muzu odkazovat
+% i z nejake sablony, ktera je definovana pred tim enumem.
+
+\subsubsection{Enumerator lookup}
+
+The name of an enumerator can be referred to using the scope resolution operator applied to a name of the enumeration. This was implemented easily using only a few rules in the (static) semantics.
+%(3.4.3:1) 
+Furthemore, the enumerators of an unscoped enumeration are declared in the scope immediately containing the declaration of the enumeration. To implement this, I have decided to add a few new cells, which map names of enumerators of enums defined in the surrounding scope to their corresponding type. The lookup then reuses rules from the previous case. It might be possible to implement the lookup even without those extra cells, but the implemented solution seemed to be simplier.
+
+The rules for enumerator lookup also have to consider the context in which the lookup is performed. As noted earlier, it is mandated by the standard that the types of declared enumerators are different inside the declaration then after it. One may find that surprising; however, this is needed in order to easily create enumerator initializers, which depends on values of previous enumerators of the same enumeration, as it is ilustrated in figure~\ref{lst:enumDepends}. If the type of the enumerator \lstinline{A} in the initializer of the enumerator \lstinline{B} was the type of the enumeration (as it is after the declaration), the initializer expression would be ill-formed, as in C++ enumerations are not implicitly convertible to arithmetic types. Thus, an enumerator prior the closing bracket has always an integral type.
+
+
+
+\begin{figure}[h]
+\begin{lstlisting}[language=C++]
+enum F {
+	A=1, B=A+2
+};
+\end{lstlisting}
+\caption{An enumerator depends on value of previous enumerator.}
+\label{lst:enumDepends}
+\end{figure}
+
+% TODO porovnani vykonu constexpr a ne-constexpr
+
+% Jo, ale delalo to trochu problemy.
+% Rict, ze nerozumim spoustu veci o tom, jak to treba muze interagovat se sablonama. Ale to se vyresi, az budeme podporovat sablony.
+%In the semantics, 
+
+%Kde se to nachází fyzicky v té sémantice? cpp14/language/translation/decl/enum.k
+%A kde se nachází popis té abstraktní syntaxe? cpp14/language/common/syntax.k?
+
+%The translation unit is processed from top to bottom.
+
+%TODO link na repo
+%TODO zmínit, že je ta sémantika na něčem testovaná.
+%TODO zminit osklive chování. Že spoustu věcí je unspecified. A že se můžeme dotazovat na spoustu věcí uvnitř deklarace enumerátoru, dívat se do šablon etc.
+%TODO o enumech mluví i cppcoreguidelines https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#S-%enum
+% Zminit, ze Dwight udelal nejaky refaktoring tech enumu?
+
+\section{Generalized constant expressions (constexpr)}
+TBD
+
+
 \ifshowoldstuff
 
 \chapter{-------------------------}
@@ -592,128 +713,6 @@ To sum up, the C/C++ semantics project consists of: one parser for C and another
 
 
 % Kdyz tedy mluvime o kompilaci, asi bych mel zminit, ze K umoznuje 'snadno' udelat ze semantiky interpreter.
-
-\section{Building the semantics}
-- Odkázat se na návod. Je k tomu potřeba upravená verze K, ta od RV.
-
-% Taky to mozna muzeme nazvat 'implementace'
-%\chapter{Implementation and evaluation
-\chapter{Implementation}
-
-This chapter focuses on those parts of the C/C++ semantics project, which are related to the goal and contribution of this thesis. It describes the implementation of the main features, shows relations between the implementation, standard and general architecture of the semantics, and highlights some aspect of the C++ language one may perhaps oversee when using the language as a programmer. The last section of this chapter then gives a short evaluation of the implementation.
-
-%Cells - semantic components.
-%Co se ukládá do konfigurace? Kam se to ukládá? 
-	
-%TODO mention some GCC/clang tests
-
-%Jo a K ma taky schopnost reflektovat konfiguraci...
-
-\section{Enumerations}
-
-%This section contains
-
-%Vsechny ty veci se ukladaji k nejake translacni jednotce...
-
-%Take opaque enum declaration - celkem novinka
-%1) Uvodni odstavec o enumech
-
-%Enumerations are a part of C++ language from its beginings.
-
-
-%Enums may be declared in namespaces (including global namespace), functions and classes.
-
-
-%Taky ze je to vyhradne translacni zalezitost. V behove semantice se moc neprojevuji, az na to, ze se obcas delaji nejake ty kontroly na meze. Takze se projevuji jen nedefinovanym chovanim.
-
-%Before using a name of an enumeration (or any other named entity) in a translation unit, the name have to be declared first.
-%Enumerations (as well as all other named entities) must be declared in the translation unit prior their first use. An enumeration can be introduced either by its full declaration, or by an \textit{opaque enum declaration}(see n4296 7.2). After such declaration, the enumeration is considered to be a complete type.
-
-%Co všechno bylo potřeba udělat? Nechat clang-kast, ať generuje požadované informace. Deklarace. Konverze.  Operátory (neimplementoval jsem já). Lookup enumerátorů.
-
-% The modifications include: generating AST nodes for enumeration declarations in clang-kast, processing them in the static semantics, enumeratpr lookup.  
-
-% Popsat co me vedlo k tomu, ze jsem se pustil zrovna do enumu. Ze je to pomerne samostatna vec, nezavisla na vetsine ostatnich featur C++, a je jednoducha.
-
-In order to implement enumerations, various\footnote{But not many. Is this ok?} parts of the semantics had to be modified. The translation tool clang-kast was slightly modified to produce AST nodes for enumeration declarations; to process the declarations in the semantics, a new file was added to static semantics and a new set of cells was added to common part of configuration. It was also needed to implement enumerator lookup, which required addition of a few cells to configuration and a slight modification of some of the name lookup rules. The semantics was to some extent already prepared to work with enumerations, and some of the relevant rules (e.g. for conversions) needed no change. To ensure correctness of implementation, several test cases were added to the test suite. Overall, most of the modifications were additive, and only little of the existing code needed to be changed. During the implementation process, a few minor bugs were discovered and fixed. 
-
-% TODO zminit ze jsem chtel implementovat i operatory na enumech, ale nedal jsem to a udelal to Dwight.
-%It was also needed to add a support for operations
-
-\subsubsection{Declaration}
-%TODO reference the standard
-
-Enumeration declaration, including the \textit{opaque declaration}, is implemented in module \texttt{CPP-DECL-ENUM} of the semantics.
-%cpp14/language/translation/decl/enum.k. In K abstract syntax, full enumeration declarations are represented by "EnumDef" node, whereas opaque enum declarations are represented by node "OpaqueEnumDeclaration". 
-Every enumeration declaration is processed as follows:
-\begin{enumerate}
-\item A new \texttt{cppenum} cell is created in the current translation unit. An error is reported if there already exist an enumeration with the same name, unless the declaratation is opaque.
-\item The enumeration being declared is added to environment, so that it could be later looked up.
-\item For full declarations, the enumerators are processed in the order of their declarations. Processed enumerators are stored in sub-cells of the \texttt{cppenum} cell; for unscoped enumerations, the enumerators are also added to the scope surrounding the enumeration declaration.
-\item For unscoped enumerations without a fixed underlying type, the set of enumeration values and the underlying type is computed and stored in the \texttt{cppenum} cell.
-\end{enumerate}
-
-For declarations of enumerations with no fixed underlying type, the standard keeps one aspect of the declaration unspecified. Prior the closing bracket of the enumerator declaration
-\footnote{And inside the enumeration declaration in particular.},
-the type of an enumerator with initializer is the type of the initializer, and type of an enumerator without initializer is the type of previous enumerator, whenever possible. If there is no initializer specified for the first enumerator, the type of the enumerator is unspecified; it is also unspecified for enumerators (without initializers) whose value does not fit into the type of previous enumerator. 
-For example, in the declaration on figure~\ref{fig:ugly-enum}, the type of enumerator \lstinline{A} in the declaration of \lstinline{B} is not specified, and therefore the value of \lstinline{B} is not specified, too. Similarly, the value of enumerator \lstinline{D} on most platforms does not fit to unsigned char, which is the type of enumerator \lstinline{C}, and its type is thus unspecified. Note that the types of enumerators are unspecified only inside of the declaration of the enumeration, i.e. prior the closing bracket of the declaration. Type of every enumerator after the complete declaration is always the type of the enumeration, so this unspecified behaviour is usually not a problem in practice, unless one writes code similar to the one in image~\ref{fig:ugly-enum}.
-
-\begin{figure}[h]
-\begin{lstlisting}[language=C++]
-enum E {
-	A, B=sizeof(A), C=(unsigned char)255, D
-};
-\end{lstlisting}
-\caption{Declaration of an enumeration with unspecified values of enumerators.}
-\label{fig:ugly-enum}
-\end{figure}
-
-However, the semantics should be aware of this behaviour. Many real-world programs use enumerations whose enumerators does not have initializers, since the value of the enumerators is by default numbered from zero. Earlier versions of the semantics caused the semantic-based compiler kcc to stop the compilation whenever an undefined or unspecified behaviour was encoutered, which would be an unforunate thing to do for such programs. For this reason, an error-reporting and recovery support was added to the semantics\footnote{The error-reporting support was added in a commit with sha 584fa6ff4a90aca45de99d6b210177258ebd96d4 by Dwight Guth.}. The current version of the semantics issues a warning, whenever this unspecified behaviour occur. Ideally, the warning would be suppressed if the unspecified type is never used, but this enhancement is not implemented.
-
-% Also, enumerations may be declared in block, class or namespace scope. There was no problem in supporting all three.
-
-% The error-reporting support was added in 584fa6ff4a90aca45de99d6b210177258ebd96d4 by Dwight Guth.
-% Rict, ze psat tu semantiku je jako psat interpreter.
-% Rikat, ze to je 'uvnitr enumerace' je nepresne. Protoze na ten enumerator se muzu odkazovat
-% i z nejake sablony, ktera je definovana pred tim enumem.
-
-\subsubsection{Enumerator lookup}
-
-The name of an enumerator can be referred to using the scope resolution operator applied to a name of the enumeration. This was implemented easily using only a few rules in the (static) semantics.
-%(3.4.3:1) 
-Furthemore, the enumerators of an unscoped enumeration are declared in the scope immediately containing the declaration of the enumeration. To implement this, I have decided to add a few new cells, which map names of enumerators of enums defined in the surrounding scope to their corresponding type. The lookup then reuses rules from the previous case. It might be possible to implement the lookup even without those extra cells, but the implemented solution seemed to be simplier.
-
-The rules for enumerator lookup also have to consider the context in which the lookup is performed. As noted earlier, it is mandated by the standard that the types of declared enumerators are different inside the declaration then after it. One may find that surprising; however, this is needed in order to easily create enumerator initializers, which depends on values of previous enumerators of the same enumeration, as it is ilustrated in figure~\ref{lst:enumDepends}. If the type of the enumerator \lstinline{A} in the initializer of the enumerator \lstinline{B} was the type of the enumeration (as it is after the declaration), the initializer expression would be ill-formed, as in C++ enumerations are not implicitly convertible to arithmetic types. Thus, an enumerator prior the closing bracket has always an integral type.
-
-
-
-\begin{figure}[h]
-\begin{lstlisting}[language=C++]
-enum F {
-	A=1, B=A+2
-};
-\end{lstlisting}
-\caption{An enumerator depends on value of previous enumerator.}
-\label{lst:enumDepends}
-\end{figure}
-
-% Jo, ale delalo to trochu problemy.
-% Rict, ze nerozumim spoustu veci o tom, jak to treba muze interagovat se sablonama. Ale to se vyresi, az budeme podporovat sablony.
-%In the semantics, 
-
-%Kde se to nachází fyzicky v té sémantice? cpp14/language/translation/decl/enum.k
-%A kde se nachází popis té abstraktní syntaxe? cpp14/language/common/syntax.k?
-
-%The translation unit is processed from top to bottom.
-
-%TODO link na repo
-%TODO zmínit, že je ta sémantika na něčem testovaná.
-%TODO zminit osklive chování. Že spoustu věcí je unspecified. A že se můžeme dotazovat na spoustu věcí uvnitř deklarace enumerátoru, dívat se do šablon etc.
-%TODO o enumech mluví i cppcoreguidelines https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#S-%enum
-% Zminit, ze Dwight udelal nejaky refaktoring tech enumu?
-
-\section{Generalized constant expressions (constexpr)}
-TBD
 
 \chapter{Conclusion}
 	
