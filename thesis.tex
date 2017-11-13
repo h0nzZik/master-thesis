@@ -1,9 +1,10 @@
 %%%%% Definitions of If- toggles
 \newif\ifshowkexamples
-
+\newif\ifshowoldstuff
 
 %%%%% 
 %\showkexamplestrue
+%\showoldstufftrue
 
 %%%%%
 \documentclass{fithesis3}
@@ -78,14 +79,23 @@ faculty = {fi},
 \chapter{Introduction}
 
 %// TODO uhladit
-Software verification is hard. Formal methods for software verification are being developed. But there are not many high quality tools on the market. One problem might be that in order to develop production-ready tool, it is not enough to understand formal methods. Knowledge of precise semantics of the selected programming language is needed. In recent years, \K framework is gaining popuparity. Separation of expertise...?
+Writing correct software is hard.
+%Software verification is hard.
+Although formal methods for software verification are being developed, there are few high quality tools on the market. One particular problem is that in order to create a production-ready tool, it is not enough to understand formal methods; the developers also need to understand the precise semantics of the selected programming language.
 
-\K framework has been successfully used to give formal semantics to a varienty of languages, including Java\cite{bogdanas-rosu-2015-popl}, Python, Javascript\cite{park-stefanescu-rosu-2015-pldi}, and C\cite{ellison-2012-thesis}\cite{hathhorn-ellison-rosu-2015-pldi}, all of which is publicly available. The C semantics has been used to create RV-Match\cite{guth-hathhorn-saxena-rosu-2016-cav}, a ,,tool for checking C programs for
-undefined behavior and other common programmer mistakes''.  At the time of writing, the C semantics is being extended to support C++; the C++ support is also the focus of this thesis.
+% Knowledge of precise semantics of the selected programming language is needed.
+In recent years, a platform named ,,\K framework'' is gaining popuparity. The platform is based on the idea that formal, executable language semantics can be used to derive a large variety of tools, including interpreters, debuggers, model checkers or deductive program verifiers\cite{rosu-2017-marktoberdorf}. Tool developers, skilled in a particular area of formal methods, can work inside their area of expertise and developing language independent tools, while leaving language details to someone else. Thus, a separation of concerns is achieved.
 
-The thesis originally aimed to implement whichever language features needed to be done, as the C++ language is complex and the C++ semantics is still highly incomplete. As the work progressed, two features were selected to be implemented: \textit{enumerations} and \textit{constant expressions}. Enumerations were chosen because of their relative simplicity: it is a purely compile-time feature, which does not interfere much with other language features; it exists in the language from its beginning, and \textit{scoped enumerations} introduced in C++11 are even simplier both from language and user point of view. Though legacy enumerations needs to be still supported. \textit{Constant expressions}, on the contrary, had undergone a deep change in C++11, which allowed a restricted set of runtime computations to happen in the compilation time; the future revisions released the restrictions to the point that in C++17, almost arbitrary side effect free computations can happen in the time of compilation. One could reasonably expect that in order to implement constant expressions, a more fundamental change to the semantics have to be done.
+\K framework has been successfully used to give formal semantics to a varienty of languages, including Java\cite{bogdanas-rosu-2015-popl}, Python, Javascript\cite{park-stefanescu-rosu-2015-pldi}, and C\cite{ellison-2012-thesis}\cite{hathhorn-ellison-rosu-2015-pldi}, all of which is publicly available. The C semantics has been used to create RV-Match, a ,,tool for checking C programs for
+undefined behavior and other common programmer mistakes''\cite{guth-hathhorn-saxena-rosu-2016-cav}.  At the time of writing, the C semantics is being extended to support C++; the C++ support is also the focus of this thesis.
+
+The thesis originally aimed to implement whichever language features needed to be done, as the C++ language is complex and the C++ semantics is still highly incomplete. As the work progressed, two features were selected to be implemented: \textit{enumerations} and \textit{constant expressions}. It went out that the two features play together rather nicely: C++ allows enumerators to be initialized with constant expressions, so enumerations can be used to test the implementation of constant expressions. 
+
+Enumerations were chosen because of their relative simplicity: it is a purely compile-time feature, which does not interfere much with other language features; it exists in the language from its beginning, and \textit{scoped enumerations} introduced in C++11 are even simplier both from language and user point of view (the legacy C-style enumerations still need to be supported, though).
+
+\textit{Constant expressions}, on the contrary, had undergone a deep change in C++11, which allowed a restricted set of runtime computations to happen in the compilation time; the future revisions released the restrictions to the point that in C++17, almost arbitrary side effect free computations can happen in the time of compilation. One could reasonably expect that in order to implement constant expressions, a more fundamental change to the semantics have to be done.
 % (TODO tohle asi prijde dat do vice minuleho casu).
- During the implementation it went out that the two features play together rather nicely: C++ allows enumerators to be initialized with constant expressions, so enumerations can be used to test the implementation of constant expressions.
+ 
 %"ukazalo se"
 %(TODO zminit, ze za tim je ten 'constexpr' keyword).
 
@@ -113,7 +123,7 @@ The purpose of this text is to describe the implementation of the aforementioned
 % TODO muzu dat jako prilohu k diplomce virtualku s nainstalovanym prostredim?
 % TODO zminit prekazky pri vyvoji: pomala kompilace, nedeterminismus?
 
-\chapter{\K C/C++ semantics}
+\chapter{\K C/C++ semantics overview}
 
 
 
@@ -153,10 +163,11 @@ $ kcc hello.C -o hello
 $ ./hello
 Hello world
 \end{lstlisting}
+\caption{A "hello world" program.}
 \label{helloWorldSource}
 \end{figure}
 
-In \K framework, a semantics of programming language L assigns/induces to every program in L a transition system over the set of program configurations. /* specifically for C++ */ The generated executable file \texttt{hello} is then a perl script, which walks through the transition system in a step-by-step manner. The walk starts in an initial configuration and ends in a configuration for which no further transition is defined. The script then examines the final configuration and stops, possibly printing an error message in case the walk ended abnormally.
+In \K framework, a semantics of programming language L assigns to every program in L a set of program configuration with a transition system over them. The executable file \texttt{hello} generated by \kcc is a perl script, which walks through the transition system in a step-by-step manner. The walk starts in an initial configuration and ends in a configuration for which no further transition is defined. The script then examines the final configuration and stops, possibly printing an error message in case the walk ended abnormally.
 
 It is possible to specify an exact number of computational steps to take by setting the variable \texttt{DEPTH} to the desired value. In this particular example, the executable is able to print only an incomplete portion of the text; then the error message is printed. 
 
@@ -167,9 +178,10 @@ Hello woError: Execution failed.
 \end{lstlisting}
 \end{figure}
 
-The last configuration can be also inspected manually. If the executable is run with \texttt{VERBOSE} environment variable set, the configuration (as well as other potentially useful data) is dumped to standard output. This feature was found to be very useful for debugging the C++ semantics.
-
 The full list of accepted environment variables can be obtained by setting the environment variable \texttt{HELP}.
+
+%The last configuration can be also inspected manually. If the executable is run with \texttt{VERBOSE} environment variable set, the configuration (as well as other potentially useful data) is dumped to standard output. This feature was found to be very useful for debugging the C++ semantics.
+
 
 % Konvence v textu: \texttt na nazvy entit (programu, bunek v konfiguraci, sortu), \textit na nove (poprve se vyskytujici?) vyrazy a na ty, ktere potrebuji zvyraznit
 
@@ -231,7 +243,7 @@ configuration
 \label{exampleConfigurationDefinition}
 \end{figure}
 
-Configurations are defined as shown on listing~\ref{exampleConfigurationDefinition}; from the example, a multiple observations can be made. 
+Configurations are defined as shown on listing~\ref{exampleConfigurationDefinition}; from the example, a number of observations can be made:
 \begin{itemize}
 \item The definition consists of a \texttt{configuration} keyword followed by a list of nested cells; the cells does not need to be enclosed in a top cell.
 \item Configurations consist of multiple cells; a cell can be thought of as a labeled multiset \cite{hathhorn-ellison-rosu-2015-pldi}. Cells may contain other cells, integers, lists, maps and arbitrary terms (including program ASTs).
@@ -275,11 +287,14 @@ has about 600 kilobytes. The excerpt in the figure~\ref{exampleConfigurationOutp
   )...
 )
 \end{lstlisting}
-\caption{An excerpt of configuration generated by command~\ref{exampleConfigurationCommand}. Large portions of the configuration were replaced by elipsis (\ldots) and the formatting (whitespaces) was added manually.}
+\caption{An excerpt of 
+%configuration generated by command~\ref{exampleConfigurationCommand}.
+generated configuration.
+Large portions of the configuration were replaced by elipsis (\ldots) and the formatting (whitespaces) was added manually.}
 \label{exampleConfigurationOutput}
 \end{figure}
 
-Tady se bude hodit zminit kast.
+%Tady se bude hodit zminit kast.
 
 % TODO zminit nejake konvence, ktere jsou dodrzovane v projektu, ale nejsou v readme.
 % TODO most of this thesis is concerned with the static semantics
@@ -292,6 +307,8 @@ Tady se bude hodit zminit kast.
 % Co jeste potrebuji popsat predtim, nez zacnu popisovat implementaci enumu a constexpr? Tak toho, co jsem potreboval vedet pro enumy, je celkem malo. Mozna bych vzdy prerekvizity popsat pred popisem implementace dane veci. Tj ze veci podstatne pro ConstExpr popisi az po popisu implementace enumu, pred popisem implementace ConstExpr.
 
 % Zminit problem, na ktery jsem narazil pri implementaci constexpr ConditionalOp. Totiz PRExpr je PRVal jen behem prekladu. Hmmm... mozna by to nemelo byt PRVal nikdy. Nebo.. ja nevim! Spis by mela exekucni semantika, nebo alespon ty spolecne casti, nepouzivat PRVal na poznani toho, jestli je vyraz vyhodnoceny.
+
+\ifshowoldstuff
 
 \chapter{-------------------------}
 
@@ -725,7 +742,9 @@ $\mall{blue}{content}{X > 3}$
 \ball{blue}{content}{X > 3}.
 
 
-\fi
+\fi %showkexamples
+
+\fi %showoldstuff 
 
 \bibliographystyle{plain}
 \bibliography{references} 
