@@ -84,10 +84,10 @@ Writing correct software is hard.
 Although formal methods for software verification are being developed, there are few high quality tools on the market. One particular problem is that in order to create a production-ready tool, it is not enough to understand formal methods; the developers also need to understand the precise semantics of the selected programming language.
 
 % Knowledge of precise semantics of the selected programming language is needed.
-In recent years, a platform named ,,\K framework'' is gaining popuparity. The platform is based on the idea that formal, executable language semantics can be used to derive a large variety of tools, including interpreters, debuggers, model checkers or deductive program verifiers\cite{rosu-2017-marktoberdorf}. Tool developers, skilled in a particular area of formal methods, can work inside their area of expertise and developing language independent tools, while leaving language details to someone else. Thus, a separation of concerns is achieved.
+In recent years, a platform named ,,\K framework'' is gaining popuparity. The platform is based on the idea that formal, executable language semantics can be used to derive a large variety of tools, including interpreters, debuggers, model checkers or deductive program verifiers~\cite{rosu-2017-marktoberdorf}. Tool developers, skilled in a particular area of formal methods, can work inside their area of expertise and developing language independent tools, while leaving language details to someone else. Thus, a separation of concerns is achieved.
 
-\K framework has been successfully used to give formal semantics to a varienty of languages, including Java\cite{bogdanas-rosu-2015-popl}, Python, Javascript\cite{park-stefanescu-rosu-2015-pldi}, and C\cite{ellison-2012-thesis}\cite{hathhorn-ellison-rosu-2015-pldi}, all of which is publicly available. The C semantics has been used to create RV-Match, a ,,tool for checking C programs for
-undefined behavior and other common programmer mistakes''\cite{guth-hathhorn-saxena-rosu-2016-cav}.  At the time of writing, the C semantics is being extended to support C++; the C++ support is also the focus of this thesis.
+\K framework has been successfully used to give formal semantics to a varienty of languages, including Java~\cite{bogdanas-rosu-2015-popl}, Python, Javascript~\cite{park-stefanescu-rosu-2015-pldi}, and C~\cite{ellison-2012-thesis}\cite{hathhorn-ellison-rosu-2015-pldi}, all of which is publicly available. The C semantics has been used to create RV-Match, a ,,tool for checking C programs for
+undefined behavior and other common programmer mistakes''~\cite{guth-hathhorn-saxena-rosu-2016-cav}.  At the time of writing, the C semantics is being extended to support C++; the C++ support is also the focus of this thesis.
 
 The thesis originally aimed to implement whichever language features needed to be done, as the C++ language is complex and the C++ semantics is still highly incomplete. As the work progressed, two features were selected to be implemented: \textit{enumerations} and \textit{constant expressions}. It went out that the two features play together rather nicely: C++ allows enumerators to be initialized with constant expressions, so enumerations can be used to test the implementation of constant expressions. 
 
@@ -150,7 +150,8 @@ The project of \K C/C++ semantics is hosted on GitHub\footnote{\url{https://gith
 
 \section{Basic usage}
 
-Main user interface of the project consists of a script \kcc\cite{hathhorn-ellison-rosu-2015-pldi}, which implements a compiler based on the C/C++ semantics. The script mimincs the interface of gnu gcc compiler and supports many of gcc's command-line parameters. It is therefore possible to use it to build programs instead of gcc; however, the generated executables are many times slower then the ones built using gcc.
+%TODO kde se kcc nachazi?
+Main user interface of the project consists of a script \kcc~\cite{hathhorn-ellison-rosu-2015-pldi}, which implements a compiler based on the C/C++ semantics. The script mimincs the interface of gnu gcc compiler and supports many of gcc's command-line parameters. It is therefore possible to use it to build programs instead of gcc; however, the generated executables are many times slower then the ones built using gcc.
 
 \begin{figure}[h]
 \begin{lstlisting}[language=bash]
@@ -246,7 +247,7 @@ configuration
 Configurations are defined as shown on listing~\ref{exampleConfigurationDefinition}; from the example, a number of observations can be made:
 \begin{itemize}
 \item The definition consists of a \texttt{configuration} keyword followed by a list of nested cells; the cells does not need to be enclosed in a top cell.
-\item Configurations consist of multiple cells; a cell can be thought of as a labeled multiset \cite{hathhorn-ellison-rosu-2015-pldi}. Cells may contain other cells, integers, lists, maps and arbitrary terms (including program ASTs).
+\item Configurations consist of multiple cells; a cell can be thought of as a labeled multiset ~\cite{hathhorn-ellison-rosu-2015-pldi}. Cells may contain other cells, integers, lists, maps and arbitrary terms (including program ASTs).
 \item A cell can be included in its supercell a multiple times; the multiplicity can be adjusted with the attribute \texttt{multiplicity}.
 \item Cells are usually defined in place of their use, but they may also be defined elsewhere, which is the case for \texttt{global} and \texttt{thread-local}.
 \item Computations are contained in the \texttt{k} cell.
@@ -437,7 +438,7 @@ TBD
 
 \section{Related work}
 % Jak k semantice C/C++, tak k jejich verifikaci
-For example, Javascript semantics \cite{park-stefanescu-rosu-2015-pldi}.
+For example, Javascript semantics~\cite{park-stefanescu-rosu-2015-pldi}.
 %Other C++ Also tell something about other approaches to verifying C++ (which is my main motivation for having the semantics).
 Norrish - small step structural C++ semantics in HOL (isabelle/coq?)
 
