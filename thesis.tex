@@ -84,7 +84,17 @@ Writing correct software is hard.
 Although formal methods for software verification are being developed, there are few high quality tools on the market. One particular problem is that in order to create a production-ready tool, it is not enough to understand formal methods; the developers also need to understand the precise semantics of the selected programming language.
 
 % Knowledge of precise semantics of the selected programming language is needed.
-In recent years, a platform named ,,\K framework'' is gaining popuparity. The platform is based on the idea that formal, executable language semantics can be used to derive a large variety of tools, including interpreters, debuggers, model checkers or deductive program verifiers~\cite{rosu-2017-marktoberdorf}. Tool developers, skilled in a particular area of formal methods, can work inside their area of expertise and developing language independent tools, while leaving language details to someone else. Thus, a separation of concerns is achieved.
+In recent years, a platform named ,,\K framework'' is gaining popuparity. The platform is based on the idea that formal, executable language semantics can be used to derive a large variety of tools, including interpreters, debuggers, model checkers or deductive program verifiers~\cite{rosu-2017-marktoberdorf} (see Figure~\ref{kidea}). Tool developers, skilled in a particular area of formal methods, can work inside their area of expertise and developing language independent tools, while leaving language details to someone else. Thus, a separation of concerns is achieved.
+
+% TODO sem obrazek
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.7\linewidth]{img/kidea.png}
+\caption{The idea behind \K. Adopted from~\cite{rosu-2015-meseguer}.}
+\label{kidea}
+% The image is simply print-screen-ed. Je to ok? A muzu rikat, ze jsem ho adoptoval?
+\end{figure}
 
 \K framework has been successfully used to give formal semantics to a varienty of languages, including Java~\cite{bogdanas-rosu-2015-popl}, Python, Javascript~\cite{park-stefanescu-rosu-2015-pldi}, and C~\cite{ellison-2012-thesis,hathhorn-ellison-rosu-2015-pldi}, all of which is publicly available. The C semantics has been used to create RV-Match, a ,,tool for checking C programs for
 undefined behavior and other common programmer mistakes''~\cite{guth-hathhorn-saxena-rosu-2016-cav}.  At the time of writing, the C semantics is being extended to support C++; the C++ support is also the focus of this thesis.
@@ -572,19 +582,8 @@ TBD
 
 \section{Motivation}
 
-\section{Related work}
-% Jak k semantice C/C++, tak k jejich verifikaci
-For example, Javascript semantics~\cite{park-stefanescu-rosu-2015-pldi}.
-%Other C++ Also tell something about other approaches to verifying C++ (which is my main motivation for having the semantics).
-Norrish - small step structural C++ semantics in HOL (isabelle/coq?)
-
-
 \chapter{Background}
 % Ok,  Co musi ctenar vedet? Musi mit nejakou predstavu o operacni semantice, pak o tom, jak lze v K popisovat jazyky. Potom musi trochu znat C++, ze mame nejakou kompilaci, linkovani, ze je to kompatabilni s C castecne na zdrojove, castecne na link-time urovni.
-
-\section{Operational semantics}
-Mozna neni nutne. Ctenari pravdepodobne budou znat. Odkazy na nejake dokuemnty/kurzy?
-
 
 \section{K framework}
 
