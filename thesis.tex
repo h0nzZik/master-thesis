@@ -207,9 +207,13 @@ The project of C/C++ semantics internally consists of multiple \K semantics, all
 % TODO ma byt sekce 'motivation' o tom, co me motivovalo/motivuje, nebo proc by
 % se o to mel zajimat ctenar? Dulezita vec je o tom high-level uvazovani.
 
-In \K, a language semantics is defined by specifying an abstract syntax, a structure of configurations over the syntax, and rewrite rules over the configurations and the syntax. The abstract syntax is defined using \texttt{syntax} keyword and BNF-like notation. For example, the
+In \K, a language semantics is defined by specifying an abstract syntax, a structure of configurations over the syntax, and rewrite rules over the configurations and the syntax.
+
+\paragraph{Abstract syntax}
+The abstract syntax is defined using \texttt{syntax} keyword and BNF-like notation. For example, the
 source file \texttt{semantics/c11/library/io.k} contains a syntax declaration
-\begin{lstlisting}[language=k]
+%[language=k] - but that is ugly
+\begin{lstlisting}
 syntax KItem ::= sendString(Int, String)
 \end{lstlisting}
 which declares all terms with label \texttt{sendString}, one parameter of sort \texttt{Int}, and one of sort \texttt{String}, to be of sort \texttt{KItem}. Terms of that sort represent computational items; however, terms with label \texttt{sendString} are never parsed as a part of the program and their purpose is purely semantic. 
@@ -222,7 +226,8 @@ which declares all terms with label \texttt{sendString}, one parameter of sort \
 %The configuration is enclosed in a top-level cell \texttt{T}, which contains two cells: \texttt{k} and \texttt{classes}. The former cell contains a term of sort \texttt{K}, which represents a computation; the latter contains one \texttt{class} cell and possibly something else, which is left out.
 
 \begin{figure}
-\begin{lstlisting}[language=k]
+%[language=k] - but that is ugly
+\begin{lstlisting}
 configuration
 <global/>
 <result-value> 139:EffectiveValue </result-value>
@@ -244,6 +249,7 @@ configuration
 \label{exampleConfigurationDefinition}
 \end{figure}
 
+\paragraph{Configurations}
 Configurations are defined as shown on listing~\ref{exampleConfigurationDefinition}; from the example, a number of observations can be made:
 \begin{itemize}
 \item The definition consists of a \texttt{configuration} keyword followed by a list of nested cells; the cells does not need to be enclosed in a top cell.
@@ -252,10 +258,63 @@ Configurations are defined as shown on listing~\ref{exampleConfigurationDefiniti
 \item Cells are usually defined in place of their use, but they may also be defined elsewhere, which is the case for \texttt{global} and \texttt{thread-local}.
 \item Computations are contained in the \texttt{k} cell.
 \item The content of a cell in its definition definition specifies the cell's initial value. For example, the \texttt{k} cell here initially contains a sequence of computations, parametrized by parsed program and command-line arguments.
-\item \K allows each cell to have a color and provides a tool, \kdoc , to generate a colorful documentation from a language definition. The tool is broken, though.
+\item \K allows each cell to have a color, and provides a tool, \kdoc , to generate a colorful documentation from a language definition. The tool is broken, though.
 \end{itemize}
+%TODO udelat z predchoziho seznamu normalni anglicke vety
+
 
 % TODO budu se muset odkazovat na konkretni verze tech naostroju i semantiky.
+\paragraph{Rewriting rules}
+Rewriting rules specify the transition relation on configurations. Rules usually consists of a \texttt{rule} keyword, followed by a list of configuration cells, and a \texttt{requires} clause. Inside the cells, a rewriting may take place, which is then denoted by ,,\lstinline{=>}''. If there are more rewritings inside one rule, they all happen at once; in the C/C++ semantics, this is often used when declaring an entity.
+
+The following rule, which gives semantics to \texttt{sendString}, can serve as an example.
+\begin{figure}[h]
+%[language=k] - but that is ugly
+\begin{lstlisting}
+rule <k> sendString(FD::Int, S::String)
+      => #putc(FD, ordChar(firstChar(S)))
+      ~> sendString(FD, butFirstChar(S))
+     ...</k>
+     <options> Opts::Set </options>
+     requires lengthString(S) >Int 0
+     andBool notBool (NoIO() in Opts)
+\end{lstlisting}
+\end{figure}
+
+The rule says: ,,Every configuration, in which
+\begin{enumerate}
+\item there is an \texttt{options} cell containing a set not containing an \texttt{NoIO()} term, and in which
+\item there is also a \texttt{k} cell having on its top a \texttt{sendString} item parametrized with an integer and a nonempty string \texttt{S},
+\end{enumerate}
+can be rewritten to another configuration by rewriting the \texttt{sendString} item to \texttt{\#putc} of the first character, followed by (\lstinline{~>}) the same \texttt{sendString} item, but without the first character of the string.''
+This way the rule encodes the following piece of semantic information: ,,To send a nonempty string means to send its first character and then to send the rest, unless the IO is disabled''.
+
+
+%TODO zminit rozdil mezi :: a : typovanim
+%
+% The basic form of rewriting rules is
+%\begin{displaymath}
+%\phi \Rightarrow \psi \mathbb{if} b \, ,
+%\end{displaymath}
+%where $\phi, \psi$ are terms (aka \textit{patterns}) with shared set of free varables. A configuration $\mathcal{C_1}$ \textit{rewrites} to configuration $\mathcal{C_2}$ (under the rule $r$), if and only if the free variables  
+%%TODO configuration is a term, too
+%
+%\footnote{The semantics of patterns is formalized in \textit{matching logic}.}
+%
+% An example\ref{exampleRewriteRule}.
+%% Each rule consists of a \texttt{rule} keyword,  The rules Due to a mechanism known as \textit{configuration abstraction}, the rules
+
+
+\begin{figure}
+%[language=k] - but that is ugly
+\begin{lstlisting}
+rule <k> sendString(FD::Int, S::String) => .K ...</k>
+     <options> Opts::Set </options>
+     requires lengthString(S) <=Int 0
+     orBool (NoIO() in Opts)
+\end{lstlisting}
+\end{figure}
+
 
 \subsection{Can we see it?}
 
