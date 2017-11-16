@@ -86,7 +86,7 @@ Although formal methods for software verification are being developed, there are
 % Knowledge of precise semantics of the selected programming language is needed.
 In recent years, a platform named ,,\K framework'' is gaining popuparity. The platform is based on the idea that formal, executable language semantics can be used to derive a large variety of tools, including interpreters, debuggers, model checkers or deductive program verifiers~\cite{rosu-2017-marktoberdorf}. Tool developers, skilled in a particular area of formal methods, can work inside their area of expertise and developing language independent tools, while leaving language details to someone else. Thus, a separation of concerns is achieved.
 
-\K framework has been successfully used to give formal semantics to a varienty of languages, including Java~\cite{bogdanas-rosu-2015-popl}, Python, Javascript~\cite{park-stefanescu-rosu-2015-pldi}, and C~\cite{ellison-2012-thesis}\cite{hathhorn-ellison-rosu-2015-pldi}, all of which is publicly available. The C semantics has been used to create RV-Match, a ,,tool for checking C programs for
+\K framework has been successfully used to give formal semantics to a varienty of languages, including Java~\cite{bogdanas-rosu-2015-popl}, Python, Javascript~\cite{park-stefanescu-rosu-2015-pldi}, and C~\cite{ellison-2012-thesis,hathhorn-ellison-rosu-2015-pldi}, all of which is publicly available. The C semantics has been used to create RV-Match, a ,,tool for checking C programs for
 undefined behavior and other common programmer mistakes''~\cite{guth-hathhorn-saxena-rosu-2016-cav}.  At the time of writing, the C semantics is being extended to support C++; the C++ support is also the focus of this thesis.
 
 The thesis originally aimed to implement whichever language features needed to be done, as the C++ language is complex and the C++ semantics is still highly incomplete. As the work progressed, two features were selected to be implemented: \textit{enumerations} and \textit{constant expressions}. It went out that the two features play together rather nicely: C++ allows enumerators to be initialized with constant expressions, so enumerations can be used to test the implementation of constant expressions. 
@@ -371,7 +371,7 @@ Large portions of the configuration were replaced by elipsis (\ldots) and the fo
 
 \chapter{Implementation}
 
-This chapter focuses on those parts of the C/C++ semantics project, which are related to the goal and contribution of this thesis. It describes the implementation of the main features, shows relations between the implementation, standard and general architecture of the semantics, and highlights some aspect of the C++ language one may perhaps oversee when using the language as a programmer. The last section of this chapter then gives a short evaluation of the implementation.
+This chapter focuses on those parts of the C/C++ semantics project, which are related to the goal and contribution of this thesis. The chapter describes the implementation of the main features, shows relations between the implementation, standard and general architecture of the semantics, and highlights some aspects of the C++ language one may perhaps oversee when using the language as a programmer. The last section of this chapter then gives a short evaluation of the implementation.
 
 %Cells - semantic components.
 %Co se ukládá do konfigurace? Kam se to ukládá? 
@@ -381,6 +381,83 @@ This chapter focuses on those parts of the C/C++ semantics project, which are re
 %Jo a K ma taky schopnost reflektovat konfiguraci...
 
 \section{Enumerations}
+
+
+%Many languages implement enumerations in order to equip the programmer with a tool
+%In order to 
+%Enumerations enable the programmer 
+
+\begin{figure}
+\begin{lstlisting}[language=C++]
+enum E { A = 5, B = A + 3 };
+\end{lstlisting}
+\caption{A declaration of an \textit{unscoped enumeration} \texttt{E} with \textit{unscoped enumerators} \texttt{A} and \texttt{B}.}
+\end{figure}
+
+\begin{figure}
+\begin{lstlisting}[language=C++]
+enum class E { A = 5, B = A + 3 };
+\end{lstlisting}
+\caption{A declaration of a \textit{scoped enumeration} \texttt{E} with \textit{scoped enumerators} \texttt{A} and \texttt{B}.}
+\end{figure}
+
+\begin{figure}
+\begin{lstlisting}[language=C++]
+enum E1 : int {};
+enum class E2 : int {};
+enum class E3 {};
+\end{lstlisting}
+\caption{Declarations of enumerations with fixed underlying type.}
+\end{figure}
+
+\begin{figure}
+\begin{lstlisting}[language=C++]
+enum E1 : char;
+enum class E2 : unsigned int;
+enum class E3;
+\end{lstlisting}
+\caption{\textit{Opaque-enum-declaration}s.}
+\end{figure}
+
+\begin{figure}
+\begin{lstlisting}[language=C++]
+enum E;
+\end{lstlisting}
+\caption{Not a valid declaration, because ,,opaque-enum-declaration declaring an unscoped enumeration shall not omit the enum-base'' (7.2:2)}
+\end{figure}
+
+\begin{figure}
+\begin{lstlisting}[language=C++]
+enum class E : short { A, B = A + 2, C };
+\end{lstlisting}
+\caption{Prior the closing bracket, the enumerators \texttt{A}, \texttt{B} and \texttt{C} have a type \texttt{short}.}
+\end{figure}
+
+\begin{figure}
+\begin{lstlisting}[language=C++]
+enum E { A, B, C = (char)255, D };
+\end{lstlisting}
+\caption{Prior the closing bracket, the enumerators \texttt{A}, \texttt{B} and \texttt{D} have an unspecified type, the enumerator \texttt{C} has type \texttt{char}.}
+\end{figure}
+
+\begin{figure}
+\begin{lstlisting}[language=C++]
+enum E { A, B = A, C = +A };
+\end{lstlisting}
+\caption{Quiz: what are the types of B and C prior the closing bracket?}
+\end{figure}
+
+\begin{figure}
+\begin{lstlisting}[language=C++]
+enum { A };
+enum : char { B, C };
+\end{lstlisting}
+\caption{,,The optional identifier shall not be omitted in the declaration of a scoped enumeration''(7.2:2), however, it may be omitted in the declaration of an unscoped enumeration.}
+\end{figure}
+
+% TODO pojem 'incomplete type' se vztahuje vzdy k nejakemu mistu v kodu.
+
+%TODO odkazy do standardu
 
 %This section contains
 
@@ -406,7 +483,7 @@ This chapter focuses on those parts of the C/C++ semantics project, which are re
 
 % Popsat co me vedlo k tomu, ze jsem se pustil zrovna do enumu. Ze je to pomerne samostatna vec, nezavisla na vetsine ostatnich featur C++, a je jednoducha.
 
-In order to implement enumerations, various\footnote{But not many. Is this ok?} parts of the semantics had to be modified. The translation tool clang-kast was slightly modified to produce AST nodes for enumeration declarations; to process the declarations in the semantics, a new file was added to static semantics and a new set of cells was added to common part of configuration. It was also needed to implement enumerator lookup, which required addition of a few cells to configuration and a slight modification of some of the name lookup rules. The semantics was to some extent already prepared to work with enumerations, and some of the relevant rules (e.g. for conversions) needed no change. To ensure correctness of implementation, several test cases were added to the test suite. Overall, most of the modifications were additive, and only little of the existing code needed to be changed. During the implementation process, a few minor bugs were discovered and fixed. 
+In order to implement enumerations, several parts of the semantics had to be modified. The translation tool clang-kast was slightly modified to produce AST nodes for enumeration declarations; to process the declarations in the semantics, a new file was added to static semantics and a new set of cells was added to common part of configuration. It was also needed to implement enumerator lookup, which required addition of a few cells to configuration and a slight modification of some of the name lookup rules. The semantics was to some extent already prepared to work with enumerations, and some of the relevant rules (e.g. for conversions) needed no change. To ensure correctness of implementation, several test cases were added to the test suite. Overall, most of the modifications were additive, and only little of the existing code needed to be changed. During the implementation process, a few minor bugs were discovered and fixed. 
 
 % TODO zminit ze jsem chtel implementovat i operatory na enumech, ale nedal jsem to a udelal to Dwight.
 %It was also needed to add a support for operations
@@ -539,11 +616,11 @@ Mozna neni treba, mozna ze
 %| "if" BExp "then" Stmt "else" Stmt "fi" [strict(1)]
 %\end{asciik}
 
-In \K framework, languages are described using small-step operational semantics. This kind of semantics assigns to every program a transition system $( \var{Cfg}, \rightarrow )$ over the set of program configurations, whose transitions correspond to computational steps. Existence of transitions between given configurations is then determined e.g. by a deductive system (in case of structural operational semantics), or by pattern matching rewriting rules to the configurations (in case of \K).
-
-
 %TODO reference some courses and lecture notes for small-step structural operational semantics
-%TODO cite the k tutorial
+%TODO cite the k tutorial.
+
+In \K framework, languages are described using small-step operational semantics. This kind of semantics assigns to every program a transition system $( \var{Cfg}, \rightarrow )$, where $\Var{Cfg}$ is a set of program configurations and $\rightarrow$ is a binary relation over $\var{Cfg}$. The relation $\rightarrow$ is called a ,,transition relation'' and its elements are ,,transitions''. Transitions correspond to computational steps; existence of transitions between given configurations is determined e.g. by a deductive system (in case of structural operational semantics), or by pattern matching rewriting rules to the configurations (in case of \K).
+
 
 Program configurations for small-step semantics can consist of a ,,program'' part and a ,,data'' part. Consider simple imperative language IMP. In textbook small-step SOS, the set of program configurations $\var{Cfg}$ can be defined as $\var{Pgm} \times \Sigma$, where $\var{Pgm}$ is a set of programs and $\Sigma$ is the set of functions from variable names to (syntactic) integers; thus, configurations are tuples. In \K, configurations are made of semantic components (called \textit{cells}) nested in a tree-like manner; the cells contain values of various predefined (numbers, lists, \ldots) or user-defined syntactic sorts. Every configuration is then a (ground) term.
 
