@@ -181,9 +181,9 @@ In the \K framework, languages are described in a style commonly known as \texti
 
 The configurations are not abstract, but they have an internal structure, which depends on the definition $\var{D}$. For a simple imperative language, similar to the language IMP defined in the K tutorial~\cite{k-tutorial}, the configurations may consists of a ,,program'' part and a ,,data'' part.
 
-\paragraph{Terms}
+\subsection{Terms}
 
-The program part can be represented as a term. \K allows to define a multisorted algebraic signature $(S, \Sigma)$ using a BNF-like notation; closed terms over this signature forms a (multisorted) term algebra. One may then choose a particular sort $s \in \Sigma$ and declare the set of all programs to be the set of all closed terms of the sort $s$.
+The program part can be represented as a term. \K allows to define a multisorted algebraic signature $(S, \Sigma)$; closed terms over this signature forms a (multisorted) term algebra. One may then choose a particular sort $s \in \Sigma$ and declare the set of all programs to be the set of all closed terms of the sort $s$.
 
 Sorts are defined using \texttt{syntax} keyword. The definition
 \begin{lstlisting}
@@ -199,16 +199,14 @@ Furthermore, \K allows the sort constructors to be given in an infix syntax and 
 \begin{lstlisting}
 syntax G ::= unit() | add(G, G) | inv(G)
 \end{lstlisting}
-one may write
+it is possible to write
 \begin{lstlisting}
 syntax G ::= ".G" | G "+" G | "-" G
 \end{lstlisting}
-to describe a sort of groups.
-
-\K is distributed together with a basic library; together they proved a number of pre-defined sorts, including \texttt{Int}, \texttt{Bool}, \texttt{Id}, \texttt{List}, and \texttt{Map}. % Using those sorts
-
-
-\noindent\rule{\textwidth}{1pt}
+to describe the signature of groups. \K also supports subsorting; the following definition makes the sort \texttt{Int} a subsort of the sort \texttt{Real}:
+\begin{lstlisting}
+syntax Real ::= Int
+\end{lstlisting}
 
 \begin{figure}[h]
 \begin{lstlisting}
@@ -217,33 +215,33 @@ syntax AExp  ::= Int | Id
 syntax BExp  ::= Bool
                | AExp "<=" AExp
                | "!" BExp
-               > BExp "&&" BExp
+               | BExp "&&" BExp
                | "(" BExp ")"
 syntax Block ::= "{" "}"
                | "{" Stmt "}"
 syntax Stmt  ::= Block
                | Id "=" AExp ";"
-                 Block "else" Block
                | "while" "(" BExp ")" Block
-               > Stmt Stmt
+               | Stmt Stmt
 syntax Pgm   ::= Stmt
 \end{lstlisting}
 \caption{A definition of an algebraic signature of the IMP.}
 \label{impSyntax}
 \end{figure}
 
-As can be seen from Figure~\ref{impSyntax}, definitions of the algebraic signatures in \K looks similar to definitions of grammars. The first two lines define 
+%\noindent\rule{\textwidth}{1pt}
 
-Of course, the programmer may choose to use a configuration with only one cell and use 
+\K is distributed together with a basic library; together they provide a number of pre-defined sorts, including \texttt{Id} \texttt{Int}, \texttt{Bool}, \texttt{List}, and \texttt{Map}. The \texttt{Id} is a sort of C-style identifiers, the other names are rather self-explanatory. With use of these sorts, an algebraic signature of the IMP language can be defined as in Figure~\ref{impSyntax}. From the definition, \textit{arithmetic expressions} (represented by the sort \texttt{AExp}) are integers, identifiers, and sums of other arithmetic expressions; the arithmetic expressions can be compared to create \textit{boolean expressions} are boolean constants, and so on.
 
-%The transitions correspond to computational steps; the existence of a transition between two particular configurations is determined by the internal structure of the
+It can be seen from the Figure~\ref{impSyntax} that definitions of algebraic signatures in \K looks similar to definitions of context-free grammars using a BNF notation. This is not a coincidence; in fact, \K allows to specify the \textit{concrete syntax} with use of special \textit{attributes}. However, we will not discuss it here, as it is not relevant to this text.
 
-\paragraph{Configurations}
+
+\subsection{Configurations}
 
 %For a simple imperative language, similar to the language IMP defined in the K tutorial~\cite{k-tutorial}, the configurations may consists of a ,,program'' part and a ,,data'' part.
-In \K, a part of the program configuration can be stored in a \textit{cell}, which can be thought of as a labeled multiset~\cite{hathhorn-ellison-rosu-2015-pldi}. In a source code of a language definition in \K, cells are written in an xml-style notation.
+A part of the program configuration can be stored in a \textit{cell}, which can be thought of as a labeled multiset~\cite{hathhorn-ellison-rosu-2015-pldi}. Cells may contain terms of a given sort or other cells. In a source code of a language definition in \K, cells are written in an xml-style notation.
 
-Figure~\ref{impConfiguration} contains a snippet of such source code. The keyword \texttt{configuration} here defines three cells (\texttt{T}, \texttt{k} and \texttt{state}), a single structure for all configurations, and an initial configuration. Every cell in the definition has some content: the \texttt{state} cell contains \lstinline{.Map}, which has a sort \texttt{Map} an represents a empty map; the \texttt{k} cell contains a term of sort \texttt{Pgm} consisting of a variable with name \texttt{\$PGM}, and the \texttt{T} cell contains the other two cells. The initial configuration for program \texttt{P} is just like that, except that the variable \texttt{\$PGM} is replaced by a term, representing the program \texttt{P}.
+Figure~\ref{impConfiguration} contains a snippet of such source code. The keyword \texttt{configuration} here defines three cells (\texttt{T}, \texttt{k} and \texttt{state}), a single structure for all configurations, and an initial configuration. Every cell in the definition has some content: the \texttt{state} cell contains \lstinline{.Map}, which has a constructor of sort \texttt{Map}, representing an empty map; the \texttt{k} cell contains a term of sort \texttt{Pgm} consisting of a variable with name \texttt{\$PGM}, and the \texttt{T} cell contains the other two cells. The initial configuration for program \texttt{P} is just like that, except that the variable \texttt{\$PGM} is replaced by a term, representing the program \texttt{P}.
 
 \begin{figure}
 \begin{lstlisting}
@@ -256,38 +254,37 @@ configuration <T>
 \label{impConfiguration}
 \end{figure}
 
+We have said earlier that the programmer may choose a sort, whose terms will represent the ,,program'' part of the configuration; that happens in the configuration definition. In this particular semantics of the language Imp, the ,,data'' part of the configuration is represented by a term of sort \texttt{Map}. %Of course, the programmer may choose to use a configuration with only one cell to represent both
+
+%The transitions correspond to computational steps; the existence of a transition between two particular configurations is determined by the internal structure of the
+
+
 %TODO a co je toplevel konfigurace?
 
 Program configurations for small-step semantics can consist of a ,,program'' part and a ,,data'' part. Consider simple imperative language IMP. In textbook small-step SOS, the set of program configurations $\var{Cfg}$ can be defined as $\var{Pgm} \times \Sigma$, where $\var{Pgm}$ is a set of programs and $\Sigma$ is the set of functions from variable names to (syntactic) integers; thus, configurations are tuples. In \K, configurations are made of semantic components (called \textit{cells}) nested in a tree-like manner; the cells contain values of various predefined (numbers, lists, \ldots) or user-defined syntactic sorts. Every configuration is then a (ground) term.
 
 The configuration for IMP can be defined as in figure~\ref{ImpConfigurationInK}. The \texttt{k} cell contains the ,,program'' part - a list of computations yet to be computed. The \texttt{state} cell holds a map from variable names to values; the syntactic sorts of its keys and values are not specified. The \texttt{state} cell initially holds an empty map, while \texttt{k} cell initially contains the abstract syntax tree of whole program.
 
-The abstract syntax is defined using BNF notation inside \texttt{syntax} declarations (see figure~\ref{ImpSyntaxInK}). \K also supports attaching various attributes; some of them (e.g associativity attributes) are needed to support automatic generation of concrete syntax parser, some of the other have a semantic impact (strictness attributes etc). The user-defined syntactic constructs can be used anywhere in configuration, not just in \texttt{k} cell.
+\subsection{Rules}
 
-%TODO kontexty, KResult apod
-
-\begin{figure}
-\caption{Definition of program configuration in the syntax of \K. }
-\label{ImpConfigurationInK}
-\begin{asciik}
-configuration <T> <k> \$PGM:Pgm </k> <state> .Map </state> </T>
-\end{asciik}
-\end{figure}
-
-\begin{figure}
-\caption{Part of IMP syntax in \K. The syntactic categories $\var{Id}$, $\var{Int}$ are predefined as well as some operations on them. }
-\label{ImpSyntaxInK}
-\begin{asciik}
-syntax AExp ::= Id | Int
-
-syntax BExp  ::= Bool
-| AExp "<=" AExp [seqstrict]
-
-syntax Stmt  ::= "skip"
-| Id "=" AExp
-| "if" BExp "then" Stmt "else" Stmt "fi" [strict(1)]
-\end{asciik}
-\end{figure}
+%The abstract syntax is defined using BNF notation inside \texttt{syntax} declarations (see figure~\ref{ImpSyntaxInK}). \K also supports attaching various attributes; some of them (e.g associativity attributes) are needed to support automatic generation of concrete syntax parser, some of the other have a semantic impact (strictness attributes etc). The user-defined syntactic constructs can be used anywhere in configuration, not just in \texttt{k} cell.
+%
+%%TODO kontexty, KResult apod
+%
+%\begin{figure}
+%\caption{Part of IMP syntax in \K. The syntactic categories $\var{Id}$, $\var{Int}$ are predefined as well as some operations on them. }
+%\label{ImpSyntaxInK}
+%\begin{asciik}
+%syntax AExp ::= Id | Int
+%
+%syntax BExp  ::= Bool
+%| AExp "<=" AExp [seqstrict]
+%
+%syntax Stmt  ::= "skip"
+%| Id "=" AExp
+%| "if" BExp "then" Stmt "else" Stmt "fi" [strict(1)]
+%\end{asciik}
+%\end{figure}
 
 
 %TODO note about syntactic domains Id and Bool.
@@ -515,7 +512,7 @@ configuration
 \end{figure}
 
 \paragraph{Configurations}
-Configurations are defined as shown on listing~\ref{exampleConfigurationDefinition}; from the example, a number of observations can be made:
+Configurations are defined as shown in listing~\ref{exampleConfigurationDefinition}; from the example, a number of observations can be made:
 \begin{itemize}
 \item The definition consists of a \texttt{configuration} keyword followed by a list of nested cells; the cells does not need to be enclosed in a top cell.
 \item Configurations consist of multiple cells; a cell can be thought of as a labeled multiset ~\cite{hathhorn-ellison-rosu-2015-pldi}. Cells may contain other cells, integers, lists, maps and arbitrary terms (including program ASTs).
