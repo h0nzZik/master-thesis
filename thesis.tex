@@ -233,9 +233,6 @@ syntax Pgm   ::= Stmt
 
 \K is distributed together with a basic library; together they provide a number of pre-defined sorts, including \texttt{Id} \texttt{Int}, \texttt{Bool}, \texttt{List}, and \texttt{Map}. The \texttt{Id} is a sort of C-style identifiers, the other names are rather self-explanatory. With use of these sorts, an algebraic signature of the IMP language can be defined as in Figure~\ref{impSyntax}. From the definition, \textit{arithmetic expressions} (represented by the sort \texttt{AExp}) are integers, identifiers, and sums of other arithmetic expressions; the arithmetic expressions can be compared to create \textit{boolean expressions} are boolean constants, and so on.
 
-It can be seen from the Figure~\ref{impSyntax} that definitions of algebraic signatures in \K looks similar to definitions of context-free grammars using a BNF notation. This is not a coincidence; in fact, \K allows to specify the \textit{concrete syntax} with use of special \textit{attributes}. However, we will not discuss it here, as it is not relevant to this text.
-
-
 \subsection{Configurations}
 
 %For a simple imperative language, similar to the language IMP defined in the K tutorial~\cite{k-tutorial}, the configurations may consists of a ,,program'' part and a ,,data'' part.
@@ -250,20 +247,97 @@ configuration <T>
                 <state> .Map </state>
               </T>
 \end{lstlisting}
-\caption{A definition a configuration of a language Imp.}
+\caption{A definition of the initial configuration of the language Imp.}
 \label{impConfiguration}
 \end{figure}
 
 We have said earlier that the programmer may choose a sort, whose terms will represent the ,,program'' part of the configuration; that happens in the configuration definition. In this particular semantics of the language Imp, the ,,data'' part of the configuration is represented by a term of sort \texttt{Map}. %Of course, the programmer may choose to use a configuration with only one cell to represent both
+
+
 
 %The transitions correspond to computational steps; the existence of a transition between two particular configurations is determined by the internal structure of the
 
 
 %TODO a co je toplevel konfigurace?
 
-Program configurations for small-step semantics can consist of a ,,program'' part and a ,,data'' part. Consider simple imperative language IMP. In textbook small-step SOS, the set of program configurations $\var{Cfg}$ can be defined as $\var{Pgm} \times \Sigma$, where $\var{Pgm}$ is a set of programs and $\Sigma$ is the set of functions from variable names to (syntactic) integers; thus, configurations are tuples. In \K, configurations are made of semantic components (called \textit{cells}) nested in a tree-like manner; the cells contain values of various predefined (numbers, lists, \ldots) or user-defined syntactic sorts. Every configuration is then a (ground) term.
+%Program configurations for small-step semantics can consist of a ,,program'' part and a ,,data'' part. Consider simple imperative language IMP. In textbook small-step SOS, the set of program configurations $\var{Cfg}$ can be defined as $\var{Pgm} \times \Sigma$, where $\var{Pgm}$ is a set of programs and $\Sigma$ is the set of functions from variable names to (syntactic) integers; thus, configurations are tuples. In \K, configurations are made of semantic components (called \textit{cells}) nested in a tree-like manner; the cells contain values of various predefined (numbers, lists, \ldots) or user-defined syntactic sorts. Every configuration is then a (ground) term.
+%
+%The configuration for IMP can be defined as in figure~\ref{ImpConfigurationInK}. The \texttt{k} cell contains the ,,program'' part - a list of computations yet to be computed. The \texttt{state} cell holds a map from variable names to values; the syntactic sorts of its keys and values are not specified. The \texttt{state} cell initially holds an empty map, while \texttt{k} cell initially contains the abstract syntax tree of whole program.
 
-The configuration for IMP can be defined as in figure~\ref{ImpConfigurationInK}. The \texttt{k} cell contains the ,,program'' part - a list of computations yet to be computed. The \texttt{state} cell holds a map from variable names to values; the syntactic sorts of its keys and values are not specified. The \texttt{state} cell initially holds an empty map, while \texttt{k} cell initially contains the abstract syntax tree of whole program.
+\subsection{Parsing}
+It can be seen from the Figure~\ref{impSyntax} that definitions of algebraic signatures in \K looks similar to definitions of context-free grammars using a BNF notation. This is not a coincidence; in fact, \K allows to specify the \textit{concrete syntax} with use of special \textit{attributes}. This subsection describes some of the parsing facilities \K provides; the \Project does not use them, but the description enables the reader to easily experiment with the provided examples.
+
+Before going further, let us note that in the time of writing there exist two implementations of \K: UUIC-\K, developed by University of Illinois in Urbana-Campaign, and RV-\K, developed by RuntimeVerification, inc. There are some differences between the two; one of them is that the RV-\K requires the configuration to contain a cell with \texttt{exit} attribute. The cell contains the value returned by \texttt{krun}. All examples in this chapter from this point further work with both implementations of \K, modulo this ,,exit'' difference.
+
+\begin{figure}
+\begin{lstlisting}
+module ARITH-SYNTAX
+  syntax AExp  ::= Int
+                 | AExp "/" AExp              [left]
+                 > AExp "+" AExp              [left]
+                 | "(" AExp ")"               [bracket]
+  syntax Pgm ::= AExp
+endmodule
+module ARITH
+  imports ARITH-SYNTAX  
+  configuration <T>
+                   <k> $PGM:Pgm </k>
+                   <ret exit="">0</ret>
+                </T>
+endmodule
+\end{lstlisting}
+\caption{File \texttt{arith.k}. Note the \texttt{ret} cell with \texttt{exit} attribute.}
+\label{arithSource}
+\end{figure}
+
+Figure~\ref{arithSource} contains a definition of a simple language of arithmetic expressions. The definition contains a few things we have not described yet. First, it is split into two modules; the \texttt{ARITH-SYNTAX} module contains everything which is needed to generate a parser, while the \texttt{ARITH} module contains everything else. Second, one of the sort constructors is separated from the previous one by a \lstinline{>} sign; that causes the preceding productions in the concrete syntax grammar to have a higher priority than the following ones and thus to bind tighter. Third, some constructors have \textit{attributes} attached; the \texttt{left} attributes causes a binary constructor to be left-associative, and the \texttt{bracket} attribute means that the corresponding unary constructor should be parsed as a pair of brackets.
+%TODO mozna se to podoba Parsing Expression Grammar
+
+When stored in a file with name \texttt{arith.k}, the definition may be compiled using UIUC-\K (the first command) or using RV-\K (the second one):
+\begin{lstlisting}[language=bash]
+$ kompile arith.k
+$ kompile -O2 arith.k
+\end{lstlisting}
+The \krun command will use the module \texttt{ARITH-SYNTAX} to generate the parser and the module \texttt{ARITH} to generate an interpreter. The names of the modules used can be specified by command-line arguments; if they are not specified (as above), \K infers them from the filename. Both parser and interpreter are stored in a directory \texttt{arith-kompiled}.
+
+The compiled definition can be used to parse and execute a program written in the arithmetic language.
+\begin{lstlisting}[language=bash]
+$ cat addition.arith
+1 + 2 + 3
+$ krun addition.arith
+<T> <k> 1 + 2 + 3 </k> <ret> 0 </ret> </T>
+\end{lstlisting}
+The command parses the given source file, creates an initial configuration, walks in the generated transition system until it reaches a terminal configuration, and pretty-prints it. The generated transition system contains only one configuration (the initial one), as the current language definition of Arith does not have any semantic rules.
+
+The pretty-printing implies that the abstract syntax is \textit{unparsed} back to the concrete one; therefore, from the output above one can not conclude that the file was parsed correctly, as changing the left associativity to the right one (by changing \texttt{left} attributes to \texttt{right} ones) would not alter the output. However, \krun can be instructed to output a textual version of its internal representation:
+\begin{lstlisting}[language=bash]
+$ krun --output addition.kast
+<T>`(`<k>`(`_+__ARITH-SYNTAX`(`_+__ARITH-SYNTAX`(
+#token("1","Int"),#token("2","Int")),#token("3","Int"))),
+`<ret>`(#token("0","Int")))
+\end{lstlisting}
+The output is easily readable for a machine; to parse it, the generated concrete syntax parser is not needed. It is less readable for humans, though. From the output one can easily get
+\begin{lstlisting}
++( +( 1, 2 ), 3 )
+\end{lstlisting}
+simply be keeping only the content of \texttt{k} cell, removing superfluous characters and adding spaces. One can see that this expression, when interpreted as in prefix-notation, correspond to the content of \texttt{addition.c}. From a different example on Figure~\ref{arithMixed} one can see that the division has a priority over addition and the parenthesis bind the tightest.
+
+
+\begin{figure}
+\begin{lstlisting}[language=bash]
+$ cat simple.arith
+5/2 + (1 + 3) / 2
+$ krun simple.arith
+<T> <k> 5 / 2 + ( 1 + 3 ) / 2 </k> <ret> 0 </ret> </T>
+$ krun --output kast simple.arith
+<T>`(`<k>`(`_+__ARITH-SYNTAX`(`_/__ARITH-SYNTAX`(
+#token("5","Int"),#token("2","Int")),`_/__ARITH-SYNTAX`(`
+_+__ARITH-SYNTAX`(#token("1","Int"),#token("3","Int")),
+#token("2","Int")))),`<ret>`(#token("0","Int")))
+\end{lstlisting}
+\caption{Another example of a program in the language of arithmetic expressions. The last output corresponds to the expression \lstinline{+( /( 5, 2 ), /( +( 1, 3 ), 2 ) )}{}}
+\label{arithMixed}
+\end{figure}
 
 \subsection{Rules}
 
@@ -350,6 +424,16 @@ Features to cover here:
 %\subsection{Matching and reachability logic}
 %
 %%Protoze moji motivaci je v konecnem dusledku verifikace, mel bych zminit, ze existuje matching logika a hlavne reachability logika spolu s odvozovacim systemem. Idealne se zase odvolat do nejakeho paperu. Urcite bych to nepopisoval.
+
+\paragraph{Differences between UIUC-K and RV-K}
+\begin{itemize}
+\item In RV-K, the configuration needs to have a cell with an \texttt{exit} attribute.
+\item KServer. Only one instance can be running. Uses NailGun. What does work and what does not.
+\item kompile must be run with -O2 switch
+\begin{lstlisting}
+<result exit=""> 0 </result>
+\end{lstlisting}
+\end{itemize}
 
 \section{C++}
 
