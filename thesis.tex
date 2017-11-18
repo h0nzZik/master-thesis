@@ -386,8 +386,23 @@ requires notBool isInt(E1) orBool notBool isInt(E2)
 can be added into the language definition; the rule rewrites a sum of two terms of sort \texttt{AExp} to \lstinline{-1}{}, unless both of the terms have the sort \texttt{Int}. The \texttt{notBool} and \texttt{orBool} are built-in functions; \texttt{isInt} is a~sort predicate for the sort \texttt{Int}.
 
 \subsubsection{Computations}
-How to compute the sum of three numbers, say $1 + 2 + 3$? In the language Arith, the \texttt{+}-constructor is left-associative, so the natural approach is to compute $1 + 2$ first, which yields a result $r$, and then to compute $r + 3$. In \K, the notion of \textit{first} and \textit{then} is formalized in terms of \textit{computations} and their \textit{chaining}. 
+How to compute the sum of three numbers, say $1 + 2 + 3$? In the language Arith, the \texttt{+} constructor is left-associative, so the natural approach is to compute $1 + 2$ first, which yields a result $r$, and then to compute $r + 3$. In \K, the notion of \textit{first} and \textit{then} is formalized in terms of \textit{computations} and their \textit{chaining}. Computations have the sort \texttt{K}; all user-defined sorts are automatically subsorted to \texttt{K}. Computations can be composed using the~\lstinline{~>}{} constructor, which is associative. The sort \texttt{K} has a nulary constructor \texttt{.K}, which represents an empty computation and acts as a unit with respect to~\lstinline{~>}{}. Thus \texttt{K} with~\lstinline{~>}{} and \texttt{.K} form a monoid.
 
+In practice, the monoidal structure means that any term consisting of computations and the~\lstinline{~>}{} constructor behave as a \textit{chain} of computations, with hidden empty computations everywhere inside. One can then insert a computation \texttt{c} to any position in the chain simply by rewriting an empty computation on that position \texttt{c}. It also allows the rule 
+\begin{lstlisting}
+rule <k> I1:Int + I2:Int => I1 +Int I2 </k>
+\end{lstlisting}
+to be replaced by the rule
+\begin{lstlisting}
+rule (<k> I1:Int + I2:Int => I1 +Int I2) ~> _</k>
+\end{lstlisting}
+without losing any existing behavior. If the old rule matches a configuration with a term \lstinline{C}{} in the \texttt{k} cell, then the new rule matches the term \lstinline{C ~> .K}{} - the anonymous variable binds to the empty computation. But the new rule matches also the term \lstinline{C}{}, because due the monodial structure, configurations \lstinline{C}{} and \lstinline{C ~> .K}{} are equal.
+
+On the other hand, the new rule adds some behaviors, because it matches not only when the \texttt{k} cell contains exactly an addition of two integers, but also when it contains any sequence of computations, where the first computation is an addition of two integers. The first computation in the list is called \textit{the top}.
+
+The parenthesis in the new rule are needed, as the constructor \lstinline{~>}{} binds tighter then the operator~\lstinline{=>}{}.
+
+%TODO vice se na pravidla
 
 %TODO Note: in RV-K, the computation chaining seems to work only inside the k cell. I do not know why.
 
