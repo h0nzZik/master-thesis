@@ -123,25 +123,15 @@ From this point on, we will write ,,\Project'' instead of ,,the C/C++ semantics 
 
 % at first, the project of C/C++ semantics is introduced; then the concepts involved are described in greater depth; then a~general architecture of the project of C/C++ semantics is outlined, followed by a~more detailed description of the parts related to the selected features. A discussion of details of the implementation...
 
-%However, the implementation efforts also revealed a~lack of developer documentation for the project. TODO podporit, vyjmenovat duvody
-
-%TODO pouzit figure 2 z PLDI'15, ACM. 2015. Ok tady je nejaka dokumentace.
-
-%The purpose of this text is twofold. Firstly, to document the already existing architecture of the project of C/C++ semantics.  Secondly, to discuss the implementation of features, which have been developed as a~part of this thesis.
+%TODO pouzit figure 2 z PLDI'15, ACM. 2015.
 
 
-% Uz tady bych chtel nastinit vztahy mezi K frameworkem, operacni semantikou a~C++. Ale jenom zlehka, aby ctenar mel intuitivni predstavu o tom, o cem bude zbytek textu, stejne jako to, cim jsem ja prispel. Hlavne by tu mela byt motivace. co delam? Rozsiruji formalni semantiku jazyka C++ v K, ktera jeste neni dokoncena. Proc to delam? Asi se ztotoznuji s tim, ze verifikacni metody a~semantika mohou byt oddelene, a~ze mit formalni semantiku, o niz je mozne strojove uvazovat, je uzitecne. Na jakou praci navazuju?
-
-% Pry bych mel uvest, co je zname a~co je nezname. Mno zname je vsechno - je mozne vytvorit semantiku realneho jazyka, jak bylo demostrovano na pripade C, Javy, JavaScriptu etc. Jen je potreba to udelat pro C++. 
-
-% TODO muzu dat jako prilohu k diplomce virtualku s nainstalovanym prostredim?
+% TODO dat jako prilohu k diplomce virtualku s nainstalovanym prostredim.
 % TODO zminit prekazky pri vyvoji: pomala kompilace, nedeterminismus?
 
 \chapter{Background}
 This chapter intends to give a~brief overview of the \K framework, the C++ language, and the \Project.
 The level of detail here is necessary to understand the description of the Implementation section and does not go much deeper; an inquisitive reader is encouraged to go through the K tutorial. % And read the Standard, and stack overflow, ...
-
-% Ok,  Co musi ctenar vedet? Musi mit nejakou predstavu o operacni semantice, pak o tom, jak lze v K popisovat jazyky. Potom musi trochu znat C++, ze mame nejakou kompilaci, linkovani, ze je to kompatabilni s C castecne na zdrojove, castecne na link-time urovni.
 
 \section{K framework}
 
@@ -163,16 +153,8 @@ The level of detail here is necessary to understand the description of the Imple
 
 \paragraph{K And Operational semantics}
 
-%Goal: to show, how K framework fits to operational semantics. How various K construct support specifying syntax, rewrite rules, configurations, ...
-
-%(Informal semantics of many programming languages is defined in this way.) 
-
 %TODO reference some courses and lecture notes for small-step structural operational semantics
 %TODO cite the k tutorial.
-
-%In the \K framework, a~semantics of a~programming language L assigns to every program in L a~set of program configuration with a~transition system over them
-
-% this kind of semantics is known as \textit{operational semantics}.
 
 %TODO rozlisovat mezi 'language definition' - tim budu vzdycky oznacovat konkretni semantiku v K, a~proste semantikou.
 
@@ -230,13 +212,10 @@ syntax Pgm   ::= Stmt
 \label{impSyntax}
 \end{figure}
 
-%\noindent\rule{\textwidth}{1pt}
-
 \K is distributed together with a~basic library; together they provide a~number of pre-defined sorts, including \texttt{Id} \texttt{Int}, \texttt{Bool}, \texttt{List}, and \texttt{Map}. The \texttt{Id} is a~sort of C-style identifiers, the other names are rather self-explanatory. With use of these sorts, an algebraic signature of the IMP language can be defined as in Figure~\ref{impSyntax}. From the definition, \textit{arithmetic expressions} (represented by the sort \texttt{AExp}) are integers, identifiers, and sums of other arithmetic expressions; the arithmetic expressions can be compared to create \textit{boolean expressions} are boolean constants, and so on.
 
 \subsection{Configurations}
 
-%For a~simple imperative language, similar to the language IMP defined in the K tutorial~\cite{k-tutorial}, the configurations may consists of a~,,program'' part and a~,,data'' part.
 A part of the program configuration can be stored in a~\textit{cell}, which can be thought of as a~labeled multiset~\cite{hathhorn-ellison-rosu-2015-pldi}. Cells may contain terms of a~given sort or other cells. In a~source code of a~language definition in \K, cells are written in an xml-style notation.
 
 Figure~\ref{impConfiguration} contains a~snippet of such source code. The keyword \texttt{configuration} here defines three cells (\texttt{T}, \texttt{k} and \texttt{state}), a~single structure for all configurations, and an initial configuration. Every cell in the definition has some content: the \texttt{state} cell contains \lstinline{.Map}, which has a~constructor of sort \texttt{Map}, representing an empty map; the \texttt{k} cell contains a~term of sort \texttt{Pgm} consisting of a~variable with name \texttt{\$PGM}, and the \texttt{T} cell contains the other two cells. The initial configuration for program \texttt{P} is just like that, except that the variable \texttt{\$PGM} is replaced by a~term, representing the program \texttt{P}.
@@ -261,14 +240,12 @@ We have said earlier that the programmer may choose a~sort, whose terms will rep
 
 %TODO a~co je toplevel konfigurace?
 
-%Program configurations for small-step semantics can consist of a~,,program'' part and a~,,data'' part. Consider simple imperative language IMP. In textbook small-step SOS, the set of program configurations $\var{Cfg}$ can be defined as $\var{Pgm} \times \Sigma$, where $\var{Pgm}$ is a~set of programs and $\Sigma$ is the set of functions from variable names to (syntactic) integers; thus, configurations are tuples. In \K, configurations are made of semantic components (called \textit{cells}) nested in a~tree-like manner; the cells contain values of various predefined (numbers, lists, \ldots) or user-defined syntactic sorts. Every configuration is then a~(ground) term.
-%
 %The configuration for IMP can be defined as in figure~\ref{ImpConfigurationInK}. The \texttt{k} cell contains the ,,program'' part - a~list of computations yet to be computed. The \texttt{state} cell holds a~map from variable names to values; the syntactic sorts of its keys and values are not specified. The \texttt{state} cell initially holds an empty map, while \texttt{k} cell initially contains the abstract syntax tree of whole program.
 
 \subsection{Parsing}
 It can be seen from the Figure~\ref{impSyntax} that definitions of algebraic signatures in \K looks similar to definitions of context-free grammars using a~BNF notation. This is not a~coincidence; in fact, \K allows to specify the \textit{concrete syntax} with use of special \textit{attributes}. This subsection describes some of the parsing facilities \K provides; the \Project does not use them, but the description enables the reader to easily experiment with the provided examples.
 
-Before going further, let us note that in the time of writing there exist two implementations of \K: UUIC-\K, developed by University of Illinois in Urbana-Campaign, and RV-\K, developed by RuntimeVerification, inc. There are some differences between the two; one of them is that the RV-\K requires the configuration to contain a~cell with \texttt{exit} attribute. The cell contains the value returned by \krun. All examples in this chapter from this point further work with both implementations of \K, modulo this ,,exit'' difference.
+Before going further, let us note that in the time of writing there exist two implementations of \K: UUIC-\K, developed by University of Illinois in Urbana-Campaign, and RV-\K, developed by RuntimeVerification, inc. There are some differences between the two; one of them is that the RV-\K requires the configuration to contain a~cell with \texttt{exit} attribute: the cell contains the value returned by \krun. All examples in this chapter from this point further work with both implementations of \K, modulo this ,,exit'' difference.
 
 \begin{figure}
 \begin{lstlisting}
@@ -341,6 +318,29 @@ _+__ARITH-SYNTAX`(#token("1","Int"),#token("3","Int")),
 \end{figure}
 
 \subsection{Rules}
+So far, the definition of language Arith was able to generate only trivial transition systems with one configuration and no transitions. To generate configurations from the initial one, \K provides a concept of \textit{semantic rules}. In their simplest version, the rules have the form of $\phi \Rightarrow \psi$, where $\phi$, $\psi$ are \textit{patterns} - configurations with free variables, where every variable free in $\psi$ have to be free in $\phi$. We say that a pattern $\phi$ matches a concrete configuration $\var{Cfg}$, when $\phi$ may be turned into $\var{Cfg}$ by substituting free variables of $\phi$ with concrete terms. In that case we say that the variables \textit{bind} to the corresponding terms. When $\phi$ matches a configuration $\var{Cfg}$, a transition is generated into a new configuration $\var{Cfg^\prime}$, which is a result of substituting the free variables of $\psi$ with the bound terms.
+
+For example, the module \texttt{ARITH} of the language Arith may be extended with the following rule:
+\begin{lstlisting}
+rule <T><k>I1::Int + I2::Int</k><ret>R::Int</ret></T> 
+  => <T><k>I1 +Int I2</k><ret>R</ret></T>
+\end{lstlisting}
+The left hand side of~\lstinline{=>}{} contains three free variables (\texttt{I1}, \texttt{I2}, \texttt{R}), all of which are explictly sorted to \texttt{Int}. The variables \texttt{I1}, \texttt{I2} are used as the two parameters of the constructor~\lstinline{+}{}, while the variable \texttt{R} represents the content of the \texttt{ret} cell. On the right hand side, \texttt{I1} and \texttt{I2} are given as parameters to built-in function~\lstinline{+Int}{}, which implements the addition of two integers; the variable~\texttt{R} is used in the same place as on the left side, thus leaving the \texttt{ret} cell unchanged.
+
+The compiled definition takes two numbers and adds them together:
+\begin{lstlisting}[language=bash]
+$ kompile arith.k
+$ cat simple.arith
+1 + 2
+$ krun simple.arith
+<T> <k> 3 </k> <ret> 0 </ret> </T>
+\end{lstlisting}
+Here \krun again printed the final configuration. It is possible to print an $i$-th configuration with use of the \texttt{depth} switch:
+\begin{lstlisting}[language=bash]
+$ krun --depth 0 simple.arith
+$ krun --depth 0 simple.arith
+\end{lstlisting}
+
 
 %The abstract syntax is defined using BNF notation inside \texttt{syntax} declarations (see figure~\ref{ImpSyntaxInK}). \K also supports attaching various attributes; some of them (e.g associativity attributes) are needed to support automatic generation of concrete syntax parser, some of the other have a~semantic impact (strictness attributes etc). The user-defined syntactic constructs can be used anywhere in configuration, not just in \texttt{k} cell.
 %
@@ -370,14 +370,14 @@ _+__ARITH-SYNTAX`(#token("1","Int"),#token("3","Int")),
 %The $<k>$ cell contains a~sequence of commands to execute. $c_1 \rightsquigarrow c_2$.
 
 % Nejdrive tak intuitivne
-The transition system is induced by rewriting rules; those have the form of $l \Rightarrow r \texttt{ if } b$, where $l$ and $r$ are matching-logic patterns \footnote{Patterns are basically terms with free variables. Details about matching logic are given in \ref{MatchingLogic}.},
-%(terms with free variables) of the same sort, 
-and $b$ is a~first-order formula over free variables of $l$. Whenever the pattern $l$ \textit{matches} a~configuration such that $b$ evaluates to $\var{true}$, the rule gets applied and generates a~new configuration. One such rule in the IMP language may be
-\begin{asciik}[basicstyle=\small]
-rule <T><k> X:Id => I ...</k>
-     <state>... X |-> I ...</state></T>
-\end{asciik}
-
+%The transition system is induced by rewriting rules; those have the form of $l \Rightarrow r \texttt{ if } b$, where $l$ and $r$ are matching-logic patterns \footnote{Patterns are basically terms with free variables. Details about matching logic are given in \ref{MatchingLogic}.},
+%%(terms with free variables) of the same sort, 
+%and $b$ is a~first-order formula over free variables of $l$. Whenever the pattern $l$ \textit{matches} a~configuration such that $b$ evaluates to $\var{true}$, the rule gets applied and generates a~new configuration. One such rule in the IMP language may be
+%\begin{asciik}[basicstyle=\small]
+%rule <T><k> X:Id => I ...</k>
+%     <state>... X |-> I ...</state></T>
+%\end{asciik}
+%
 
 %FIXME the rule does not match always,
 
@@ -385,7 +385,7 @@ rule <T><k> X:Id => I ...</k>
 %The transition system contains transition between configurations $C_1$ and $C_2$, if there
 %The rule gets applied whenever the pattern $l$ \textit{matches} the current configuration, i.e. it is possible to substitute free variables in $l$ for ground terms such that the result is identical to the configuration, and $b$ (after the same substitution) holds.  Due to the mechanism called ,,configuration abstraction'', rules can be unified with a~subtree of the configuration, thus avoiding a~use of unnecessary subterms in the rule.
 
-Many rules care about only a~small fraction of the configuration. \K framework therefore implements a~mechanism called ,,configuration abstraction'', which allows rules to mention only the necessary configuration cells; \K then desugars them. For example, in the above rule it is possible to remove the $<T>$ cell.
+%Many rules care about only a~small fraction of the configuration. \K framework therefore implements a~mechanism called ,,configuration abstraction'', which allows rules to mention only the necessary configuration cells; \K then desugars them. For example, in the above rule it is possible to remove the $<T>$ cell.
 
 
 %$\kprefix{k}{\reduce{X:Id}{I}...}{}$
@@ -399,11 +399,11 @@ Many rules care about only a~small fraction of the configuration. \K framework t
 
 %TODO structural frames (I heard about them in the Java semantics)
 
+%
+%
+%Those three kinds of \K declarations are sufficient to give a~semantics to given language; however, \K provides some additional construct, which makes writing the semantics easier. Those will be discussed in latter sections
 
-
-Those three kinds of \K declarations are sufficient to give a~semantics to given language; however, \K provides some additional construct, which makes writing the semantics easier. Those will be discussed in latter sections
-
-Features to cover here:
+TODO: Features to cover here:
 \begin{itemize}
 \item heating/cooling rules
 \item modules
@@ -431,9 +431,6 @@ Features to cover here:
 \item In RV-K, the configuration needs to have a~cell with an \texttt{exit} attribute.
 \item KServer. Only one instance can be running. Uses NailGun. What does work and what does not.
 \item kompile must be run with -O2 switch
-\begin{lstlisting}
-<result exit=""> 0 </result>
-\end{lstlisting}
 \end{itemize}
 
 \section{C++}
