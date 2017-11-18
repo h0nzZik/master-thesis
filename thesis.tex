@@ -318,14 +318,15 @@ _+__ARITH-SYNTAX`(#token("1","Int"),#token("3","Int")),
 \end{figure}
 
 \subsection{Rules}
-So far, the definition of language Arith was able to generate only trivial transition systems with one configuration and no transitions. To generate configurations from the initial one, \K provides a concept of \textit{semantic rules}. In their simplest version, the rules have the form of $\phi \Rightarrow \psi$, where $\phi$, $\psi$ are \textit{patterns} - configurations with free variables, where every variable free in $\psi$ have to be free in $\phi$. We say that a pattern $\phi$ matches a concrete configuration $\var{Cfg}$, when $\phi$ may be turned into $\var{Cfg}$ by substituting free variables of $\phi$ with concrete terms. In that case we say that the variables \textit{bind} to the corresponding terms. When $\phi$ matches a configuration $\var{Cfg}$, a transition is generated into a new configuration $\var{Cfg^\prime}$, which is a result of substituting the free variables of $\psi$ with the bound terms.
+So far, the definition of language Arith was able to generate only trivial transition systems with one configuration and no transitions. To generate configurations from the initial one, \K provides a~concept of \textit{semantic rules}. In their simplest version, the rules have the form of $\varphi \Rightarrow \psi$, where $\varphi$, $\psi$ are \textit{patterns} - configurations with free variables, where every variable free in $\psi$ have to be free in $\varphi$. We say that a~pattern $\varphi$ \textit{matches} a~concrete configuration $\var{Cfg}$, when $\varphi$ may be turned into $\var{Cfg}$ by substituting free variables of $\varphi$ with concrete terms. In that case we say that the variables \textit{bind} to the corresponding terms. When $\varphi$ matches a~configuration $\var{Cfg}$, a~transition is generated into a~new configuration $\var{Cfg^\prime}$, which is the result of substituting the free variables of $\psi$ with the bound terms.
 
+\subsubsection{Basic rules}
 For example, the module \texttt{ARITH} of the language Arith may be extended with the following rule:
 \begin{lstlisting}
-rule <T><k>I1::Int + I2::Int</k><ret>R::Int</ret></T> 
+rule <T><k>I1:Int + I2:Int</k><ret>R:Int</ret></T> 
   => <T><k>I1 +Int I2</k><ret>R</ret></T>
 \end{lstlisting}
-The left hand side of~\lstinline{=>}{} contains three free variables (\texttt{I1}, \texttt{I2}, \texttt{R}), all of which are explictly sorted to \texttt{Int}. The variables \texttt{I1}, \texttt{I2} are used as the two parameters of the constructor~\lstinline{+}{}, while the variable \texttt{R} represents the content of the \texttt{ret} cell. On the right hand side, \texttt{I1} and \texttt{I2} are given as parameters to built-in function~\lstinline{+Int}{}, which implements the addition of two integers; the variable~\texttt{R} is used in the same place as on the left side, thus leaving the \texttt{ret} cell unchanged.
+The left hand side of the rewriting operator (\lstinline{=>}{}) contains three free variables (\texttt{I1}, \texttt{I2}, \texttt{R}), all of which required to have a sort \texttt{Int}. The variables \texttt{I1}, \texttt{I2} are used as the two parameters of the constructor~\lstinline{+}{}, while the variable \texttt{R} represents the content of the \texttt{ret} cell. On the right hand side, \texttt{I1} and \texttt{I2} are given as parameters to built-in function~\lstinline{+Int}{}, which implements the addition of two integers; the variable~\texttt{R} is used in the same place as on the left side, thus leaving the \texttt{ret} cell unchanged.
 
 The compiled definition takes two numbers and adds them together:
 \begin{lstlisting}[language=bash]
@@ -338,11 +339,74 @@ $ krun simple.arith
 Here \krun again printed the final configuration. It is possible to print an $i$-th configuration with use of the \texttt{depth} switch:
 \begin{lstlisting}[language=bash]
 $ krun --depth 0 simple.arith
-$ krun --depth 0 simple.arith
+<T> <k> 1 + 2 </k> <ret> 0 </ret> </T>
+$ krun --depth 1 simple.arith
+<T> <k> 3 </k> <ret> 0 </ret> </T>
 \end{lstlisting}
 
+\subsubsection{Local rewriting}
+The semantic rule above applies the rewriting operator (\lstinline{=>}{}) to whole configuration, although it changes only the content of the \texttt{k} cell. \K implements a~concept called \textit{local rewriting}, which allows language definition developers to use the rewriting operator inside a~cell or inside a~term. With use of local rewriting, the above rule can be written as:
+\begin{lstlisting}
+rule <T> <k> I1:Int + I2:Int => I1 +Int I2 </k>
+         <ret> R:Int </ret> </T>
+\end{lstlisting}
+The rule can be even more simplified with use of an anonymous free variable, denoted by an underscore (\lstinline{_}{}):
+\begin{lstlisting}
+rule <T> <k> I1:Int + I2:Int => I1 +Int I2 </k>
+         <ret> _ </ret> </T>
+\end{lstlisting}
+It is also possible to use the rewriting operator multiple times in one semantic rule:
+\begin{lstlisting}
+rule <T> <k> (I1:Int => 0) + (I2:Int => I1 +Int I2) </k>
+         <ret> _ </ret> </T> requires I1 =/=Int 0
+rule <T> <k> (0 + I:Int) => I </k> <ret> _ </ret> </T>
+\end{lstlisting}
+A \texttt{requires} clause causes a~rule to apply only if a~certain condition holds; in this particular example, the rule should not apply if the variable \texttt{I1} is bound to zero. Without the clause, the rule would be able to apply indefinitely, without any effect.
 
-%The abstract syntax is defined using BNF notation inside \texttt{syntax} declarations (see figure~\ref{ImpSyntaxInK}). \K also supports attaching various attributes; some of them (e.g associativity attributes) are needed to support automatic generation of concrete syntax parser, some of the other have a~semantic impact (strictness attributes etc). The user-defined syntactic constructs can be used anywhere in configuration, not just in \texttt{k} cell.
+ 
+\subsubsection{Configuration abstraction}
+
+Semantic rules usually need to be aware only of a~few configuration cells. In \K, the semantics rules have to mention only the cells they really need to mention. The \K tool then, from the definition of configuration, infers the context in which such local rewriting takes place. The rule for addition can be written as:
+\begin{lstlisting}
+rule <k> I1:Int + I2:Int => I1 +Int I2 </k>
+\end{lstlisting}
+Such semantics rules are not only shorter and easier to write, but they are also independent on most of the configuration; when the structure of configuration changes, the rules may remain the same. This feature is called \textit{configuration abstraction}.
+
+\subsubsection{Sort predicates}
+
+For every sort \texttt{Srt} \K automatically generates a~\textit{sort predicate} \texttt{isSrt} of sort \texttt{Bool}. The predicate takes any term and returns \texttt{true} if the term is of sort \texttt{Srt}, otherwise returns \texttt{false}. So far, the definition of Arith language can not evaluate nested expressions, as the built-in function~\texttt{+Int}, which is used in the rule
+\begin{lstlisting}
+rule <k> I1:Int + I2:Int => I1 +Int I2 </k>
+\end{lstlisting}
+can be applied only on terms of sort Int. Moreover, the left side of the rule requires the involved terms to be of sort \texttt{Int} With use of sort predicate, a rule
+\begin{lstlisting}
+rule <l> E1:AExp + E2:AExp => -1 </l>
+requires notBool isInt(E1) orBool notBool isInt(E2)
+\end{lstlisting}
+can be added into the language definition; the rule rewrites a sum of two terms of sort \texttt{AExp} to \lstinline{-1}{}, unless both of the terms have the sort \texttt{Int}. The \texttt{notBool} and \texttt{orBool} are built-in functions; \texttt{isInt} is a~sort predicate for the sort \texttt{Int}.
+
+\subsubsection{Computations}
+How to compute the sum of three numbers, say $1 + 2 + 3$? In the language Arith, the \texttt{+}-constructor is left-associative, so the natural approach is to compute $1 + 2$ first, which yields a result $r$, and then to compute $r + 3$. In \K, the notion of \textit{first} and \textit{then} is formalized in terms of \textit{computations} and their \textit{chaining}. 
+
+
+%TODO Note: in RV-K, the computation chaining seems to work only inside the k cell. I do not know why.
+
+
+------------------------
+TODO: Features to cover here:
+\begin{itemize}
+\item Computations
+\item heating/cooling rules
+\item modules
+\item contexts
+\item KResult
+\item Konstruktory a~atribut [function]
+\item Atribut [strict]
+\end{itemize}
+
+
+%TODO ono to funguje i v pripade, ze mame vetsi nasobnost nekterych bunek
+
 %
 %%TODO kontexty, KResult apod
 %
@@ -402,16 +466,6 @@ $ krun --depth 0 simple.arith
 %
 %
 %Those three kinds of \K declarations are sufficient to give a~semantics to given language; however, \K provides some additional construct, which makes writing the semantics easier. Those will be discussed in latter sections
-
-TODO: Features to cover here:
-\begin{itemize}
-\item heating/cooling rules
-\item modules
-\item contexts
-\item KResult
-\item Konstruktory a~atribut [function]
-\item Atribut [strict]
-\end{itemize}
 
 
 % Mozna i nejake jazykove vyrazy toho jazyka. Kontexty, [function] - sam tomu presne nerozumim.
@@ -634,13 +688,13 @@ can be rewritten to another configuration by rewriting the \texttt{sendString} i
 This way the rule encodes the following piece of semantic information: ,,To send a~nonempty string means to send its first character and then to send the rest, unless the IO is disabled''.
 
 
-%TODO zminit rozdil mezi :: a : typovanim
+%TODO zminit rozdil mezi :: a~: typovanim
 %
 % The basic form of rewriting rules is
 %\begin{displaymath}
-%\phi \Rightarrow \psi \mathbb{if} b \, ,
+%\varphi \Rightarrow \psi \mathbb{if} b \, ,
 %\end{displaymath}
-%where $\phi, \psi$ are terms (aka \textit{patterns}) with shared set of free varables. A configuration $\mathcal{C_1}$ \textit{rewrites} to configuration $\mathcal{C_2}$ (under the rule $r$), if and only if the free variables  
+%where $\varphi, \psi$ are terms (aka \textit{patterns}) with shared set of free varables. A configuration $\mathcal{C_1}$ \textit{rewrites} to configuration $\mathcal{C_2}$ (under the rule $r$), if and only if the free variables  
 %%TODO configuration is a~term, too
 %
 %\footnote{The semantics of patterns is formalized in \textit{matching logic}.}
