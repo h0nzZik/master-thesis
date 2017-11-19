@@ -151,7 +151,7 @@ The level of detail here is necessary to understand the description of the Imple
 %
 
 
-\paragraph{K And Operational semantics}
+%\paragraph{K And Operational semantics}
 
 %TODO reference some courses and lecture notes for small-step structural operational semantics
 %TODO cite the k tutorial.
@@ -162,7 +162,9 @@ In the \K framework, languages are described in a~style commonly known as \texti
 
 %TODO an image of a~transition system
 
-The configurations are not abstract, but they have an internal structure, which depends on the definition $\var{D}$. For a~simple imperative language, similar to the language IMP defined in the K tutorial~\cite{k-tutorial}, the configurations may consists of a~,,program'' part and a~,,data'' part.
+The configurations are not abstract, but they have an internal structure, which depends on the definition $\var{D}$. 
+For imperative languages, the configurations may consists of a~,,program'' part and a~,,data'' part.
+%For a~simple imperative language, similar to the language IMP defined in the K tutorial~\cite{k-tutorial}, the configurations may consists of a~,,program'' part and a~,,data'' part.
 
 \subsection{Terms}
 
@@ -208,15 +210,15 @@ syntax Stmt  ::= Block
                | Stmt Stmt
 syntax Pgm   ::= Stmt
 \end{lstlisting}
-\caption{A definition of an algebraic signature of the IMP.}
+\caption{A definition of an algebraic signature of an imperative language.}
 \label{impSyntax}
 \end{figure}
 
-\K is distributed together with a~basic library; together they provide a~number of pre-defined sorts, including \texttt{Id} \texttt{Int}, \texttt{Bool}, \texttt{List}, and \texttt{Map}. The \texttt{Id} is a~sort of C-style identifiers, the other names are rather self-explanatory. With use of these sorts, an algebraic signature of the IMP language can be defined as in Figure~\ref{impSyntax}. From the definition, \textit{arithmetic expressions} (represented by the sort \texttt{AExp}) are integers, identifiers, and sums of other arithmetic expressions; the arithmetic expressions can be compared to create \textit{boolean expressions} are boolean constants, and so on.
+\K is distributed together with a~basic library; together they provide a~number of pre-defined sorts, including \texttt{Id} \texttt{Int}, \texttt{Bool}, \texttt{List}, and \texttt{Map}. The \texttt{Id} is a~sort of C-style identifiers, the other names are rather self-explanatory. With use of these sorts, an algebraic signature of an imperative language can be defined as in Figure~\ref{impSyntax}. From the definition, \textit{arithmetic expressions} (represented by the sort \texttt{AExp}) are integers, identifiers, and sums of other arithmetic expressions; the arithmetic expressions can be compared to create \textit{boolean expressions}, and so on.
 
 \subsection{Configurations}
 
-A part of the program configuration can be stored in a~\textit{cell}, which can be thought of as a~labeled multiset~\cite{hathhorn-ellison-rosu-2015-pldi}. Cells may contain terms of a~given sort or other cells. In a~source code of a~language definition in \K, cells are written in an xml-style notation.
+A part of a~program configuration can be stored in a~\textit{cell}, which can be thought of as a~labeled multiset~\cite{hathhorn-ellison-rosu-2015-pldi}. Cells may contain terms of a~given sort or other cells. In a~source code of a~language definition in \K, cells are written in an xml-style notation.
 
 Figure~\ref{impConfiguration} contains a~snippet of such source code. The keyword \texttt{configuration} here defines three cells (\texttt{T}, \texttt{k} and \texttt{state}), a~single structure for all configurations, and an initial configuration. Every cell in the definition has some content: the \texttt{state} cell contains \lstinline{.Map}, which has a~constructor of sort \texttt{Map}, representing an empty map; the \texttt{k} cell contains a~term of sort \texttt{Pgm} consisting of a~variable with name \texttt{\$PGM}, and the \texttt{T} cell contains the other two cells. The initial configuration for program \texttt{P} is just like that, except that the variable \texttt{\$PGM} is replaced by a~term, representing the program \texttt{P}.
 
@@ -366,40 +368,27 @@ A \texttt{requires} clause causes a~rule to apply only if a~certain condition ho
  
 \subsubsection{Configuration abstraction}
 
-Semantic rules usually need to be aware only of a~few configuration cells. In \K, the semantics rules have to mention only the cells they really need to mention. The \K tool then, from the definition of configuration, infers the context in which such local rewriting takes place. The rule for addition can be written as:
+Semantic rules usually need to be aware only of a~few configuration cells. In \K, the semantics rules have to mention only the cells they really need to mention. The \K tool then, from the definition of configuration, infers the context in which such local rewriting takes place. The rule for addition can be written as in Figure~\ref{ruleAddInKCell}.
+\begin{figure}
 \begin{lstlisting}
 rule <k> I1:Int + I2:Int => I1 +Int I2 </k>
 \end{lstlisting}
+\caption{A rule for addition of two integers.}
+\label{ruleAddInKCell}
+\end{figure}
 Such semantics rules are not only shorter and easier to write, but they are also independent on most of the configuration; when the structure of configuration changes, the rules may remain the same. This feature is called \textit{configuration abstraction}.
 
-\subsubsection{Sort predicates}
 
-For every sort \texttt{Srt} \K automatically generates a~\textit{sort predicate} \texttt{isSrt} of sort \texttt{Bool}. The predicate takes any term and returns \texttt{true} if the term is of sort \texttt{Srt}, otherwise returns \texttt{false}. So far, the definition of Arith language can not evaluate nested expressions, as the built-in function~\texttt{+Int}, which is used in the rule
-\begin{lstlisting}
-rule <k> I1:Int + I2:Int => I1 +Int I2 </k>
-\end{lstlisting}
-can be applied only on terms of sort Int. Moreover, the left side of the rule requires the involved terms to be of sort \texttt{Int} With use of sort predicate, a rule
-\begin{lstlisting}
-rule <l> E1:AExp + E2:AExp => -1 </l>
-requires notBool isInt(E1) orBool notBool isInt(E2)
-\end{lstlisting}
-can be added into the language definition; the rule rewrites a sum of two terms of sort \texttt{AExp} to \lstinline{-1}{}, unless both of the terms have the sort \texttt{Int}. The \texttt{notBool} and \texttt{orBool} are built-in functions; \texttt{isInt} is a~sort predicate for the sort \texttt{Int}.
+\subsection{Computations}
+%How to compute the sum of three numbers, say $1 + 2 + 3$? In the language Arith, the \texttt{+} constructor is left-associative, so the natural approach is to compute $1 + 2$ first, which yields a result $r$, and then to compute $r + 3$. 
+When creating a language definition, it is often needed to compute something first, and then use the result of the computation to compute something else. In \K, the notion of \textit{first} and \textit{then} is formalized in terms of \textit{computations} and their \textit{chaining}. Computations have the sort \texttt{K}; all user-defined sorts are automatically subsorted to \texttt{K}. Computations can be composed using the~\lstinline{~>}{} constructor, which is associative. The sort \texttt{K} has a nulary constructor \texttt{.K}, which represents an empty computation and acts as a unit with respect to~\lstinline{~>}{}. Thus \texttt{K} with~\lstinline{~>}{} and \texttt{.K} form a monoid.
 
-\subsubsection{Computations}
-How to compute the sum of three numbers, say $1 + 2 + 3$? In the language Arith, the \texttt{+} constructor is left-associative, so the natural approach is to compute $1 + 2$ first, which yields a result $r$, and then to compute $r + 3$. In \K, the notion of \textit{first} and \textit{then} is formalized in terms of \textit{computations} and their \textit{chaining}. Computations have the sort \texttt{K}; all user-defined sorts are automatically subsorted to \texttt{K}. Computations can be composed using the~\lstinline{~>}{} constructor, which is associative. The sort \texttt{K} has a nulary constructor \texttt{.K}, which represents an empty computation and acts as a unit with respect to~\lstinline{~>}{}. Thus \texttt{K} with~\lstinline{~>}{} and \texttt{.K} form a monoid.
-
-In practice, the monoidal structure means that any term consisting of computations and the~\lstinline{~>}{} constructor behave as a \textit{chain} of computations, with hidden empty computations everywhere inside. One can then insert a computation \texttt{c} to any position in the chain simply by rewriting an empty computation on that position \texttt{c}. It also allows the rule 
-\begin{lstlisting}
-rule <k> I1:Int + I2:Int => I1 +Int I2 </k>
-\end{lstlisting}
-to be replaced by the rule
+In practice, the monoidal structure means that any term consisting of computations and the~\lstinline{~>}{} constructor behave as a \textit{chain} of computations, with hidden empty computations everywhere inside. One can then insert a computation \texttt{c} to any position in the chain simply by rewriting an empty computation on that position \texttt{c}. It also allows replacing the rule~\ref{ruleAddInKCell} with
 \begin{lstlisting}
 rule (<k> I1:Int + I2:Int => I1 +Int I2) ~> _</k>
 \end{lstlisting}
-without losing any existing behavior. If the old rule matches a configuration with a term \lstinline{C}{} in the \texttt{k} cell, then the new rule matches the term \lstinline{C ~> .K}{} - the anonymous variable binds to the empty computation. But the new rule matches also the term \lstinline{C}{}, because due the monoidal structure, configurations \lstinline{C}{} and \lstinline{C ~> .K}{} are equal.
-
+without losing any existing behavior. If the old rule matches a configuration with a term \lstinline{C}{} in the \texttt{k} cell, then the new rule matches the term \lstinline{C ~> .K}{}, as the anonymous variable binds to the empty computation. But the new rule matches also the term \lstinline{C}{}, because due the monoidal structure, configurations \lstinline{C}{} and \lstinline{C ~> .K}{} are equal.
 On the other hand, the new rule adds some behaviors, because it matches not only when the \texttt{k} cell contains exactly an addition of two integers, but also when it contains any sequence of computations, where the first computation is an addition of two integers. The first computation in the list is called \textit{the top}.
-
 The parenthesis in the new rule are needed, as the constructor \lstinline{~>}{} binds tighter then the operator~\lstinline{=>}{}.
 
 % Nerozumim presne, jak funguji ty tri tecky
@@ -421,9 +410,28 @@ can be also written as
 rule I1:Int + I2:Int => I1 +Int I2
 \end{lstlisting}
 
+\subsection{Strictness and evaluation strategies}
+
+How to compute the sum of three numbers, say $1 + 2 + 3$? In the language Arith, the \texttt{+} constructor is left-associative, so the natural approach is to compute $1 + 2$ first, which yields a result $r$, and then to compute $r + 3$. Although it is possible to write such rules manually, \K provides a number of tools, which enable the programmer to describe such computations on higher level of abstraction.
+
+\subsubsection{Sort predicates}
+
+For every sort \texttt{Srt} \K automatically generates a~\textit{sort predicate} \texttt{isSrt} of sort \texttt{Bool}. The predicate takes any term and returns \texttt{true} if the term is of sort \texttt{Srt}, otherwise returns \texttt{false}. So far, the definition of Arith language can not evaluate nested expressions, as the built-in function~\texttt{+Int}
+%, which is used in the rule
+%\begin{lstlisting}
+%rule <k> I1:Int + I2:Int => I1 +Int I2 </k>
+%\end{lstlisting}
+can be applied only on terms of sort Int. Moreover, the left side of the rule requires the involved terms to be of sort \texttt{Int} With use of sort predicate, a rule
+\begin{lstlisting}
+rule <l> E1:AExp + E2:AExp => -1 </l>
+requires notBool isInt(E1) orBool notBool isInt(E2)
+\end{lstlisting}
+can be added into the language definition; the rule rewrites a sum of two terms of sort \texttt{AExp} to \lstinline{-1}{}, unless both of the terms have the sort \texttt{Int}. The \texttt{notBool} and \texttt{orBool} are built-in functions; \texttt{isInt} is a~sort predicate for the sort \texttt{Int}.
+
+
 \subsubsection{Heating/cooling}
-Using the information above, a programmer may use the following piece of \K code to evaluate nested expressions:
-\begin{figure}[h]
+Using the information above, a programmer may use the piece of \K code in Figure~\ref{manualHeatCool} to evaluate nested expressions.
+\begin{figure}
 \begin{lstlisting}
 syntax KItem ::= holdAddR(AExp) | holdAddL(Int)
 rule E1:AExp + E2:AExp => E1 ~> holdAddR(E2)
@@ -434,14 +442,13 @@ rule E2:Int ~> holdAddL(E1:Int) => E1 + E2
 rule E1:Int ~> holdAddR(E2) => E1 + E2
 rule I1:Int + I2:Int => I1 +Int I2
 \end{lstlisting}
-\caption{Manually written heating and cooling rules}.
+\caption{Heating and cooling rules, written manually.}
 \label{manualHeatCool}
 \end{figure}
-The sort \texttt{KItem} is a bit special, but it is subsorted to the sort \texttt{K} as any user-defined sort. The idea here is that the left addend is evaluated first, then the right addend is evaluated and finally the two integers are added using the built-in function \texttt{+Int}. One way to interpret the rules is that the first two rules extract an unevaluated expression out of the addition, which creates a hole in the term, the extracted expression is then evaluated, and the third and forth rule plug the evaluated expression back into the hole. 
-The process of extracting a subterm is known as \textit{heating}, while the opposite process is \textit{cooling}.
+The idea here is that the left addend is evaluated first, then the right addend is evaluated and finally the two integers are added using the built-in function \texttt{+Int}. One way to interpret the rules is that the first two rules extract an unevaluated expression out of the addition, which creates a hole in the term, the extracted expression is then evaluated, and the third and forth rule plug the evaluated expression back into the hole. The constructors \texttt{holdAddR} and \texttt{holdAddL} are used to represent the original term without the extracted subterm; the sort \texttt{KItem} is a bit special, but it is subsorted to the sort \texttt{K} as any user-defined sort. The process of extracting a subterm is known as \textit{heating}, while the opposite process is \textit{cooling}. 
 
 \subsubsection{Evaluation contexts}
-Heating and cooling rules are very common; they are also tedious to write manually. In \K, the idea of evaluating a certain subterm first can be expressed in terms of \textit{evaluation context}. With use of context, the \K code
+Heating and cooling rules are very common; they are also tedious to write manually. In \K, the idea of evaluating a certain subterm first can be expressed in terms of \textit{evaluation context}. With use of a keyword \texttt{context}, the \K code
 \begin{lstlisting}
 syntax KItem ::= holdAddR(AExp)
 rule E1:AExp + E2:AExp => E1 ~> holdAddR(E2)
@@ -460,7 +467,9 @@ context HOLE:AExp + E:AExp [result(Int)]
 context I:Int + HOLE:AExp [result(Int)]
 rule I1:Int + I2:Int => I1 +Int I2
 \end{lstlisting}
-which is a significant reduction of code. When compiled, the generated interpreter evaluates the expression $3 + 1 + 7$ as follows:
+which significantly reduces the amount of code. When compiled, the generated interpreter correctly evaluates the expression $3 + 1 + 7$; the evaluation progress is shown in Figure~\ref{contextEvaluation}.
+
+\begin{figure}
 \begin{lstlisting}
 3 + 1 + 7
 ( 3 + 1 ) ~> #freezer_+__ARITH-SYNTAX1_ ( 7 )
@@ -468,12 +477,14 @@ which is a significant reduction of code. When compiled, the generated interpret
 4 + 7
 11
 \end{lstlisting}
-(showing only the content of \texttt{k} cell).
+\caption{The progress of evaluating the expression $3 + 1 + 7$. An $i$th line represents the configuration after $i$ computational steps, starting from zero. For brevity, only the content of the \texttt{k} cell is shown.}
+\label{contextEvaluation}
+\end{figure}
 
-\subsubsection{Strictness}
+\subsubsection{Strictness attributes}
 \K defines a sort \texttt{KResult}, which represents results of computations. When no \texttt{result} attribute is given to a context declaration, the declaration behaves as with \lstinline{[result(KResult)]}{}. When writing a larger language definition, it is convenient to identify the sorts of desired results and subsort them to \texttt{KResult}.
 
-When defining a constructor for some sort, the constructor may be tagged with an attribute \texttt{strict}. In that case \K generates a context declaration for every parameter of the constructor. With use of the \texttt{strict} attribute, a definition of the language Arith can be given using only a few lines (Figure~\ref{arithFinal}).
+When defining a sort constructor, the constructor may be tagged with an attribute \texttt{strict}. In that case \K generates a context declaration for every parameter of the constructor. With use of the \texttt{strict} attribute, a definition of the language Arith can be given using only a few lines (Figure~\ref{arithFinal}).
 
 \begin{figure}
 \begin{lstlisting}
@@ -499,6 +510,7 @@ endmodule
 \label{arithFinal}
 \end{figure}
 
+\subsection{Functions}
 
 %TODO Note: in RV-K, the computation chaining seems to work only inside the k cell. I do not know why.
 
@@ -513,43 +525,12 @@ TODO: Features to cover here:
 
 %TODO ono to funguje i v pripade, ze mame vetsi nasobnost nekterych bunek
 
-%
-%%TODO kontexty, KResult apod
-%
-%\begin{figure}
-%\caption{Part of IMP syntax in \K. The syntactic categories $\var{Id}$, $\var{Int}$ are predefined as well as some operations on them. }
-%\label{ImpSyntaxInK}
-%\begin{asciik}
-%syntax AExp ::= Id | Int
-%
-%syntax BExp  ::= Bool
-%| AExp "<=" AExp [seqstrict]
-%
-%syntax Stmt  ::= "skip"
-%| Id "=" AExp
-%| "if" BExp "then" Stmt "else" Stmt "fi" [strict(1)]
-%\end{asciik}
-%\end{figure}
-
-
 %TODO note about syntactic domains Id and Bool.
 
 
 %TODO say that configuration cells have their own sort
 
-%The $<k>$ cell contains a~sequence of commands to execute. $c_1 \rightsquigarrow c_2$.
-
-% Nejdrive tak intuitivne
-%The transition system is induced by rewriting rules; those have the form of $l \Rightarrow r \texttt{ if } b$, where $l$ and $r$ are matching-logic patterns \footnote{Patterns are basically terms with free variables. Details about matching logic are given in \ref{MatchingLogic}.},
-%%(terms with free variables) of the same sort, 
-%and $b$ is a~first-order formula over free variables of $l$. Whenever the pattern $l$ \textit{matches} a~configuration such that $b$ evaluates to $\var{true}$, the rule gets applied and generates a~new configuration. One such rule in the IMP language may be
-%\begin{asciik}[basicstyle=\small]
-%rule <T><k> X:Id => I ...</k>
-%     <state>... X |-> I ...</state></T>
-%\end{asciik}
-%
-
-%FIXME the rule does not match always,
+%The $<k>$ cell %FIXME the rule does not match always,
 
 % Pozdeji presneji.
 %The transition system contains transition between configurations $C_1$ and $C_2$, if there
