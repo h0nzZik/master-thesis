@@ -829,18 +829,44 @@ This chapter focuses on those parts of the C/C++ semantics project, which are re
 
 \section{Enumerations}
 
-
-%Many languages implement enumerations in order to equip the programmer with a~tool
-%In order to 
-%Enumerations enable the programmer 
+Many languages implement enumerated types as a means for programmers to define a finite set of related values. Enumerations in the C++ language are based on enumerations from the C language. In this section we give a brief presentation of the C++ enumerations, as defined in~\cite{n4296}. Note that this text is concerned with what the language allows, rather than what is consider to be a good practice. For a discussion about the latter we point the reader to the relevant section of CppCoreGuidelines\footnote{\url{http://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines}}. 
 
 \begin{figure}
 \begin{lstlisting}[language=C++]
 enum E { A = 5, B = A + 3 };
+enum E e = B;
 \end{lstlisting}
-\caption{A declaration of an \textit{unscoped enumeration} \texttt{E} with \textit{unscoped enumerators} \texttt{A} and \texttt{B}.}
+\caption{A declaration of an \textit{unscoped enumeration} \texttt{E} with \textit{unscoped enumerators} \texttt{A} and \texttt{B}, followed by a declaration of a variable \texttt{e} of type \texttt{E}, initialized by the enumerator \texttt{B}. This code is valid in both C++14 and C99.}
 \label{CStyleEnumDeclaration}
 \end{figure}
+
+Figure~\ref{CStyleEnumDeclaration} shows a basic C-style declaration of an enumeration \texttt{E}, with subsequent declaration of an object of the enumeration's type. Both declarations are valid in both C and C++. In C++14, the C-style enumerations are called \textit{unscoped enumerations}. An enumeration may contain an unbounded number of named values, called \textit{enumerators}. Here, \texttt{E} contains two enumerators: \texttt{A} and \texttt{B}. In C++14, enumerators of an unscoped enumeration are called \textit{unscoped enumerators} and they are defined in the scope which contains the enumeration declaration (or, in the terms of the standard, the \textit{enum-specifier}~\theStandard{7.2:11}). Therefore, it is possible to refer to them simply as in this example.
+
+Because of this simplicity it is not possible to declare two unscoped enumerations with the same enumerator, in the same scope. It is still possible to create the second enumeration in a different scope, though; the enumeration may even have the same name, as in the Figure~\ref{fig:collidingEnumerators}. If that happens, the old enumerator is \textit{shadowed} with the new one, but it is still possible to access the old one using the scope resolution operator (i.e. \texttt{::B} in this example).
+\begin{figure}
+\begin{lstlisting}
+enum E{B};
+// enum F{B}; // an error
+int main() { 
+    enum E{A,B};
+    return (int)B;
+}  
+\end{lstlisting}
+\caption{A declaration of an enumeration with the same enumerator as an already existing enumeration.}
+\label{fig:collidingEnumerators}
+\end{figure}
+%Unlike in C, when declaring a variable of an enumeration type, Netreba opakovat 'enum'
+
+
+% \theStandard{5.1.1/11} 
+
+%In C, enumerators have an integral type; in C++14, the
+
+\section{---------------------------}
+
+%Many languages implement enumerations in order to equip the programmer with a~tool
+%In order to 
+%Enumerations enable the programmer 
 
 \begin{figure}
 \begin{lstlisting}[language=C++]
@@ -931,6 +957,7 @@ enum : char { B, C };
 
 % Popsat co me vedlo k tomu, ze jsem se pustil zrovna do enumu. Ze je to pomerne samostatna vec, nezavisla na vetsine ostatnich featur C++, a~je jednoducha.
 
+%In the C++ standard~\cite{n4296}, enumerations are described mostly in
 In order to implement enumerations, several parts of the semantics had to be modified. The translation tool clang-kast was slightly modified to produce AST nodes for enumeration declarations; to process the declarations in the semantics, a~new file was added to static semantics and a~new set of cells was added to common part of configuration. It was also needed to implement enumerator lookup, which required addition of a~few cells to configuration and a~slight modification of some of the name lookup rules. The semantics was to some extent already prepared to work with enumerations, and some of the relevant rules (e.g. for conversions) needed no change. To ensure correctness of implementation, several test cases were added to the test suite. Overall, most of the modifications were additive, and only little of the existing code needed to be changed. During the implementation process, a~few minor bugs were discovered and fixed. 
 
 % TODO zminit ze jsem chtel implementovat i operatory na enumech, ale nedal jsem to a~udelal to Dwight.
@@ -952,7 +979,7 @@ Every enumeration declaration is processed as follows:
 For declarations of enumerations with no fixed underlying type, the standard keeps one aspect of the declaration unspecified. Prior the closing bracket of the enumerator declaration
 \footnote{And inside the enumeration declaration in particular.},
 the type of an enumerator with initializer is the type of the initializer, and type of an enumerator without initializer is the type of previous enumerator, whenever possible. If there is no initializer specified for the first enumerator, the type of the enumerator is unspecified; it is also unspecified for enumerators (without initializers) whose value does not fit into the type of previous enumerator. 
-For example, in the declaration on figure~\ref{fig:ugly-enum}, the type of enumerator \lstinline{A} in the declaration of \lstinline{B} is not specified, and therefore the value of \lstinline{B} is not specified, too. Similarly, the value of enumerator \lstinline{D} on most platforms does not fit to unsigned char, which is the type of enumerator \lstinline{C}, and its type is thus unspecified. Note that the types of enumerators are unspecified only inside of the declaration of the enumeration, i.e. prior the closing bracket of the declaration. Type of every enumerator after the complete declaration is always the type of the enumeration, so this unspecified behaviour is usually not a~problem in practice, unless one writes code similar to the one in image~\ref{fig:ugly-enum}.
+For example, in the declaration on figure~\ref{fig:ugly-enum}, the type of enumerator \lstinline{A}{} in the declaration of \lstinline{B}{} is not specified, and therefore the value of \lstinline{B}{} is not specified, too. Similarly, the value of enumerator \lstinline{D}{} on most platforms does not fit to unsigned char, which is the type of enumerator \lstinline{C}{}, and its type is thus unspecified. Note that the types of enumerators are unspecified only inside of the declaration of the enumeration, i.e. prior the closing bracket of the declaration. Type of every enumerator after the complete declaration is always the type of the enumeration, so this unspecified behaviour is usually not a~problem in practice, unless one writes code similar to the one in image~\ref{fig:ugly-enum}.
 
 \begin{figure}[ht]
 \begin{lstlisting}[language=C++]
