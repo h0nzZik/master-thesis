@@ -87,8 +87,6 @@ Although formal methods for software verification are being developed, there are
 % Knowledge of precise semantics of the selected programming language is needed.
 In recent years, a~platform named ,,\K framework'' is gaining popuparity. The platform is based on the idea that formal, executable language semantics can be used to derive a~large variety of tools, including interpreters, debuggers, model checkers or deductive program verifiers~\cite{rosu-2017-marktoberdorf} (see Figure~\ref{kidea}). Tool developers, skilled in a~particular area of formal methods, can work inside their area of expertise and developing language independent tools, while leaving language details to someone else. Thus, a~separation of concerns is achieved.
 
-% TODO sem obrazek
-
 \begin{figure}[h]
 \centering
 \includegraphics[width=0.7\linewidth]{img/kidea.png}
@@ -135,18 +133,6 @@ The level of detail here is necessary to understand the description of the Imple
 
 \section{K framework}
 
-%The purpose of this section is to give an overview of \K semantic framework. First subsection shows how \K can be used to describe language semantics in an operational manner; the second subsections contains an overview of various \K tools, including debugger, as well as a~brief introduction of \K abstract syntax; and the last subsection discuss in more detail various aspects of \K, including matching and reachability logic.
-%
-%\subsection{Idea}
-%Mozna neni treba, mozna ze 
-%\K framework idea - see their image.
-%
-%%We have to also mention that K framework can parse concrete syntax but it can also be used with an external parser.
-%
-%
-%% KAst
-%% 
-%
 %% Taky bych chtel popsat, jake nastroje K framework nabizi, z ceho se sklada apod. Ale ze aktualni prochazi rekonstrukci, takze nektere vlastnosti nefunguji. Pdf dokumentace ze semantiky. Obycejny interpreter, model checker, ...
 %
 
@@ -164,7 +150,6 @@ In the \K framework, languages are described in a~style commonly known as \texti
 
 The configurations are not abstract, but they have an internal structure, which depends on the definition $\var{D}$. 
 For imperative languages, the configurations may consists of a~,,program'' part and a~,,data'' part.
-%For a~simple imperative language, similar to the language IMP defined in the K tutorial~\cite{k-tutorial}, the configurations may consists of a~,,program'' part and a~,,data'' part.
 
 \subsection{Terms}
 
@@ -233,7 +218,7 @@ configuration <T>
 \label{impConfiguration}
 \end{figure}
 
-We have said earlier that the programmer may choose a~sort, whose terms will represent the ,,program'' part of the configuration; that happens in the configuration definition. In this particular semantics of the language Imp, the ,,data'' part of the configuration is represented by a~term of sort \texttt{Map}. %Of course, the programmer may choose to use a~configuration with only one cell to represent both
+We have said earlier that the programmer may choose a~sort, whose terms will represent the ,,program'' part of the configuration; that happens in the configuration definition. In this particular language definition, the ,,data'' part of the configuration is represented by a~term of sort \texttt{Map}. %Of course, the programmer may choose to use a~configuration with only one cell to represent both
 
 
 
@@ -241,8 +226,6 @@ We have said earlier that the programmer may choose a~sort, whose terms will rep
 
 
 %TODO a~co je toplevel konfigurace?
-
-%The configuration for IMP can be defined as in figure~\ref{ImpConfigurationInK}. The \texttt{k} cell contains the ,,program'' part - a~list of computations yet to be computed. The \texttt{state} cell holds a~map from variable names to values; the syntactic sorts of its keys and values are not specified. The \texttt{state} cell initially holds an empty map, while \texttt{k} cell initially contains the abstract syntax tree of whole program.
 
 \subsection{Parsing}
 It can be seen from the Figure~\ref{impSyntax} that definitions of algebraic signatures in \K looks similar to definitions of context-free grammars using a~BNF notation. This is not a~coincidence; in fact, \K allows to specify the \textit{concrete syntax} with use of special \textit{attributes}. This subsection describes some of the parsing facilities \K provides; the \Project does not use them, but the description enables the reader to easily experiment with the provided examples.
@@ -377,10 +360,10 @@ rule <k> I1:Int + I2:Int => I1 +Int I2 </k>
 \label{ruleAddInKCell}
 \end{figure}
 Such semantics rules are not only shorter and easier to write, but they are also independent on most of the configuration; when the structure of configuration changes, the rules may remain the same. This feature is called \textit{configuration abstraction}.
+%TODO ono to funguje i v pripade, ze mame vetsi nasobnost nekterych bunek
 
 
 \subsection{Computations}
-%How to compute the sum of three numbers, say $1 + 2 + 3$? In the language Arith, the \texttt{+} constructor is left-associative, so the natural approach is to compute $1 + 2$ first, which yields a result $r$, and then to compute $r + 3$. 
 When creating a language definition, it is often needed to compute something first, and then use the result of the computation to compute something else. In \K, the notion of \textit{first} and \textit{then} is formalized in terms of \textit{computations} and their \textit{chaining}. Computations have the sort \texttt{K}; all user-defined sorts are automatically subsorted to \texttt{K}. Computations can be composed using the~\lstinline{~>}{} constructor, which is associative. The sort \texttt{K} has a nulary constructor \texttt{.K}, which represents an empty computation and acts as a unit with respect to~\lstinline{~>}{}. Thus \texttt{K} with~\lstinline{~>}{} and \texttt{.K} form a monoid.
 
 In practice, the monoidal structure means that any term consisting of computations and the~\lstinline{~>}{} constructor behave as a \textit{chain} of computations, with hidden empty computations everywhere inside. One can then insert a computation \texttt{c} to any position in the chain simply by rewriting an empty computation on that position \texttt{c}. It also allows replacing the rule~\ref{ruleAddInKCell} with
@@ -416,12 +399,7 @@ How to compute the sum of three numbers, say $1 + 2 + 3$? In the language Arith,
 
 \subsubsection{Sort predicates}
 
-For every sort \texttt{Srt} \K automatically generates a~\textit{sort predicate} \texttt{isSrt} of sort \texttt{Bool}. The predicate takes any term and returns \texttt{true} if the term is of sort \texttt{Srt}, otherwise returns \texttt{false}. So far, the definition of Arith language can not evaluate nested expressions, as the built-in function~\texttt{+Int}
-%, which is used in the rule
-%\begin{lstlisting}
-%rule <k> I1:Int + I2:Int => I1 +Int I2 </k>
-%\end{lstlisting}
-can be applied only on terms of sort Int. Moreover, the left side of the rule requires the involved terms to be of sort \texttt{Int} With use of sort predicate, a rule
+For every sort \texttt{Srt} \K automatically generates a~\textit{sort predicate} \texttt{isSrt} of sort \texttt{Bool}. The predicate takes any term and returns \texttt{true} if the term is of sort \texttt{Srt}, otherwise returns \texttt{false}. So far, the definition of Arith language can not evaluate nested expressions, as the built-in function~\texttt{+Int} can be applied only on terms of sort Int. Moreover, the left side of the rule requires the involved terms to be of sort \texttt{Int} With use of sort predicate, a rule
 \begin{lstlisting}
 rule <l> E1:AExp + E2:AExp => -1 </l>
 requires notBool isInt(E1) orBool notBool isInt(E2)
@@ -484,8 +462,6 @@ which significantly reduces the amount of code. When compiled, the generated int
 \subsubsection{Strictness attributes}
 \K defines a sort \texttt{KResult}, which represents results of computations. When no \texttt{result} attribute is given to a context declaration, the declaration behaves as with \lstinline{[result(KResult)]}{}. When writing a larger language definition, it is convenient to identify the sorts of desired results and subsort them to \texttt{KResult}.
 
-When defining a sort constructor, the constructor may be tagged with an attribute \texttt{strict}. In that case \K generates a context declaration for every parameter of the constructor. With use of the \texttt{strict} attribute, a definition of the language Arith can be given using only a few lines (Figure~\ref{arithFinal}).
-
 \begin{figure}
 \begin{lstlisting}
 module ARITH-SYNTAX
@@ -510,27 +486,30 @@ endmodule
 \label{arithFinal}
 \end{figure}
 
+When defining a sort constructor, the constructor may be tagged with an attribute \texttt{strict}. In that case \K generates a context declaration for every parameter of the constructor. With use of the \texttt{strict} attribute, a definition of the language Arith can be given using only a few lines (Figure~\ref{arithFinal}).
+
+
 \subsection{Functions}
+
+\begin{figure}
+\begin{lstlisting}
+syntax Int ::= eval(AExp) [function]
+rule eval(I:Int) => I
+rule eval(E1:AExp + E2:AExp) => eval(E1) +Int eval(E2)
+rule eval(E1:AExp / E2:AExp) => eval(E1) /Int eval(E2)
+\end{lstlisting}
+\caption{An \texttt{eval} function.}
+\label{figAnEvalFunction}
+\end{figure}
+
+In the preceding text, a number of built-in functions was used (e.g. \texttt{andBool}, \texttt{=/=Int} and \texttt{/Int}). Functions can appear in side conditions (the \texttt{requires} clause) or right hand sides of the rewriting operator. Their application does not create any transitions in the transition system and unlike constructors, functions cannot be pattern-matched. Custom functions can be defined with \texttt{syntax} keyword and a \texttt{function} attribute; their behavior is defined using the rewriting operator. See Figure~\ref{figAnEvalFunction} for an example. 
+%Since both constructors and functions are defined using \texttt{syntax} keyword, both of them can be referred to as \textit{syntactic constructs}.
+
+%TODO mohu citovat "A Complete Semantics of K", coz je nejaky tech report, ktery se vali v GitHub repozitari nekoho okolo K?
 
 %TODO Note: in RV-K, the computation chaining seems to work only inside the k cell. I do not know why.
 
 
-------------------------
-TODO: Features to cover here:
-\begin{itemize}
-\item modules
-\item Konstruktory a~atribut [function]
-\end{itemize}
-
-
-%TODO ono to funguje i v pripade, ze mame vetsi nasobnost nekterych bunek
-
-%TODO note about syntactic domains Id and Bool.
-
-
-%TODO say that configuration cells have their own sort
-
-%The $<k>$ cell %FIXME the rule does not match always,
 
 % Pozdeji presneji.
 %The transition system contains transition between configurations $C_1$ and $C_2$, if there
@@ -546,33 +525,13 @@ TODO: Features to cover here:
 
 %TODO contexts, heating/cooling rules, strictness
 
-%TODO difference between \K source code and latex drawing (it is used everywhere).
+%TODO the drawings?
 
-%TODO structural frames (I heard about them in the Java semantics)
+%TODO structural frames
 
-%
-%
-%Those three kinds of \K declarations are sufficient to give a~semantics to given language; however, \K provides some additional construct, which makes writing the semantics easier. Those will be discussed in latter sections
-
-
-% Mozna i nejake jazykove vyrazy toho jazyka. Kontexty, [function] - sam tomu presne nerozumim.
-%\subsection{Parsing and K AST}
-%TODO: something about k abstract syntax format, concrete syntax parser, the possibility to use external parsers. This is what we do in the C++ semantics.
-%
-%\subsection{Semantics in K}
-%
-%heating/cooling rules, contexts
-%
 %\subsection{Matching and reachability logic}
 %
 %%Protoze moji motivaci je v konecnem dusledku verifikace, mel bych zminit, ze existuje matching logika a~hlavne reachability logika spolu s odvozovacim systemem. Idealne se zase odvolat do nejakeho paperu. Urcite bych to nepopisoval.
-
-\paragraph{Differences between UIUC-K and RV-K}
-\begin{itemize}
-\item In RV-K, the configuration needs to have a~cell with an \texttt{exit} attribute.
-\item KServer. Only one instance can be running. Uses NailGun. What does work and what does not.
-\item kompile must be run with -O2 switch
-\end{itemize}
 
 \section{C++}
 
