@@ -396,13 +396,109 @@ to be replaced by the rule
 \begin{lstlisting}
 rule (<k> I1:Int + I2:Int => I1 +Int I2) ~> _</k>
 \end{lstlisting}
-without losing any existing behavior. If the old rule matches a configuration with a term \lstinline{C}{} in the \texttt{k} cell, then the new rule matches the term \lstinline{C ~> .K}{} - the anonymous variable binds to the empty computation. But the new rule matches also the term \lstinline{C}{}, because due the monodial structure, configurations \lstinline{C}{} and \lstinline{C ~> .K}{} are equal.
+without losing any existing behavior. If the old rule matches a configuration with a term \lstinline{C}{} in the \texttt{k} cell, then the new rule matches the term \lstinline{C ~> .K}{} - the anonymous variable binds to the empty computation. But the new rule matches also the term \lstinline{C}{}, because due the monoidal structure, configurations \lstinline{C}{} and \lstinline{C ~> .K}{} are equal.
 
 On the other hand, the new rule adds some behaviors, because it matches not only when the \texttt{k} cell contains exactly an addition of two integers, but also when it contains any sequence of computations, where the first computation is an addition of two integers. The first computation in the list is called \textit{the top}.
 
 The parenthesis in the new rule are needed, as the constructor \lstinline{~>}{} binds tighter then the operator~\lstinline{=>}{}.
 
-%TODO vice se na pravidla
+% Nerozumim presne, jak funguji ty tri tecky
+
+The rules of the form
+\begin{lstlisting}
+rule <k> SomeRewritingHere ~> _ </k>
+\end{lstlisting}
+can be also written as
+\begin{lstlisting}
+rule SomeRewritingHere
+\end{lstlisting}
+For example, the rule
+\begin{lstlisting}
+rule (<k> I1:Int + I2:Int => I1 +Int I2) ~> _</k>
+\end{lstlisting}
+can be also written as
+\begin{lstlisting}
+rule I1:Int + I2:Int => I1 +Int I2
+\end{lstlisting}
+
+\subsubsection{Heating/cooling}
+Using the information above, a programmer may use the following piece of \K code to evaluate nested expressions:
+\begin{figure}[h]
+\begin{lstlisting}
+syntax KItem ::= holdAddR(AExp) | holdAddL(Int)
+rule E1:AExp + E2:AExp => E1 ~> holdAddR(E2)
+     requires notBool isInt(E1)
+rule E1:Int + E2:AExp => E2 ~> holdAddL(E1)
+     requires notBool isInt(E2)
+rule E2:Int ~> holdAddL(E1:Int) => E1 + E2
+rule E1:Int ~> holdAddR(E2) => E1 + E2
+rule I1:Int + I2:Int => I1 +Int I2
+\end{lstlisting}
+\caption{Manually written heating and cooling rules}.
+\label{manualHeatCool}
+\end{figure}
+The sort \texttt{KItem} is a bit special, but it is subsorted to the sort \texttt{K} as any user-defined sort. The idea here is that the left addend is evaluated first, then the right addend is evaluated and finally the two integers are added using the built-in function \texttt{+Int}. One way to interpret the rules is that the first two rules extract an unevaluated expression out of the addition, which creates a hole in the term, the extracted expression is then evaluated, and the third and forth rule plug the evaluated expression back into the hole. 
+The process of extracting a subterm is known as \textit{heating}, while the opposite process is \textit{cooling}.
+
+\subsubsection{Evaluation contexts}
+Heating and cooling rules are very common; they are also tedious to write manually. In \K, the idea of evaluating a certain subterm first can be expressed in terms of \textit{evaluation context}. With use of context, the \K code
+\begin{lstlisting}
+syntax KItem ::= holdAddR(AExp)
+rule E1:AExp + E2:AExp => E1 ~> holdAddR(E2)
+     requires notBool isInt(E1)
+rule E2:Int ~> holdAddL(E1:Int) => E1 + E2
+\end{lstlisting}
+can be equivalently expressed as:
+\begin{lstlisting}
+context HOLE:AExp + E:AExp [result(Int)]
+\end{lstlisting}
+The \texttt{context} declaration means exactly that: whenever the top of a \texttt{k} cell contains an addition of two \texttt{AExp}s and the first one is not of sort \texttt{Int}, extract the first one, push it on the top of the \texttt{k} cell and mark the addition as begin \texttt{frozen}; when the extracted subterm gets evaluated to \texttt{Int}, plug it back to the original context.
+
+With use of context, the code on Figure~\ref{manualHeatCool} can be equivalently expressed as
+\begin{lstlisting}
+context HOLE:AExp + E:AExp [result(Int)]
+context I:Int + HOLE:AExp [result(Int)]
+rule I1:Int + I2:Int => I1 +Int I2
+\end{lstlisting}
+which is a significant reduction of code. When compiled, the generated interpreter evaluates the expression $3 + 1 + 7$ as follows:
+\begin{lstlisting}
+3 + 1 + 7
+( 3 + 1 ) ~> #freezer_+__ARITH-SYNTAX1_ ( 7 )
+4 ~> #freezer_+__ARITH-SYNTAX1_ ( 7 )
+4 + 7
+11
+\end{lstlisting}
+(showing only the content of \texttt{k} cell).
+
+\subsubsection{Strictness}
+\K defines a sort \texttt{KResult}, which represents results of computations. When no \texttt{result} attribute is given to a context declaration, the declaration behaves as with \lstinline{[result(KResult)]}{}. When writing a larger language definition, it is convenient to identify the sorts of desired results and subsort them to \texttt{KResult}.
+
+When defining a constructor for some sort, the constructor may be tagged with an attribute \texttt{strict}. In that case \K generates a context declaration for every parameter of the constructor. With use of the \texttt{strict} attribute, a definition of the language Arith can be given using only a few lines (Figure~\ref{arithFinal}).
+
+\begin{figure}
+\begin{lstlisting}
+module ARITH-SYNTAX
+  syntax AExp  ::= Int
+                 | AExp "/" AExp [left, strict]
+                 > AExp "+" AExp [left, strict]
+                 | "(" AExp ")"  [bracket]
+  syntax Pgm ::= AExp
+endmodule
+module ARITH
+  imports ARITH-SYNTAX
+  configuration <T>
+                  <k> $PGM:Pgm </k>
+                  <ret exit=""> 0 </ret>
+                </T>
+  syntax KResult ::= Int
+  rule I1:Int + I2:Int => I1 +Int I2
+  rule I1:Int / I2:Int => I1 /Int I2 requires I2 =/=Int 0
+endmodule
+\end{lstlisting}
+\caption{A definition of the language Arith.}
+\label{arithFinal}
+\end{figure}
+
 
 %TODO Note: in RV-K, the computation chaining seems to work only inside the k cell. I do not know why.
 
@@ -410,13 +506,8 @@ The parenthesis in the new rule are needed, as the constructor \lstinline{~>}{} 
 ------------------------
 TODO: Features to cover here:
 \begin{itemize}
-\item Computations
-\item heating/cooling rules
 \item modules
-\item contexts
-\item KResult
 \item Konstruktory a~atribut [function]
-\item Atribut [strict]
 \end{itemize}
 
 
