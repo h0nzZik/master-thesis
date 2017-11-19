@@ -452,7 +452,7 @@ can be equivalently expressed as:
 \begin{lstlisting}
 context HOLE:AExp + E:AExp [result(Int)]
 \end{lstlisting}
-The \texttt{context} declaration means exactly that: whenever the top of a \texttt{k} cell contains an addition of two \texttt{AExp}s and the first one is not of sort \texttt{Int}, extract the first one, push it on the top of the \texttt{k} cell and mark the addition as begin \texttt{frozen}; when the extracted subterm gets evaluated to \texttt{Int}, plug it back to the original context.
+The \texttt{context} declaration means exactly that: whenever the top of a \texttt{k} cell contains an addition of two \texttt{AExp}s and the first one is not of sort \texttt{Int}, extract the first one, push it on the top of the \texttt{k} cell and replace the addition with some placeholder; when the extracted subterm gets evaluated to \texttt{Int}, plug it back to the original context.
 
 With use of context, the code on Figure~\ref{manualHeatCool} can be equivalently expressed as
 \begin{lstlisting}
@@ -594,6 +594,8 @@ TODO: Features to cover here:
 \end{itemize}
 
 \section{C++}
+
+Standard, see~\cite{n4296}.
 
 \ifshowoldstuff
 
