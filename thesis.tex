@@ -83,10 +83,12 @@ faculty = {fi},
 
 Writing correct software is hard.
 %Software verification is hard.
-Although formal methods for software verification are being developed, there are only a few high quality tools on the market. One particular problem is that in order to create a~production-ready tool, it is not enough to understand formal methods; the developers also need to understand the precise semantics of the selected programming language.
+Although formal methods for software verification are being developed, there are only a few high quality tools on the market. In order to create a~production-ready tool based on a particular set of formal methods and targeting a particular language, it is necessary to understand the formal methods, the precise semantics of the target language, and possibly some other things. Researchers and engineers often work in teams, and various teams often implement different techniques for the same language; because of that, a platform, which would enable component reuse and separation of concerns, might significantly improve the productivity of the tool developers.
 
 % Knowledge of precise semantics of the selected programming language is needed.
-In recent years, a~platform named ,,\K framework'' is gaining popuparity. The platform is based on the idea that formal, executable language semantics can be used to derive a~large variety of tools, including interpreters, debuggers, model checkers or deductive program verifiers~\cite{rosu-2017-marktoberdorf} (see Figure~\ref{kidea}). Tool developers, skilled in a~particular area of formal methods, can work inside their area of expertise and developing language independent tools, while leaving language details to someone else. Thus, a~separation of concerns is achieved.
+%In recent years, one such platform named ,,\K framework'' is gaining popuparity.
+\K framework is one such platform.
+It is based on the idea that formal, executable language semantics can be used to derive a~large variety of tools, including interpreters, debuggers, model checkers or deductive program verifiers~\cite{rosu-2017-marktoberdorf} (see Figure~\ref{kidea}). Tool developers, skilled in a~particular area of formal methods, can work inside their area of expertise and developing language independent tools, while leaving language details to someone else. Thus, a~separation of concerns is achieved.
 
 \begin{figure}[ht]
 \centering
