@@ -83,7 +83,7 @@ faculty = {fi},
 
 Writing correct software is hard.
 %Software verification is hard.
-Although formal methods for software verification are being developed, there are few high quality tools on the market. One particular problem is that in order to create a~production-ready tool, it is not enough to understand formal methods; the developers also need to understand the precise semantics of the selected programming language.
+Although formal methods for software verification are being developed, there are only a few high quality tools on the market. One particular problem is that in order to create a~production-ready tool, it is not enough to understand formal methods; the developers also need to understand the precise semantics of the selected programming language.
 
 % Knowledge of precise semantics of the selected programming language is needed.
 In recent years, a~platform named ,,\K framework'' is gaining popuparity. The platform is based on the idea that formal, executable language semantics can be used to derive a~large variety of tools, including interpreters, debuggers, model checkers or deductive program verifiers~\cite{rosu-2017-marktoberdorf} (see Figure~\ref{kidea}). Tool developers, skilled in a~particular area of formal methods, can work inside their area of expertise and developing language independent tools, while leaving language details to someone else. Thus, a~separation of concerns is achieved.
@@ -97,29 +97,26 @@ In recent years, a~platform named ,,\K framework'' is gaining popuparity. The pl
 \end{figure}
 
 \K framework has been successfully used to give formal semantics to a~varienty of languages, including Java~\cite{bogdanas-rosu-2015-popl}, Python, Javascript~\cite{park-stefanescu-rosu-2015-pldi}, and C~\cite{ellison-2012-thesis,hathhorn-ellison-rosu-2015-pldi}, all of which is publicly available. The C semantics has been used to create RV-Match, a~,,tool for checking C programs for
-undefined behavior and other common programmer mistakes''~\cite{guth-hathhorn-saxena-rosu-2016-cav}.  At the time of writing, the C semantics is being extended to support C++; the C++ support is also the focus of this thesis.
+undefined behavior and other common programmer mistakes''~\cite{guth-hathhorn-saxena-rosu-2016-cav}.  At the time of writing, the C semantics is being extended to support the C++ programming language. The C++ support is also the focus of this thesis. From this point on, when we write ,,\Project'', we mean this project of defining C/C++ language semantics in \K.
 
-The thesis originally aimed to implement whichever language features needed to be done, as the C++ language is complex and the C++ semantics is still highly incomplete. As the work progressed, two features were selected to be implemented: \textit{enumerations} and \textit{constant expressions}. It went out that the two features play together rather nicely: C++ allows enumerators to be initialized with constant expressions, so enumerations can be used to test the implementation of constant expressions. 
 
-Enumerations were chosen because of their relative simplicity: it is a~purely compile-time feature, which does not interfere much with other language features; it exists in the language from its beginning, and \textit{scoped enumerations} introduced in C++11 are even simpler both from language and user point of view (the legacy C-style enumerations still need to be supported, though).
+%The thesis originally aimed to implement whichever language features needed to be done, as the C++ language is complex and the C++ semantics is still highly incomplete. As the work progressed, two features were selected to be implemented: \textit{enumerations} and \textit{constant expressions}.
+The thesis aimed to implement two language features: \textit{enumerations} and \textit{constant expressions}. When we decided to implement the enumerations, we thought that it is a relatively simple language feature: they do not have any special runtime behavior, do not interfere much with other language features, and they exist in the language from its beginning. The \textit{scoped enumerations}, introduced in C++11, are even simpler both from language and user point of view (the legacy C-style enumerations still need to be supported, though). However, careful reading of the standard~\cite{n4296} revealed us that the enumerations behave in many ways which we considered to be surprising, as we did not know them from common programming practice.
+% Mam i tady pouzivat autorsky plural?
 
-\textit{Constant expressions}, on the contrary, had undergone a~deep change in C++11, which allowed a~restricted set of runtime computations to happen in the compilation time; the future revisions released the restrictions to the point that in C++17, almost arbitrary side effect free computations can happen in the time of compilation. One could reasonably expect that in order to implement constant expressions, a~more fundamental change to the semantics have to be done.
+\textit{Constant expressions}, on the contrary, had undergone a~deep change in C++11, which allowed a~restricted set of runtime computations to happen in the compilation time; the future revisions released the restrictions to the point that in C++17, almost arbitrary side effect free computations can happen in the time of compilation. Because of that, we expected from the beginning that in order to implement the constant expressions, a~more fundamental change to the semantics have to be done.
+
+The two features were successfully implemented; the implementation of enumerations was merged into the upstream, the implementation of constant expression is likely to be merged soon. It went out that the they play together rather nicely: C++ requires enumerators to be initialized with constant expressions; therefore, the implementation of enumerations was used to test the implementation of constant expressions.  In addition, we fixed several bugs in the project, including one hard-to-debug nondeterministic behavior, and implemented a \textit{zero initialization} of class types.
+
+%TODO mam v textu rozebrat ten problem zero-inicializace trid?
 % (TODO tohle asi prijde dat do vice minuleho casu).
  
 %"ukazalo se"
 %(TODO zminit, ze za tim je ten 'constexpr' keyword).
 
-The purpose of this text is to describe the implementation of the aforementioned features. The rest of the document is organized as follows:
-\begin{enumerate}
-\item introduction of the project of C/C++ semantics
-\item description of the involved concepts
-\item outline of the general architecture of the project
-\item discussion of implementation of enums
-\item discussion of implementation of constant expressions
-\end{enumerate}
+The purpose of this text is to describe the implementation of the aforementioned features. It is organized as follows. First, the \K framework is described in such level of detail, which is enough for the reader to understand the implementation of the features and which enables him to experiment with simple language definitions. Second, basic concepts of the C++ language are outlined, followed by more in-depth discussion of the selected language features. Third, the general architecture of the \Project is described; fourth, the implementation of the language features is described. The final sections of the text contains an evaluation of the implementation, with a discussion of possible future work.
 
-From this point on, we will write ,,\Project'' instead of ,,the C/C++ semantics in K''.
-
+%TODO Říct, že přehled souvisejících věcí je v tom článku z PLDI'15.
 % at first, the project of C/C++ semantics is introduced; then the concepts involved are described in greater depth; then a~general architecture of the project of C/C++ semantics is outlined, followed by a~more detailed description of the parts related to the selected features. A discussion of details of the implementation...
 
 %TODO pouzit figure 2 z PLDI'15, ACM. 2015.
@@ -852,7 +849,7 @@ int main() {
     return (int)B;
 }  
 \end{lstlisting}
-\caption{A declaration of an enumeration with the same enumerator as an already existing enumeration.}
+\caption{A declaration of an enumeration with the same enumerator as in an already existing enumeration.}
 \label{fig:collidingEnumerators}
 \end{figure}
 %Unlike in C, when declaring a variable of an enumeration type, Netreba opakovat 'enum'
