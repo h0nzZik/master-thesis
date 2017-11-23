@@ -548,6 +548,8 @@ Standard, see~\cite{n4296}.
 
 Many languages implement enumerated types as a means for programmers to define a finite set of related values. Enumerations in the C++ language are based on enumerations from the C language. In this section we give a brief presentation of the C++ enumerations, as defined in~\cite{n4296}. Note that this text is concerned with what the language allows, rather than what is consider to be a good practice. For a discussion about the latter we point the reader to the relevant section of CppCoreGuidelines\footnote{\url{http://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines}}. 
 
+\subsubsection{Unscoped enumerations}
+
 \begin{figure}
 \begin{lstlisting}[language=C++]
 enum E { A = 5, B = A + 3 };
@@ -576,6 +578,7 @@ int main() {
 
 When a name of an enumeration (or a struct) is used in C, for example in a declaration of a variable of that enumeration type, it is necessary to use the \texttt{enum} keyword (as in Figure~\ref{CStyleEnumDeclaration}). In C++, this is not necessary, as a name of an enumeration (\texttt{enum-name}) denotes a type (it is a \texttt{type-name}, see~\theStandard{Annex A.1}). It is still possible to do it the C way, though; the type names accompanied by the keyword \texttt{enum} or \texttt{struct} (or similar) are called \textit{elaborated type specifiers}\theStandard{\S 3.4.4}.
 
+\subsubsection{Scoped enumerations}
 
 The revision C++11 introduced \texttt{scoped enumerations}. They are declared using the phrase \texttt{enum class} or \texttt{enum struct}, and enumerators of a scoped enumeration are called \textit{scoped enumerators}. Scoped enumerations differ from the plain enumerations in a number of aspects; the most significant difference is what they have their name for: scoped enumerators are declared in the scope of their enumeration\theStandard{\S 7.2:11}. Because of that, the enumerators have to be referred to using the scope resolution operator (at least outside the enumeration declaration, see Figure~\ref{fig:scopedEnumDecl}). However, unscoped enumerators can be referred to this way, too (\theStandard{\S 5.1.1/11}).
 
@@ -589,6 +592,8 @@ E e = E::B;
 \caption{A declaration of a~\textit{scoped enumeration} \texttt{E} with \textit{scoped enumerators} \texttt{A} and \texttt{B}.}
 \label{fig:scopedEnumDecl}
 \end{figure}
+
+\subsubsection{Underlying type}
 
 Every enumeration type has associated an \texttt{underlying type}. It is an integral type, which can represent all values of the enumeration; it also defines the size of the enumeration\footnote{Technically, it is more complicated: \url{https://stackoverflow.com/q/47444081/6209703}}. A programmer may find out the underlying type of an enumeration using the template \lstinline{std::underlying_type_t<T>}{}, which is provided by the standard library.
 
@@ -614,6 +619,8 @@ enum E { A, B } __attribute__((packed));
 If the underlying type of a scoped enumeration is not explicitly specified, it is automatically defined to \texttt{int}. All scoped enumerations, as well as unscoped enumerations with explicitly specified underlying type, are said to have a \textit{fixed underlying type}. This stands in contrast to unscoped enumeration without explicitly specified underlying type. Their underlying type is not fixed, but it is an \textit{implementation-defined} integral type, which can represent all values of the enumeration~\theStandard{\S 7.2:7}. That also suggests that the underlying type is not known prior the closing brace of the declaration.
 
 The fact that the standard does not specify the exact underlying type for enumerations whose underlying type is not fixed is also the reason why in pre-C++11 (including C11), the enumerations whose size matters to the programmer have to be declared with use of compiler-specific language constructs (as in Figure~\ref{fig:packedEnum}). Without that, the compiler could simply choose the underlying type (and thus the size) of the enumeration (with respect to some standard-given restrictions); in practice, the chosen underlying type is often \texttt{int}.
+
+\subsubsection{Values of an enumeration}
 
 The standard also defines the set of values of an enumeration; those are the values, which can be written or read from an object of the enumeration's type. For an enumeration whose underlying type is not fixed, the set of values limits the choice of the underlying type; it is defined such that the values of all its enumerators and all values between the enumerators are also values of the enumeration. The definition is rather technical, though; an inquisitive reader shall find it in~\theStandard{\S 7.2:8}. For an enumeration with fixed underlying type, the values of the enumeration are exactly the values of its underlying type. 
 
