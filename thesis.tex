@@ -697,6 +697,17 @@ enum class E3;
 %TODO where is the exact point of declaration?
 %TODO inicializer je jednou 'integral constant expression' a podruhe 'converted constant expression'.
 
+\section{Constant expressions}
+In C++, expressions are used almost everywhere. However, not every kind of expression can be used everywhere: one can hardly imagine the code in Figure~\ref{fig:getcharInEnum} to be valid. The expressions used in an enum declaration or as a \texttt{case} labels of a \texttt{switch} statement have to be computable in the compilation time. Those kind of expressions are generally known as \textit{constant expressions}; they are defined in~\theStandard{\S 5.20}.
+
+\begin{figure}
+\begin{lstlisting}
+enum class E { A = getchar() };
+\end{lstlisting}
+\caption{A ,,wild'' expression in a context that requires a constant expression.}
+\label{fig:getcharInEnum}
+\end{figure}
+
 \ifshowoldstuff
 
 
