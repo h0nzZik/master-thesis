@@ -675,12 +675,27 @@ void foo(int x) { E e = x; }
 
 An initializer of an enumerator may refer to previously declared enumerators of the same enumeration (see~\ref{fig:scopedEnumDecl}). Inside the enumeration declaration (prior its closing brace), the type of its enumerators is not the type of the enumerator, but always an integral type\footnote{We discuss this in more detail in Chapter~\ref{chap:implement}}. Because of the stronger-than-C type system, in some cases it would be even inconvenient if the types of enumerators were types of their enumerations. For example, the declaration in Figure~\ref{fig:scopedEnumDecl} declares an enumerator \texttt{B} with the initializer \lstinline{A + 3}{}. If the type of \texttt{A} in this expression were \texttt{E}, then the expression would be ill-formed, because the scoped enumeration does not convert to int, so it cannot be added to an int.
 
-%TODO inicializer je jednou 'integral constant expression' a podruhe 'converted constant expression'.
+\subsubsection{Incomplete types}
+Some types cannot be used to define objects; those are called \textit{incomplete}~\theStandard{\S 3.1:5}. A type may be incomplete at one point and complete at other point in a translation unit. Incomplete types are still useful; they may be used in function declarations to denote its parameters and return values, to define objects of pointer type or references. There are two categories of incomplete types: void types (e.g. \texttt{volatile void}) and incompletely-defined types. It is not allowed to apply the \texttt{sizeof} operator to an incomplete type. A programmer may choose to use incompletely-defined types to limit the number of dependencies between header files. An enumeration whose underlying type is not fixed is incomplete until the closing brace of its declaration.
 
 \subsubsection{Opaque enumerations}
 
+Enumerations with fixed underlying type can be declared \textit{opaque}, that is, without the list of enumerators (see Figure~\ref{fig:opaqueEnumDeclarations}). An enumeration declared using an \textit{opaque-enum-declaration} is a complete type (it is not an incomplete type); therefore, it can be used almost as a fully declared enumeration, except that its enumerators are not available. An opaque enumeration can be fully redeclared later in the program~\theStandard{\S 7.2:3}.
+
+\begin{figure}
+\begin{lstlisting}[language=C++]
+enum E1 : char;
+enum class E2 : unsigned int;
+enum class E3;
+\end{lstlisting}
+\caption{\textit{Opaque-enum-declaration}s.}
+\label{fig:opaqueEnumDeclarations}
+\end{figure}
+
+
 %TODO spoustu veci neprojde uz pres clang-kast
 %TODO where is the exact point of declaration?
+%TODO inicializer je jednou 'integral constant expression' a podruhe 'converted constant expression'.
 
 \ifshowoldstuff
 
@@ -973,15 +988,6 @@ enum class E2 : int {};
 enum class E3 {};
 \end{lstlisting}
 \caption{Declarations of enumerations with fixed underlying type.}
-\end{figure}
-
-\begin{figure}
-\begin{lstlisting}[language=C++]
-enum E1 : char;
-enum class E2 : unsigned int;
-enum class E3;
-\end{lstlisting}
-\caption{\textit{Opaque-enum-declaration}s.}
 \end{figure}
 
 \begin{figure}
