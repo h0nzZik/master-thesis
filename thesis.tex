@@ -643,6 +643,43 @@ int foo(E e) {
 
 This behavior may be a source of confusion for programmers who do not know this; in past, it certainly was for the author of this text. The programmer may write a code similar to the one in Figure~\ref{fig:enumNotReallyUnreachable}, which assumes that the value of \texttt{e} has to be either \texttt{E::A} or \texttt{E::B}. This assumption may be justified, if the programmer knows the set of values which may be returned from the function \texttt{giveMeAnEnum}. The programmer may try to go one step further and say: ,,If the function \texttt{giveMeAnEnum} tries to return something different than \texttt{E::A} or \texttt{E::B}, than the behavior is already undefined in \textit{that} point; therefore, we do not need to handle that situation in \texttt{foo}.'' Such a reasoning is flawed, because the function \texttt{giveMeAnEnum} may return e.g \lstinline{static_cast<E>(-117)}{}, which is guaranteed to be well-defined, because \lstinline{-117}{} is a valid value for \texttt{int}, which is the underlying type of \texttt{E} here. The programmer's reasoning would be valid if the enumeration \texttt{E} was a plain unscoped enumeration without explicitly specified underlying type (i.e if we removed the \texttt{class} keyword). We will not go into detail here, as the reasoning would depend on the technical parts of~\theStandard{\S 7.2:8}.
 
+\subsubsection{Enumerators}
+
+Declaration of an enumerator may contain an optional \textit{initializer}. If the initializer is not specified, the value of the enumerator is zero if it is the first enumerator, otherwise it is the value of the previous enumerator plus one. When an enumeration is fully defined (,,following the closing brace of an enum-specifier''), the type of each enumerator is the type of the enumerator~\theStandard{\S 7.2:5}. For example, in the declaration of variable \texttt{e} in the Figure~\ref{fig:scopedEnumDecl}, the type of the expression \lstinline{E::B}{} is \texttt{E}.
+
+\begin{figure}
+\begin{lstlisting}
+enum E { A };
+void foo(int){}
+void goo() {
+    foo(A);
+    foo(E::A);
+    foo(E::A+1};
+}
+\end{lstlisting}
+\caption{Unscoped enumerations can be implicitly converted to \texttt{int}.}
+\label{fig:unscopedEnumToInt}
+\end{figure}
+
+
+This is different from C, where enumerators have the type \texttt{int}. Still, unscoped enumerations can be implicitly converted to \texttt{int}~\theStandard{\S 7.2:10}, so they behave somewhat similarly to C. This conversion does not work for scoped enumerations. The other conversion (from integer types to enumerations) is not defined neither for scoped nor unscoped enumerations (Figure~\ref{fig:noConversionFromIntToEnum}).
+
+\begin{figure}
+\begin{lstlisting}
+enum E { A };
+void foo(int x) { E e = x; }
+\end{lstlisting}
+\caption{C++ does not allow an implicit conversion from int to enum. However, this is a valid C code.}
+\label{fig:noConversionFromIntToEnum}
+\end{figure}
+
+An initializer of an enumerator may refer to previously declared enumerators of the same enumeration (see~\ref{fig:scopedEnumDecl}). Inside the enumeration declaration (prior its closing brace), the type of its enumerators is not the type of the enumerator, but always an integral type\footnote{We discuss this in more detail in Chapter~\ref{chap:implement}}. Because of the stronger-than-C type system, in some cases it would be even inconvenient if the types of enumerators were types of their enumerations. For example, the declaration in Figure~\ref{fig:scopedEnumDecl} declares an enumerator \texttt{B} with the initializer \lstinline{A + 3}{}. If the type of \texttt{A} in this expression were \texttt{E}, then the expression would be ill-formed, because the scoped enumeration does not convert to int, so it cannot be added to an int.
+
+%TODO inicializer je jednou 'integral constant expression' a podruhe 'converted constant expression'.
+
+\subsubsection{Opaque enumerations}
+
+%TODO spoustu veci neprojde uz pres clang-kast
 %TODO where is the exact point of declaration?
 
 \ifshowoldstuff
@@ -909,7 +946,7 @@ rule <k> sendString(FD::Int, S::String)
 % Zminit problem, na ktery jsem narazil pri implementaci constexpr ConditionalOp. Totiz PRExpr je PRVal jen behem prekladu. Hmmm... mozna by to nemelo byt PRVal nikdy. Nebo.. ja nevim! Spis by mela exekucni semantika, nebo alespon ty spolecne casti, nepouzivat PRVal na poznani toho, jestli je vyraz vyhodnoceny.
 
 
-\chapter{Implementation}
+\chapter{Implementation}\label{chap:implement}
 
 This chapter focuses on those parts of the C/C++ semantics project, which are related to the goal and contribution of this thesis. The chapter describes the implementation of the main features, shows relations between the implementation, standard and general architecture of the semantics, and highlights some aspects of the C++ language one may perhaps oversee when using the language as a~programmer. The last section of this chapter then gives a~short evaluation of the implementation.
 
@@ -1088,11 +1125,12 @@ enum F {
 %TODO link na repo
 %TODO zmínit, že je ta sémantika na něčem testovaná.
 %TODO zminit osklive chování. Že spoustu věcí je unspecified. A že se můžeme dotazovat na spoustu věcí uvnitř deklarace enumerátoru, dívat se do šablon etc.
-%TODO o enumech mluví i cppcoreguidelines https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#S-%enum
-% Zminit, ze Dwight udelal nejaky refaktoring tech enumu?
 
 \section{Generalized constant expressions (constexpr)}
 TBD
+
+\chapter{Evaluation}
+What works and what does not. The bugs we have found in compilers. Ambiguity or contradictions in the standard. The one thing we implement the same way gcc and clang does, but technically is incorrect.
 
 
 \ifshowoldstuff
