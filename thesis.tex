@@ -1175,7 +1175,14 @@ enum F {
 %TODO zminit osklive chování. Že spoustu věcí je unspecified. A že se můžeme dotazovat na spoustu věcí uvnitř deklarace enumerátoru, dívat se do šablon etc.
 
 \section{Generalized constant expressions (constexpr)}
-TBD
+
+The \Project consists of the definition of translation semantics, and the execution semantics. Both have different configurations. Before we started the work, the translation semantics was already able to evaluate simple arithmetic or boolean C++ expressions (like \lstinline{1 + 1 == 2}{}. However, the translation semantics was not able to evaluate more complex expresions, and function calls in particular. To evaluate function calls, the configurations of execution semantics contains a set of cells which represents \textit{call stack}, but the configuration of translation semantics does not contain anything like that.
+
+When designing the support for generalized constant expressions, several design alternatives seemed to be viable. One of them was to extend the translation semantics with new rules and configuration cell which would allow to evaluate the not-supported-yet expressions; another alternative was to reuse some of the rules from the execution semantics and modify the configuration accordingly. We decided to first try to reuse as much of existing code as possible, with the perspective that if that fails, we will fall back to other design alternative or try to explore the design space more carefully. It turned out that we could reuse almost everything; although the changes were quite extensive, there were only a few newly added rules and cells, and most of them had the character of ,,move this there'', ,,use this file from the execution semantics in the static semantics'' and ,,add a \texttt{require} rule here''.
+
+%TODO name collisions
+%TODO how does ExprLoc work
+%TODO KResults
 
 \chapter{Evaluation}
 What works and what does not. The bugs we have found in compilers. Ambiguity or contradictions in the standard. The one thing we implement the same way gcc and clang does, but technically is incorrect.
