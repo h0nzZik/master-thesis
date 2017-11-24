@@ -675,12 +675,22 @@ void foo(int x) { E e = x; }
 
 An initializer of an enumerator may refer to previously declared enumerators of the same enumeration (see~\ref{fig:scopedEnumDecl}). Inside the enumeration declaration (prior its closing brace), the type of its enumerators is not the type of the enumerator, but always an integral type\footnote{We discuss this in more detail in Chapter~\ref{chap:implement}}. Because of the stronger-than-C type system, in some cases it would be even inconvenient if the types of enumerators were types of their enumerations. For example, the declaration in Figure~\ref{fig:scopedEnumDecl} declares an enumerator \texttt{B} with the initializer \lstinline{A + 3}{}. If the type of \texttt{A} in this expression were \texttt{E}, then the expression would be ill-formed, because the scoped enumeration does not convert to int, so it cannot be added to an int.
 
+%
+%\begin{figure}
+%\begin{lstlisting}[language=C++]
+%enum E { A, B = A, C = +A };
+%\end{lstlisting}
+%\caption{Quiz: what are the types of B and C prior the closing bracket?}
+%\label{fig:enumeratorTypeQuiz}
+%\end{figure}
+%
+
 \subsubsection{Incomplete types}
 Some types cannot be used to define objects; those are called \textit{incomplete}~\theStandard{\S 3.1:5}. A type may be incomplete at one point and complete at other point in a translation unit. Incomplete types are still useful; they may be used in function declarations to denote its parameters and return values, to define objects of pointer type or references. There are two categories of incomplete types: void types (e.g. \texttt{volatile void}) and incompletely-defined types. It is not allowed to apply the \texttt{sizeof} operator to an incomplete type. A programmer may choose to use incompletely-defined types to limit the number of dependencies between header files. An enumeration whose underlying type is not fixed is incomplete until the closing brace of its declaration.
 
 \subsubsection{Opaque enumerations}
 
-Enumerations with fixed underlying type can be declared \textit{opaque}, that is, without the list of enumerators (see Figure~\ref{fig:opaqueEnumDeclarations}). An enumeration declared using an \textit{opaque-enum-declaration} is a complete type (it is not an incomplete type); therefore, it can be used almost as a fully declared enumeration, except that its enumerators are not available. An opaque enumeration can be fully redeclared later in the program~\theStandard{\S 7.2:3}.
+Enumerations with fixed underlying type can be declared \textit{opaque}, that is, without the list of enumerators (see Figure~\ref{fig:opaqueEnumDeclarations}). An enumeration declared using an \textit{opaque-enum-declaration} is a complete type (it is not an incomplete type); therefore, it can be used almost as a fully declared enumeration, except that its enumerators are not available. Such an enumeration needs to have a fixed underlying type (see Figure~\ref{fig:opaqueEnumNotFixedUT}). An opaque enumeration can be fully redeclared later in the program~\theStandard{\S 7.2:3}.
 
 \begin{figure}
 \begin{lstlisting}[language=C++]
@@ -692,12 +702,43 @@ enum class E3;
 \label{fig:opaqueEnumDeclarations}
 \end{figure}
 
+\begin{figure}
+\begin{lstlisting}[language=C++]
+enum E;
+\end{lstlisting}
+\caption{Not a~valid declaration, because ,,opaque-enum-declaration declaring an unscoped enumeration shall not omit the enum-base''~\theStandard{\S 7.2:2}}
+\label{fig:opaqueEnumNotFixedUT}
+\end{figure}
+
+%
+%\begin{figure}
+%\begin{lstlisting}[language=C++]
+%enum class E : short { A, B = A + 2, C };
+%\end{lstlisting}
+%\caption{Prior the closing bracket, the enumerators \texttt{A}, \texttt{B} and \texttt{C} have a~type \texttt{short}.}
+%\end{figure}
+%
+%\begin{figure}
+%\begin{lstlisting}[language=C++]
+%enum E { A, B, C = (char)255, D };
+%\end{lstlisting}
+%\caption{Prior the closing bracket, the enumerators \texttt{A}, \texttt{B} and \texttt{D} have an unspecified type, the enumerator \texttt{C} has type \texttt{char}.}
+%\end{figure}
+%
+%\begin{figure}
+%\begin{lstlisting}[language=C++]
+%enum { A };
+%enum : char { B, C };
+%\end{lstlisting}
+%\caption{,,The optional identifier shall not be omitted in the declaration of a~scoped enumeration''(7.2:2), however, it may be omitted in the declaration of an unscoped enumeration.}
+%\end{figure}
+%
 
 %TODO spoustu veci neprojde uz pres clang-kast
 %TODO where is the exact point of declaration?
 %TODO inicializer je jednou 'integral constant expression' a podruhe 'converted constant expression'.
 
-\section{Constant expressions}
+\subsection{Constant expressions}
 In C++, expressions are used almost everywhere. However, not every kind of expression can be used everywhere: one can hardly imagine the code in Figure~\ref{fig:getcharInEnum} to be valid. The expressions used in an enum declaration or as a \texttt{case} labels of a \texttt{switch} statement have to be computable in the compilation time. Those kind of expressions are generally known as \textit{constant expressions}; they are defined in~\theStandard{\S 5.20}.
 
 \begin{figure}
@@ -707,6 +748,30 @@ enum class E { A = getchar() };
 \caption{A ,,wild'' expression in a context that requires a constant expression.}
 \label{fig:getcharInEnum}
 \end{figure}
+
+\subsubsection{The intuition behind the standard}
+%TODO basic concepts: object/value distinction
+
+The standard defines a couple terms with respect to constant expressions; this subsection attempts to give the reader an intuition which is behind them. The term \textit{core constant expression} (\theStandard{\S 5.20.2}) is used to represent an expression, which can be evaluated easily, using only the information the compiler has in the time of compilation. The term \textit{constant expressions} (\theStandard{\S 5.20:5}) denotes a core constant expression, whose value ,,make sense'' in the compile time.
+
+\begin{figure}
+\begin{lstlisting}
+constexpr int const & id(int const &x) { return x; }
+void test() {
+	int const a = 7;
+	//constexpr int const & b = id(a); // 1
+	constexpr int c = id(a); // 2
+	static int const d = 8;
+	constexpr int const &e = id(d); // 3
+}
+\end{lstlisting}
+\caption{...}
+\label{fig:constexprIntuition}
+\end{figure}
+
+The Figure~\ref{fig:constexprIntuition} can serve as an example here. The function \texttt{id} takes one parameter, which is a reference to a constant integer, and returns it back. The expression \lstinline{id(a)}{} is then a \textit{core constant expression}, as it can be easily evaluated (its value is equivalent to the value of the expression \lstinline{a}{}). It is not a \textit{constant expression}, because its value refers to a non-static local variable, and the memory location of a (non-static) is unknowable in the compile time (such memory location does not even exist in the execution time, or the variable may be instantiated multiple times in recursive calls). Therefore, its value cannot be used as the initializer of a constexpr reference (1).
+
+How is then possible that it may be used in the declaration (2)? Note that the variable is not initialized simply by the expression \lstinline{id(a)}{}, but with the rvalue-to-lvalue conversion of the result of that \lstinline{id(a)}{}; such composed expression is a \texttt{constant expression}. In other words, the declaration of \texttt{c} does not concerned with the identity of the object it is initialized with, but only with its value - and that value is known in the compile time, as the variable \texttt{a} is initialized with the constant expression \texttt{7}. The declaration (3) works because the variable \texttt{d} was declared \texttt{static}.
 
 \ifshowoldstuff
 
@@ -991,51 +1056,15 @@ This chapter focuses on those parts of the C/C++ semantics project, which are re
 %Many languages implement enumerations in order to equip the programmer with a~tool
 %In order to 
 %Enumerations enable the programmer 
-
-\begin{figure}
-\begin{lstlisting}[language=C++]
-enum E1 : int {};
-enum class E2 : int {};
-enum class E3 {};
-\end{lstlisting}
-\caption{Declarations of enumerations with fixed underlying type.}
-\end{figure}
-
-\begin{figure}
-\begin{lstlisting}[language=C++]
-enum E;
-\end{lstlisting}
-\caption{Not a~valid declaration, because ,,opaque-enum-declaration declaring an unscoped enumeration shall not omit the enum-base''~\theStandard{\S 7.2:2}}
-\end{figure}
-
-\begin{figure}
-\begin{lstlisting}[language=C++]
-enum class E : short { A, B = A + 2, C };
-\end{lstlisting}
-\caption{Prior the closing bracket, the enumerators \texttt{A}, \texttt{B} and \texttt{C} have a~type \texttt{short}.}
-\end{figure}
-
-\begin{figure}
-\begin{lstlisting}[language=C++]
-enum E { A, B, C = (char)255, D };
-\end{lstlisting}
-\caption{Prior the closing bracket, the enumerators \texttt{A}, \texttt{B} and \texttt{D} have an unspecified type, the enumerator \texttt{C} has type \texttt{char}.}
-\end{figure}
-
-\begin{figure}
-\begin{lstlisting}[language=C++]
-enum E { A, B = A, C = +A };
-\end{lstlisting}
-\caption{Quiz: what are the types of B and C prior the closing bracket?}
-\end{figure}
-
-\begin{figure}
-\begin{lstlisting}[language=C++]
-enum { A };
-enum : char { B, C };
-\end{lstlisting}
-\caption{,,The optional identifier shall not be omitted in the declaration of a~scoped enumeration''(7.2:2), however, it may be omitted in the declaration of an unscoped enumeration.}
-\end{figure}
+%
+%\begin{figure}
+%\begin{lstlisting}[language=C++]
+%enum E1 : int {};
+%enum class E2 : int {};
+%enum class E3 {};
+%\end{lstlisting}
+%\caption{Declarations of enumerations with fixed underlying type.}
+%\end{figure}
 
 % TODO pojem 'incomplete type' se vztahuje vzdy k nejakemu mistu v kodu.
 
@@ -1066,7 +1095,7 @@ enum : char { B, C };
 % Popsat co me vedlo k tomu, ze jsem se pustil zrovna do enumu. Ze je to pomerne samostatna vec, nezavisla na vetsine ostatnich featur C++, a~je jednoducha.
 
 %In the C++ standard~\cite{n4296}, enumerations are described mostly in
-In order to implement enumerations, several parts of the semantics had to be modified. The translation tool clang-kast was slightly modified to produce AST nodes for enumeration declarations; to process the declarations in the semantics, a~new file was added to static semantics and a~new set of cells was added to common part of configuration. It was also needed to implement enumerator lookup, which required addition of a~few cells to configuration and a~slight modification of some of the name lookup rules. The semantics was to some extent already prepared to work with enumerations, and some of the relevant rules (e.g. for conversions) needed no change. To ensure correctness of implementation, several test cases were added to the test suite. Overall, most of the modifications were additive, and only little of the existing code needed to be changed. During the implementation process, a~few minor bugs were discovered and fixed. 
+In order to implement enumerations, several parts of the semantics had to be modified. The translation tool \clangKast was slightly modified to produce AST nodes for enumeration declarations; to process the declarations in the semantics, a~new file was added to the C++ translation semantics and a~new set of cells was added to common part of configuration. It was also needed to implement enumerator lookup, which required addition of a~few cells to configuration and a~slight modification of some of the name lookup rules. The semantics was to some extent already prepared to work with enumerations, and some of the relevant rules (e.g. for conversions) needed no change. To ensure correctness of implementation, several test cases were added to the test suite. Overall, most of the modifications were additive, and only little of the existing code needed to be changed. During the implementation process, a~few minor bugs were discovered and fixed. 
 
 % TODO zminit ze jsem chtel implementovat i operatory na enumech, ale nedal jsem to a~udelal to Dwight.
 %It was also needed to add a~support for operations
@@ -1112,8 +1141,10 @@ However, the semantics should be aware of this behaviour. Many real-world progra
 
 The name of an enumerator can be referred to using the scope resolution operator applied to a~name of the enumeration. This was implemented easily using only a~few rules in the (static) semantics.
 %(3.4.3:1) 
-Furthemore, the enumerators of an unscoped enumeration are declared in the scope immediately containing the declaration of the enumeration. To implement this, I have decided to add a~few new cells, which map names of enumerators of enums defined in the surrounding scope to their corresponding type. The lookup then reuses rules from the previous case. It might be possible to implement the lookup even without those extra cells, but the implemented solution seemed to be simplier.
+Furthemore, the enumerators of an unscoped enumeration are declared in the scope immediately containing the declaration of the enumeration. To implement this, we have decided to add a~few new cells, which map names of enumerators of enums defined in the surrounding scope to their corresponding type. The lookup then reuses the rules from the previous case. 
+%It might be possible to implement the lookup even without those extra cells, but the implemented solution seemed to be simplier.
 
+%TODO sjednotit s textem, ktery jsem psal drive nahore
 The rules for enumerator lookup also have to consider the context in which the lookup is performed. As noted earlier, it is mandated by the standard that the types of declared enumerators are different inside the declaration then after it. One may find that surprising; however, this is needed in order to easily create enumerator initializers, which depends on values of previous enumerators of the same enumeration, as it is ilustrated in figure~\ref{lst:enumDepends}. If the type of the enumerator \lstinline{A} in the initializer of the enumerator \lstinline{B} was the type of the enumeration (as it is after the declaration), the initializer expression would be ill-formed, as in C++ enumerations are not implicitly convertible to arithmetic types. Thus, an enumerator prior the closing bracket has always an integral type.
 
 
