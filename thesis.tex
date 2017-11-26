@@ -597,7 +597,7 @@ E e = E::B;
 
 Every enumeration type has associated an \texttt{underlying type}. It is an integral type, which can represent all values of the enumeration; it also defines the size of the enumeration\footnote{Technically, it is more complicated: \url{https://stackoverflow.com/q/47444081/6209703}}. The standard library provides the programmer a way to find out the underlying type of an enumeration (Figure~\ref{fig:stdUnderlyingType}).
 
-\begin{figure}
+\begin{figure}[ht]
 \begin{lstlisting}
 #include <type_traits>
 enum E {A, B, C};
@@ -1061,7 +1061,6 @@ This chapter focuses on those parts of the C/C++ semantics project, which are re
 \section{Enumerations}
 
 
-\section{---------------------------}
 
 %Many languages implement enumerations in order to equip the programmer with a~tool
 %In order to 
@@ -1157,8 +1156,6 @@ Furthemore, the enumerators of an unscoped enumeration are declared in the scope
 %TODO sjednotit s textem, ktery jsem psal drive nahore
 The rules for enumerator lookup also have to consider the context in which the lookup is performed. As noted earlier, it is mandated by the standard that the types of declared enumerators are different inside the declaration then after it. One may find that surprising; however, this is needed in order to easily create enumerator initializers, which depends on values of previous enumerators of the same enumeration, as it is ilustrated in figure~\ref{lst:enumDepends}. If the type of the enumerator \lstinline{A} in the initializer of the enumerator \lstinline{B} was the type of the enumeration (as it is after the declaration), the initializer expression would be ill-formed, as in C++ enumerations are not implicitly convertible to arithmetic types. Thus, an enumerator prior the closing bracket has always an integral type.
 
-
-
 \begin{figure}[ht]
 \begin{lstlisting}[language=C++]
 enum F {
@@ -1168,6 +1165,21 @@ enum F {
 \caption{An enumerator depends on value of previous enumerator.}
 \label{lst:enumDepends}
 \end{figure}
+
+\subsubsection{Underlying type}
+
+The C++ \textit{language} does not have a direct support for determining the underlying type of an enumeration. Instead, such facility is provided by the standard library, as shown in Figure~\ref{fig:stdUnderlyingType}; the standard library then uses compiler's intrinsic functions to get the underlying type. For example, the GNU gcc compiler provides a function\footnote{It is not a function in the C/C++ sense, as it operates on types.} \lstinline{__underlying_type}{}, which takes the enumeration type and translates to its underlying type (Figure~\ref{fig:gccEnumUtIntrinsic}).
+
+\begin{figure}[ht]
+\begin{lstlisting}
+enum class E : short {};
+__underlying_type(E) x = 5;
+\end{lstlisting}
+\caption{Use of gcc's intrinsic function for determining the underlying type of an enumeration.}
+\label{fig:gccEnumUtIntrinsic}
+\end{figure}
+
+The clang fronted supports this intrinsic, too. Our tool \clangKast translates this intrinsic to the constructor \texttt{GnuEnumUnderlyingType} of sort \texttt{AType}; the translation semantics then contain a few straightforward rules which find the declared enumeration and its underlying type.
 
 % TODO porovnani vykonu constexpr a~ne-constexpr
 
