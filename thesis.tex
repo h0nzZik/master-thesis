@@ -595,9 +595,19 @@ E e = E::B;
 
 \subsubsection{Underlying type}
 
-Every enumeration type has associated an \texttt{underlying type}. It is an integral type, which can represent all values of the enumeration; it also defines the size of the enumeration\footnote{Technically, it is more complicated: \url{https://stackoverflow.com/q/47444081/6209703}}. A programmer may find out the underlying type of an enumeration using the template \lstinline{std::underlying_type_t<T>}{}, which is provided by the standard library.
+Every enumeration type has associated an \texttt{underlying type}. It is an integral type, which can represent all values of the enumeration; it also defines the size of the enumeration\footnote{Technically, it is more complicated: \url{https://stackoverflow.com/q/47444081/6209703}}. The standard library provides the programmer a way to find out the underlying type of an enumeration (Figure~\ref{fig:stdUnderlyingType}).
 
-An enumeration's underlying type can be explicitly specified \theStandard{\S 7.2:5}. This is achieved by appending a colon followed by a name of an integral type right after the \texttt{enum-name} in the declaration, as shown in Figure~\ref{fig:explicitlySpecifiedUnderlyingType}. The most obvious reason why would programmer want to specify an enum's underlying type is in order to limit the enumeration's size, perhaps because of hardware constrains. Before C++11, this was often achieved through an extension of a particular compiler; for example, the GNU gcc compiler provides a special attribute \texttt{packed}, which causes an enumeration's size to be as small as possible (Figure~\ref{fig:packedEnum}).
+\begin{figure}
+\begin{lstlisting}
+#include <type_traits>
+enum E {A, B, C};
+std::underlying_type_t<E> x = 5;
+\end{lstlisting}
+\caption{The type of the variable \texttt{x} is the underlying type of \texttt{E}.}
+\label{fig:stdUnderlyingType}
+\end{figure}
+
+An enumeration's underlying type can be explicitly specified \theStandard{\S 7.2:5}. This is achieved by appending a colon followed by a name of an integral type right after the \texttt{enum-name} in the declaration, as shown in Figure~\ref{fig:explicityleSpecifiedUnderlyingType}. The most obvious reason why would programmer want to specify an enum's underlying type is in order to limit the enumeration's size, perhaps because of hardware constrains. Before C++11, this was often achieved through an extension of a particular compiler; for example, the GNU gcc compiler provides a special attribute \texttt{packed}, which causes an enumeration's size to be as small as possible (Figure~\ref{fig:packedEnum}).
 
 \begin{figure}
 \begin{lstlisting}[language=C++]
@@ -1179,6 +1189,8 @@ enum F {
 The \Project consists of the definition of translation semantics, and the execution semantics. Both have different configurations. Before we started the work, the translation semantics was already able to evaluate simple arithmetic or boolean C++ expressions (like \lstinline{1 + 1 == 2}{}. However, the translation semantics was not able to evaluate more complex expresions, and function calls in particular. To evaluate function calls, the configurations of execution semantics contains a set of cells which represents \textit{call stack}, but the configuration of translation semantics does not contain anything like that.
 
 When designing the support for generalized constant expressions, several design alternatives seemed to be viable. One of them was to extend the translation semantics with new rules and configuration cell which would allow to evaluate the not-supported-yet expressions; another alternative was to reuse some of the rules from the execution semantics and modify the configuration accordingly. We decided to first try to reuse as much of existing code as possible, with the perspective that if that fails, we will fall back to other design alternative or try to explore the design space more carefully. It turned out that we could reuse almost everything; although the changes were quite extensive, there were only a few newly added rules and cells, and most of them had the character of ,,move this there'', ,,use this file from the execution semantics in the static semantics'' and ,,add a \texttt{require} rule here''.
+
+
 
 %TODO name collisions
 %TODO how does ExprLoc work
