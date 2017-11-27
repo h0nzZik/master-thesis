@@ -12,6 +12,7 @@
 \usepackage[utf8]{inputenc}
 \usepackage{cleveref}
 \usepackage{hyperref}
+\usepackage{csquotes}
 %\usepackage{syntax}
 \usepackage{amsthm}
 \usepackage{mathpartir}
@@ -1168,7 +1169,9 @@ enum F {
 
 \subsubsection{Underlying type}
 
-The C++ \textit{language} does not have a direct support for determining the underlying type of an enumeration. Instead, such facility is provided by the standard library, as shown in Figure~\ref{fig:stdUnderlyingType}; the standard library then uses compiler's intrinsic functions to get the underlying type. For example, the GNU gcc compiler provides a function\footnote{It is not a function in the C/C++ sense, as it operates on types.} \lstinline{__underlying_type}{}, which takes the enumeration type and translates to its underlying type (Figure~\ref{fig:gccEnumUtIntrinsic}).
+The C++ \textit{language} does not have a direct support for determining the underlying type of an enumeration. Instead, such facility is provided by the standard library, as shown in Figure~\ref{fig:stdUnderlyingType}; the standard library then uses compiler's intrinsic functions to get the underlying type. For example, the GNU gcc compiler provides a function\footnote{It is not a function in the C/C++ sense, as it operates on types.} \lstinline{__underlying_type}{}, which 
+%takes an enumeration type and
+translates to the underlying type of its argument (Figure~\ref{fig:gccEnumUtIntrinsic}).
 
 \begin{figure}[ht]
 \begin{lstlisting}
@@ -1211,6 +1214,53 @@ When designing the support for generalized constant expressions, several design 
 \chapter{Evaluation}
 What works and what does not. The bugs we have found in compilers. Ambiguity or contradictions in the standard. The one thing we implement the same way gcc and clang does, but technically is incorrect.
 
+\section{Defects}
+During the work, we discovered a few defects in major C++ compilers and also in the C++ standard. While most of them was already known among the experts, some of them are new; such defects were reported.
+% which were reported /* ... */.
+In this section, we give a brief overview of the defects we found, including the ones which were already known but not fixed yet.
+
+\subsection{A gcc redeclaration bug}
+We discovered a new bug in the C++ parser of the gcc compiler. When an opaque enumeration is redeclared using fully qualified name (as in Figure~\ref{fig:gccRedeclarationBug}), the compiler rejects it, although such code is valid (and the clang compiler compiles it without problems).
+We reported the bug to the official bugzilla\footnote{\url{https://gcc.gnu.org/bugzilla/show_bug.cgi?id=83132}}; the bug was then confirmed by a gcc c++ developer, who had subsequently shown that the bug works not only for enumerations, but also for classes. The bug affects many versions of the gcc compiler, including the version 7.2, which was the latest in the time of writing.
+
+\begin{figure}[ht]
+\begin{lstlisting}
+enum E : int;
+enum ::E : int{};
+\end{lstlisting}
+\caption{A minimal example of a redeclaration error}
+\label{fig:gccRedeclarationBug}
+\end{figure}
+
+\subsection{A Clang inconsistency bug}
+
+%We also found a new bug in Clang. The bug concerns an enum-related feature which is defective in the standard; both gcc and clang implement it the other way than the standard says. In the community, the compilers's behavior is considered the correct one, although the standard says something else; however, the Clang behavior is not internally consistent, which. We present here both the Clang bug and the standard defect, because the defect is still present in the C++17 standard as well as in the current draft\footnote{\url{https://github.com/cplusplus/draft}, (November 2017)}.
+
+%\footnote{\url{https://stackoverflow.com/q/47383199/6209703} }
+\begin{figure}
+\begin{lstlisting}
+namespace N { enum E : int; }
+enum N::E : int {A,B};
+namespace N {
+    int x = int(::N::B); // 1
+}
+int y = int(::A); // 2
+int z = int(A); // 3
+\end{lstlisting}
+\caption{Clang inconsistency bug.}
+\label{fig:clangInconsistencyBug}
+\end{figure}
+
+The Figure~\ref{fig:clangInconsistencyBug} shows a forward-declaration of an enumeration \texttt{E} in the namespace \texttt{N}, followed by a redeclaration of the enumeration; the redeclaration itself is contained in the scope of the global namespace. In which scope are the enumerators \texttt{A}, \texttt{B} declared? The standard says:
+\begin{displayquote}
+Each enum-name and each unscoped enumerator is declared in the scope that immediately contains the
+enum-specifier. \theStandard{\S 7.2:11}
+\end{displayquote}
+Therefore, from the standard's point of view, the declaration (1) is ill-formed, while the declarations (2) and (3) are valid. However, the compilers we have tried (the GNU gcc compiler in version 7.2, the MSVC compiler in version 19, and Intel's ICC in version 18) all declare the enumerators in the scope, in which the enumeration is declared, and they therefore accept the declaration (1) and reject (2) and (3).
+
+Clang takes the same approach as other compilers and accepts (1) and rejects (2), but due a bug, it also accepts (3). We reported this behavior to the Clang's Bugzilla as a bug\footnote{\url{https://bugs.llvm.org/show_bug.cgi?id=35401}}. That was confirmed by the owner of the Clang C++ frontend, Richard Smith, who also found a different manifestation of the bug.
+
+The problems with opaque declarations of unscoped enumerations are known at least from 2012, when (the same) Richard Smith submitted a related issue\footnote{\url{http://www.open-std.org/jtc1/sc22/wg21/docs/cwg\_active.html\#1485}} to the list of core language issues. The proposed resolution is to disallow the opaque declarations of unscoped enumerations; see also the discussion in the ISO C++ Google Group\footnote{\url{https://groups.google.com/a/isocpp.org/d/embed/msg/std-discussion/\_W1pUFzl3og/0Kpb0li2YMwJ}}.
 
 \ifshowoldstuff
 
