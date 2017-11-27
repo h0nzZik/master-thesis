@@ -1262,6 +1262,43 @@ Clang takes the same approach as other compilers and accepts (1) and rejects (2)
 
 The problems with opaque declarations of unscoped enumerations are known at least from 2012, when (the same) Richard Smith submitted a related issue\footnote{\url{http://www.open-std.org/jtc1/sc22/wg21/docs/cwg\_active.html\#1485}} to the list of core language issues. The proposed resolution is to disallow the opaque declarations of unscoped enumerations; see also the discussion in the ISO C++ Google Group\footnote{\url{https://groups.google.com/a/isocpp.org/d/embed/msg/std-discussion/\_W1pUFzl3og/0Kpb0li2YMwJ}}.
 
+%TODO how we implement that?
+%TODO reference C++ Standard Core Language Active Issues, Revision 97
+
+\subsection{Type of an enumeration}
+
+We found a contradiction in the C++14 standard; the contradiction is still present in C++17 as well as in an early C++20 draft (N4700).
+% and the standard draft repository (https://github.com/cplusplus/draft/, retrieved 23.11.2017).
+The contradiction is also not mentioned in the current (97th) revision of "C++ Standard Core Language Active Issues", so we think that it is a new defect.
+
+\begin{figure}[ht]
+\begin{lstlisting}
+enum class E {
+    A,
+    B = E::A // 1
+};
+\end{lstlisting}
+\caption{What is the type of \lstinline{E::A}{} in (1)?}
+\label{fig:typeOfAQualifiedEnumerator}
+\end{figure}
+
+The contradiction can be illustrated on the code in Figure~\ref{fig:typeOfAQualifiedEnumerator}. The problem is that the standard gives two different answers to the question: ,,What is the type of the expression \lstinline{E::A}{} in the declaration of \texttt{B}?''. An answer can be based on \theStandard{\S 7.2/5}, which says:
+\begin{displayquote}
+\textelp{} Following the closing brace of an enum-specifier, each enumerator has the type of its enumeration. If the underlying type is fixed, \textbf{the type of each enumerator prior to the closing brace is the underlying type} and the constant-expression in the enumerator-definition shall be a converted constant expression of the underlying type \textelp{}
+\end{displayquote}
+Therefore, the type of \lstinline{E::A}{} should be \texttt{int}, which is the default underlying type of scoped enumerations. However, the standard also says (\theStandard{\S 5.1.1/11}):
+\begin{displayquote}
+A nested-name-specifier that denotes an enumeration (7.2), followed by the name of an enumerator of that enumeration, is a qualified-id that refers to the enumerator. The result is the enumerator. \textbf{The type of the result is the type of the enumeration.} The result is a prvalue.
+\end{displayquote}
+So the type of \lstinline{E::A}{} should be \texttt{E}. This is clearly a defect in the standard. The only way to satisfy both requirements is to make the types \texttt{E} and \texttt{int} the same, which would directly contradict the standard, because ,,Each enumeration defines a type that is different from all other types.''\theStandard{\S 7.2/5}.
+
+One possible solution to this conflict is to change \theStandard{\S 5.1.1/11} to say
+that the type of the result is the type of the \textbf{enumerator},
+or to remove the relevant sentence completely. That is also how compilers seem to implement it: if \lstinline{E::A}{} had the type of an enumeration, such enumerator declaration would be ill-formed (\theStandard{\S 5.1.1/5}). Our language definition also takes this approach.
+
+This issue was first discussed on StackOverflow\footnote{\url{https://stackoverflow.com/q/42369314/6209703}}, than it was raised in the ISO C++ Google Group\footnote{\url{https://isocpp.org/forums/iso-c-standard-discussion?place=msg\%2Fstd-discussion\%2Fj63Em3eUa5c\%2FDwdIEjBJAgAJ}}. Later we also reported this (incorrectly) as an editorial issue of the standard\footnote{\url{https://github.com/cplusplus/draft/issues/1845}} and it seems that someone is already working on that.
+
+
 \ifshowoldstuff
 
 \chapter{-------------------------}
