@@ -18,6 +18,7 @@
 \usepackage{mathpartir}
 \usepackage{listings}
 \usepackage{subcaption}
+\usepackage{IEEEtrantools}
 \usepackage{xspace} % https://tex.stackexchange.com/a/17873
 %\usepackage{todonotes}
 %\usepackage{mathtime}
@@ -82,6 +83,8 @@ faculty = {fi},
 
 \begin{document}
 
+\bstctlcite{BSTcontrol}
+
 \chapter{Introduction}
 
 Writing correct software is hard.
@@ -106,10 +109,10 @@ undefined behavior and other common programmer mistakes''~\cite{guth-hathhorn-sa
 
 
 %The thesis originally aimed to implement whichever language features needed to be done, as the C++ language is complex and the C++ semantics is still highly incomplete. As the work progressed, two features were selected to be implemented: \textit{enumerations} and \textit{constant expressions}.
-The thesis aimed to implement two language features: \textit{enumerations} and \textit{constant expressions}. When we decided to implement the enumerations, we thought that it is a relatively simple language feature: they do not have any special runtime behavior, do not interfere much with other language features, and they exist in the language from its beginning. The \textit{scoped enumerations}, introduced in C++11, are even simpler both from language and user point of view (the legacy C-style enumerations still need to be supported, though). However, careful reading of the standard~\cite{n4296} revealed us that the enumerations behave in many ways which we considered to be surprising, as we did not know them from common programming practice.
-% Mam i tady pouzivat autorsky plural?
+The thesis aimed to implement two language features: \textit{enumerations} and \textit{constant expressions}. When we decided to implement the enumerations, we thought that it is a relatively simple language feature: they do not have any special runtime behavior, do not interfere much with other language features, and they exist in the language from its beginning. The \textit{scoped enumerations}, introduced in C++11~\cite{ISOcpp11}, are even simpler both from language and user point of view (the legacy C-style enumerations still need to be supported, though). However, careful reading of the standard~\cite{n4296} revealed us that the enumerations behave in many ways which we considered to be surprising, as we did not know them from common programming practice.
+%TODO tady bych se jeste neodkazova na n4296
 
-\textit{Constant expressions}, on the contrary, had undergone a~deep change in C++11, which allowed a~restricted set of runtime computations to happen in the compilation time; the future revisions released the restrictions to the point that in C++17, almost arbitrary side effect free computations can happen in the time of compilation. Because of that, we expected from the beginning that in order to implement the constant expressions, a~more fundamental change to the semantics have to be done.
+\textit{Constant expressions}, on the contrary, had undergone a~deep change in C++11, which allowed a~restricted set of runtime computations to happen in the compilation time; the future revisions released the restrictions to the point that in C++17~\cite{ISOcpp17}, almost arbitrary side effect free computations can happen in the time of compilation. Because of that, we expected from the beginning that in order to implement the constant expressions, a~more fundamental change to the semantics have to be done.
 
 The two features were successfully implemented; the implementation of enumerations was merged into the upstream, the implementation of constant expression is likely to be merged soon. It went out that the they play together rather nicely: C++ requires enumerators to be initialized with constant expressions; therefore, the implementation of enumerations was used to test the implementation of constant expressions.  In addition, we fixed several bugs in the project, including one hard-to-debug nondeterministic behavior, and implemented a \textit{zero initialization} of class types.
 
@@ -543,6 +546,13 @@ In the preceding text, a number of built-in functions was used (e.g. \texttt{and
 
 \section{C++}
 
+C++ is a ,,general purpose programming language''~\cite{bjarne-cpp} originally created by Bjarne Stroustrup in the years between 1979 and 1983~\cite{bjarne-faq}. After some time, many independent implementation emerged, and in 1998 the language was standardized as ISO/IEC 14882:1998 international standard (\cite{ISOcpp98}); that version is now known as C++98.
+
+The language changed a lot since that time and it is still evolving. Compiler developer, standard library writers, members of the standardization committee... Once in a while, a new ISO standard is released. In 2014, ...
+
+Besides the ISO standards, the committee regularly issues a working draft of the standard, which can be  downloaded freely
+\footnote{\url{https://isocpp.org/std/the-standard}}
+
 Standard, see~\cite{n4296}.
 
 \subsection{Enumerations}
@@ -656,7 +666,7 @@ This behavior may be a source of confusion for programmers who do not know this;
 
 \subsubsection{Enumerators}
 
-Declaration of an enumerator may contain an optional \textit{initializer}. If the initializer is not specified, the value of the enumerator is zero if it is the first enumerator, otherwise it is the value of the previous enumerator plus one. When an enumeration is fully defined (,,following the closing brace of an enum-specifier''), the type of each enumerator is the type of the enumerator~\theStandard{\S 7.2:5}. For example, in the declaration of variable \texttt{e} in the Figure~\ref{fig:scopedEnumDecl}, the type of the expression \lstinline{E::B}{} is \texttt{E}.
+Declaration of an enumerator may contain an optional \textit{initializer}, which have to be implicitly convertible to an integral type\footnote{It is more complicated, but this is enough here.}. If the initializer is not specified, the value of the enumerator is zero if it is the first enumerator, otherwise it is the value of the previous enumerator plus one. When an enumeration is fully defined (,,following the closing brace of an enum-specifier''), the type of each enumerator is the type of the enumerator~\theStandard{\S 7.2:5}. For example, in the declaration of variable \texttt{e} in the Figure~\ref{fig:scopedEnumDecl}, the type of the expression \lstinline{E::B}{} is \texttt{E}.
 
 \begin{figure}
 \begin{lstlisting}
@@ -684,7 +694,7 @@ void foo(int x) { E e = x; }
 \label{fig:noConversionFromIntToEnum}
 \end{figure}
 
-An initializer of an enumerator may refer to previously declared enumerators of the same enumeration (see~\ref{fig:scopedEnumDecl}). Inside the enumeration declaration (prior its closing brace), the type of its enumerators is not the type of the enumerator, but always an integral type\footnote{We discuss this in more detail in Chapter~\ref{chap:implement}}. Because of the stronger-than-C type system, in some cases it would be even inconvenient if the types of enumerators were types of their enumerations. For example, the declaration in Figure~\ref{fig:scopedEnumDecl} declares an enumerator \texttt{B} with the initializer \lstinline{A + 3}{}. If the type of \texttt{A} in this expression were \texttt{E}, then the expression would be ill-formed, because the scoped enumeration does not convert to int, so it cannot be added to an int.
+An initializer of an enumerator may refer to previously declared enumerators of the same enumeration (see~\ref{fig:scopedEnumDecl}). Inside the enumeration declaration (prior its closing brace), the type of its enumerators is not the type of the enumerator, but always an integral type\footnote{We discuss this in more detail in Chapter~\ref{chap:evaluation}}. Because of the stronger-than-C type system, in some cases it would be even inconvenient if the types of enumerators were types of their enumerations. For example, the declaration in Figure~\ref{fig:scopedEnumDecl} declares an enumerator \texttt{B} with the initializer \lstinline{A + 3}{}. If the type of \texttt{A} in this expression were \texttt{E}, then the expression would be ill-formed, because the scoped enumeration does not convert to int, so it cannot be added to an int.
 
 %
 %\begin{figure}
@@ -763,7 +773,7 @@ enum class E { A = getchar() };
 \subsubsection{The intuition behind the standard}
 %TODO basic concepts: object/value distinction
 
-The standard defines a couple terms with respect to constant expressions; this subsection attempts to give the reader an intuition which is behind them. The term \textit{core constant expression} (\theStandard{\S 5.20.2}) is used to represent an expression, which can be evaluated easily, using only the information the compiler has in the time of compilation. The term \textit{constant expressions} (\theStandard{\S 5.20:5}) denotes a core constant expression, whose value ,,make sense'' in the compile time.
+The standard defines a couple terms with respect to constant expressions; this subsection attempts to give the reader an intuition which is behind them. The term \textit{core constant expression} (\theStandard{\S 5.20.2}) is used to represent an expression, which can be evaluated easily, using only the information the compiler has in the time of compilation. The term \textit{constant expressions} (\theStandard{\S 5.20:5}) denotes a core constant expression, whose value can exist and ,,makes sense'' in the compile time.
 
 \begin{figure}
 \begin{lstlisting}
@@ -818,13 +828,6 @@ Although C/C++ standards does not go to implementation details, they contain the
 
 \chapter{Project overview}
 
-
-%TODO write something here.
-
-% TODO tady nejakou historii; veci ohledne buildu do samostatne sekce
-
-% TODO muzu si nejak zadefinovat pojem 'the Project' nebo tak? Abych to nemusel porad opakovat
-
 %\section{Build notes}
 The project of C/C++ semantics in \K is hosted on GitHub\footnote{\url{https://github.com/kframework/c-semantics}}. It can be built easily by simply following the build instructions in the repository; however, the process deserves a~few things to be mentioned here.
 %TODO preformulovat lepe ^^^^^
@@ -836,6 +839,10 @@ The project of C/C++ semantics in \K is hosted on GitHub\footnote{\url{https://g
 \item The building process can take up to thirty minutes on this text's author's machine.
 \end{itemize}
 
+%TODO fedora build steps
+% pushd cpp-parser
+% cmake -DCMAKE_CXX_FLAGS=-fno-rtti -DLLVM_PATH:PATH=/home/jenda/local/llvm-4.9/ .
+% popd
 % TODO do evaluation zkusme dat nejake UB, zejmena UB na constexpr veci. Teda potom ten constexpr neni definovany. Jo ale musime zaridit, ze nam clang nebude sypat uz vyhodnocene veci.
 
 \section{Basic usage}
@@ -1211,9 +1218,13 @@ When designing the support for generalized constant expressions, several design 
 %TODO how does ExprLoc work
 %TODO KResults
 
-\chapter{Evaluation}
+\chapter{Evaluation}\label{chap:evaluation}
 What works and what does not. The bugs we have found in compilers. Ambiguity or contradictions in the standard. The one thing we implement the same way gcc and clang does, but technically is incorrect.
 
+\section{Limitations}
+%No __attribute__((packed)) is supported. But maybe I will fix it?
+
+%TODO prejmenovat lepe.
 \section{Defects}
 During the work, we discovered a few defects in major C++ compilers and also in the C++ standard. While most of them was already known among the experts, some of them are new; such defects were reported.
 % which were reported /* ... */.
@@ -1297,6 +1308,13 @@ that the type of the result is the type of the \textbf{enumerator},
 or to remove the relevant sentence completely. That is also how compilers seem to implement it: if \lstinline{E::A}{} had the type of an enumeration, such enumerator declaration would be ill-formed (\theStandard{\S 5.1.1/5}). Our language definition also takes this approach.
 
 This issue was first discussed on StackOverflow\footnote{\url{https://stackoverflow.com/q/42369314/6209703}}, than it was raised in the ISO C++ Google Group\footnote{\url{https://isocpp.org/forums/iso-c-standard-discussion?place=msg\%2Fstd-discussion\%2Fj63Em3eUa5c\%2FDwdIEjBJAgAJ}}. Later we also reported this (incorrectly) as an editorial issue of the standard\footnote{\url{https://github.com/cplusplus/draft/issues/1845}} and it seems that someone is already working on that.
+
+%TODO related work: rv-match
+%TODO obecne veci k c++ - object/value distinction, lvalue/rvalue apod.
+
+\chapter{Conclusion}
+
+\section{Future work}
 
 
 \ifshowoldstuff
@@ -1455,7 +1473,7 @@ $\mall{blue}{content}{X > 3}$
 
 \fi %showoldstuff 
 
-\bibliographystyle{plain}
+\bibliographystyle{IEEEtran}
 \bibliography{references} 
 
 \end{document}
