@@ -549,18 +549,29 @@ In the preceding text, a number of built-in functions was used (e.g. \texttt{and
 C++ is a ,,general purpose programming language''~\cite{bjarne-cpp} originally created by Bjarne Stroustrup in the years between 1979 and 1983~\cite{bjarne-faq}. After some time, many independent implementation emerged, and in 1998 the language was standardized as ISO/IEC 14882:1998 international standard (\cite{ISOcpp98}); that version is now known as C++98. The language changed a lot since that time. New compilers emerged (e.g Clang), compilers implemented a lot of experimental features (e.g. Clang's Modules\footnote{\url{https://clang.llvm.org/docs/Modules.html}}), many core language and standard library defects were fixed and the memory model was standardized. The language is gradually evolving and once in a while, the C++ Standards Committee~\cite{wg21home} emits an ISO standard. In the time of writing, the newest C++ standard is C++17~\cite{ISOcpp17}, which was technically completed in March 2017 and should be officially published in December 2017.
 
 \subsection{Standard documents}
-Although the most videly known documents created by the committee are the international standards, the committee is working all the time. The committe produces a large amount of documents, most of which are publicly available~\cite{wg21papers}; also, every document is assigned an unique identifier, which is then used to reference the document. Among the publicly available documents are also \textit{workings drafts} of the ISO standard; in this thesis we mostly use the document \texttt{n4296}, which is the first draft released after the C++14 ISO standard. The working draft is hosted on GitHub\footnote{\url{https://github.com/cplusplus/draft/}}; it therefore possible to build it directly from its \LaTeX{ }source or to download the emitted releases on the Release page.
+Although the most videly known documents created by the committee are the international standards, the committee is working all the time. The committe produces a large amount of documents, most of which are publicly available~\cite{wg21papers}; also, every document is assigned an unique identifier, which is then used to reference the document. Among the publicly available documents are also \textit{workings drafts} of the ISO standard; in this thesis we mostly use the document \texttt{n4296}~\cite{n4296}, which is the first draft released after the C++14 ISO standard (\cite{ISOcpp14}). The working draft is hosted on GitHub\footnote{\url{https://github.com/cplusplus/draft/}}; it therefore possible to build it directly from its \LaTeX{ }source or to download the emitted releases on the Release page.
 
 %TODO citable project with assigned DOI https://guides.github.com/activities/citable-code/
 
 \subsection{Fundamentals}
 %Stepanov, chapter 1,  foundations
 
+This section describes some of the fundamental concepts of the C++ language. %Without going to details.
+
+In C++, the memory consists of one or multiple sequences of contiguous bytes, where every \textit{byte} has an unique \textit{address}~\theStandard{\S 1.7/1}. Various constructs of the language can create and destroy \textit{objects}; an object is a region of storage, not necessarily contiguous~\theStandard{\S 1.8/1}. Objects can contain \textit{subobjects}; an objects not contained in any other objects is a \textit{complete object}. Every complete object has to occupy at least one byte of the storage; therefore, we can think of objects as having an \textit{identity}.
+%TODO the standard does not define an object identity, but it uses it in 18.5/12, 25.1/10, 1.9/12
+%TODO the standard should not say that the object 'is' a region of storage and then say that object 'has' a region of storage (3.7 storage contains object)
+% In C++17, or in the current version of the draft, the terminology is much cleaner
+
+Objects and values.
+In C++, a \texttt{variable} can be either an \texttt{object}, or a reference \theStandard{\S 3/3}. Reference is not an object; unlike objects, references does not need to occupy storage
+Declaration...\theStandard{\S 3.1/1-2}
+Expressions, value categories \theStandard{\S 3.10}
 
 \subsection{Enumerations}
 
 Many languages implement enumerated types as a means for programmers to define a finite set of related values. Enumerations in the C++ language are based on enumerations from the C language. In this section we give a brief presentation of the C++ enumerations, as defined in~\cite{n4296}. Note that this text is concerned with what the language allows, rather than what is consider to be a good practice. For a discussion about the latter we point the reader to the relevant section of CppCoreGuidelines\footnote{\url{http://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines}}. 
-
+%TODO move this into literature
 \subsubsection{Unscoped enumerations}
 
 \begin{figure}
@@ -762,7 +773,7 @@ enum E;
 %TODO inicializer je jednou 'integral constant expression' a podruhe 'converted constant expression'.
 
 \subsection{Constant expressions}
-In C++, expressions are used almost everywhere. However, not every kind of expression can be used everywhere: one can hardly imagine the code in Figure~\ref{fig:getcharInEnum} to be valid. The expressions used in an enum declaration or as a \texttt{case} labels of a \texttt{switch} statement have to be computable in the compilation time. Those kind of expressions are generally known as \textit{constant expressions}; they are defined in~\theStandard{\S 5.20}.
+In C++, expressions are used almost everywhere. However, not every kind of expression can be used everywhere: one can hardly imagine the code in Figure~\ref{fig:getcharInEnum} to be valid. The expressions used in an enum declaration or as a \texttt{case} label of a \texttt{switch} statement have to be computable in the compilation time. Those kind of expressions are generally known as \textit{constant expressions}; they are defined in~\theStandard{\S 5.20}.
 
 \begin{figure}
 \begin{lstlisting}
@@ -1227,7 +1238,7 @@ What works and what does not. The bugs we have found in compilers. Ambiguity or 
 %No __attribute__((packed)) is supported. But maybe I will fix it?
 
 %TODO prejmenovat lepe.
-\section{Defects}
+\section{Defects found in other projects}
 During the work, we discovered a few defects in major C++ compilers and also in the C++ standard. While most of them was already known among the experts, some of them are new; such defects were reported.
 % which were reported /* ... */.
 In this section, we give a brief overview of the defects we found, including the ones which were already known but not fixed yet.
