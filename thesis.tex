@@ -546,14 +546,16 @@ In the preceding text, a number of built-in functions was used (e.g. \texttt{and
 
 \section{C++}
 
-C++ is a ,,general purpose programming language''~\cite{bjarne-cpp} originally created by Bjarne Stroustrup in the years between 1979 and 1983~\cite{bjarne-faq}. After some time, many independent implementation emerged, and in 1998 the language was standardized as ISO/IEC 14882:1998 international standard (\cite{ISOcpp98}); that version is now known as C++98.
+C++ is a ,,general purpose programming language''~\cite{bjarne-cpp} originally created by Bjarne Stroustrup in the years between 1979 and 1983~\cite{bjarne-faq}. After some time, many independent implementation emerged, and in 1998 the language was standardized as ISO/IEC 14882:1998 international standard (\cite{ISOcpp98}); that version is now known as C++98. The language changed a lot since that time. New compilers emerged (e.g Clang), compilers implemented a lot of experimental features (e.g. Clang's Modules\footnote{\url{https://clang.llvm.org/docs/Modules.html}}), many core language and standard library defects were fixed and the memory model was standardized. The language is gradually evolving and once in a while, the C++ Standards Committee~\cite{wg21home} emits an ISO standard. In the time of writing, the newest C++ standard is C++17~\cite{ISOcpp17}, which was technically completed in March 2017 and should be officially published in December 2017.
 
-The language changed a lot since that time and it is still evolving. Compiler developer, standard library writers, members of the standardization committee... Once in a while, a new ISO standard is released. In 2014, ...
+\subsection{Standard documents}
+Although the most videly known documents created by the committee are the international standards, the committee is working all the time. The committe produces a large amount of documents, most of which are publicly available~\cite{wg21papers}; also, every document is assigned an unique identifier, which is then used to reference the document. Among the publicly available documents are also \textit{workings drafts} of the ISO standard; in this thesis we mostly use the document \texttt{n4296}, which is the first draft released after the C++14 ISO standard. The working draft is hosted on GitHub\footnote{\url{https://github.com/cplusplus/draft/}}; it therefore possible to build it directly from its \LaTeX{ }source or to download the emitted releases on the Release page.
 
-Besides the ISO standards, the committee regularly issues a working draft of the standard, which can be  downloaded freely
-\footnote{\url{https://isocpp.org/std/the-standard}}
+%TODO citable project with assigned DOI https://guides.github.com/activities/citable-code/
 
-Standard, see~\cite{n4296}.
+\subsection{Fundamentals}
+%Stepanov, chapter 1,  foundations
+
 
 \subsection{Enumerations}
 
