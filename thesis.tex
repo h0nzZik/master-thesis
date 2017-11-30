@@ -809,6 +809,9 @@ int h[3] = {1,2,3};
 
 It is important to note that all the previous categories consider only the form of the declaration; the semantics of such declarations heavily depends on the types involved. For example, the \textit{copy-initialization} form is often used in a declaration of a reference; when used in a declaration of an object of a class type, a \textit{move constructor} may be invoked instead of \texttt{copy constructor}.
 
+%TODO inicializace muze probihat i jindy
+
+
 \subsubsection{Aggregates}
 
 The C++ language enables programmers to declare \textit{classes}. From the programming methodology standpoint, not all classes are the same kind: for example, some classes are designed to hold values (e.g. \texttt{std::complex}); other ones encapsulate behavior and while the identities of their instances are really important to programmers, their values are not. Classes can also be categorized from another perspective: some of them maintain a non-trivial \textit{invariant}, thus restricting the set of possible values their member variables may hold (e.g. \texttt{std::vector}); other classes consider their members to be independent of each other (e.g. \texttt{std::pair}), and the set of possible values of such class is then equal to the Cartesian product of the possible values of its members. Such types are commonly known as \textit{product types}\footnote{More formal treatment of product types can be found in \cite[Chapter~1.5]{hottbook}.}. In C++, the notion of types composed freely from other types is present in the form of \textit{aggregates}:
@@ -818,9 +821,26 @@ protected non-static data members (Clause 11), no base classes (Clause 10), and 
 \end{displayquote}
 %TODO zeptat se Honzy Strejcka, jestli je ten odkaz na HoTT knihu dobry napad. Je to trosku unrelated.
 \subsubsection{Aggregate initialization}
-In newer versions of the language, the restrictions on aggregate classes are a more relaxed; for example, an aggregate class may have a public non-virtual base class. Nevertheless, the idea is still the same: an \textit{aggregate} is ,,something \textit{simply} composed of other things''. Because of that, the language provides a special way to initialize an object of an aggregate type - an \textit{aggregate initialization}.
+In newer versions of the language, the restrictions on aggregate classes are more relaxed; for example, an aggregate class may have a base class, but under the condition that it is non-virtual and public~\stdN{n4700}{\S 11.6.1/1}. Nevertheless, the idea is still the same: an \textit{aggregate} is ,,something \textit{simply} composed of other things''. Because of that, the language provides a special way to initialize an object of an aggregate type - an \textit{aggregate initialization}.
 
-%TODO inicializace muze probihat i jindy
+\begin{figure}[ht]
+\begin{lstlisting}
+struct S {
+  char a;
+  int b[2];
+  double c;
+};
+S s = {'a', {2, 3}};
+\end{lstlisting}
+\caption[An exaple of an aggregate initialization.]{An exaple of an aggregate initialization. The member \texttt{c} is initialized with the value of the expression \lstinline|double\{\}| , which is a floating-point zero.}
+\label{fig:aggrInit}
+\end{figure}
+%TODO short captions for the 'List of Figures'
+
+
+The \textit{aggregate initialization} happens, when an aggregate is initialized using \textit{list-initialization}. If it happens, the \textit{elements} of the aggregate, that is, the array elements or the non-static member variables, are initialized with the respective \textit{initializer clauses} in the order of increasing indices, or in the order of declarations, respectively~\stdN{n4296}{\S 8.5.1/2}. If there are not enough initializer clauses in the initializer list, the remaining aggregate elements are initialized from an empty initializer list (see Figure~\ref{fig:aggrInit}).
+
+\subsubsection{Value initialization}
 
 \subsection{Constant expressions}
 In C++, expressions are used almost everywhere. However, not every kind of expression can be used everywhere: one can hardly imagine the code in Figure~\ref{fig:getcharInEnum} to be valid. The expressions used in an enum declaration or as a \texttt{case} label of a \texttt{switch} statement have to be computable in the compilation time. Those kind of expressions are generally known as \textit{constant expressions}; they are defined in~\std{14}{\S 5.20}.
