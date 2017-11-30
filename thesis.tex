@@ -566,11 +566,13 @@ This section describes some of the fundamental concepts of the C++ language. %Wi
 In C++, the memory consists of one or multiple sequences of contiguous bytes, where every \textit{byte} has an unique \textit{address}~\stdN{n4700}{\S 4.4/1}. Various constructs of the language can create and destroy \textit{objects}; an object occupies a region of storage, not necessarily contiguous~\stdN{n4700}{\S 4.5/1}. Objects can contain \textit{subobjects}; an objects not contained in any other objects is a \textit{complete object}. Every complete object has to occupy at least one byte of the storage; therefore, we can think of objects as having an \textit{identity} (we can identify them by the first byte of their storage).
 
 %TODO
-Objects are used to hold \textit{values}. The standard itself (at least until \cite{n4700}) does not specify what a \textit{value} is, but one can think of values as of interpretations of data. Types help to interpret values. More in-depth discussion can be found in the first chapter of \cite{progelements}.
+Objects are used to hold \textit{values}. Although the standard often refers to values, it does not specify what a \textit{value} is (at least until \cite{n4700}). One can think of value as of a \textit{datum} together with its \textit{interpretation}; an interpretation of a datum is some concrete, real-world entity\footnote{This notion of \textit{concrete entity} is something different than \textit{C++ entity} as defined in the C++ language~\stdN{n4296}{\S 3/3}. }. 
+%Types help to interpret values.
+More in-depth discussion about entities and their computer representations can be found in the first chapter of \cite{progelements}.
 
 %n4700 6.9/4 object representation of an object
 %Objects and values.
-A \texttt{variable} can be either an \texttt{object}, or a reference \stdN{n4700}{\S 6/6}. Reference is not an object; unlike objects, references does not need to occupy storage and do not have an identity.
+A \texttt{variable} can be either an object, or a \textit{reference} \stdN{n4700}{\S 6/6}. Reference is not an object; unlike objects, references does not need to occupy storage and do not have an identity.
 %Declaration...\std{14}{\S 3.1/1-2}
 %Expressions, value categories \std{14}{\S 3.10}
 
