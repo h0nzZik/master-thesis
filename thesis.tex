@@ -106,7 +106,7 @@ It is based on the idea that formal, executable language semantics can be used t
 \begin{figure}[ht]
 \centering
 \includegraphics[width=0.7\linewidth]{img/kidea.png}
-\caption{The idea behind \K. Adopted from~\cite{rosu-2015-meseguer}.}
+\caption[The \K idea]{The idea behind \K. Adopted from~\cite{rosu-2015-meseguer}.}
 \label{kidea}
 % The image is simply print-screen-ed. Je to ok? A muzu rikat, ze jsem ho adoptoval?
 \end{figure}
@@ -207,7 +207,7 @@ syntax Stmt  ::= Block
                | Stmt Stmt
 syntax Pgm   ::= Stmt
 \end{lstlisting}
-\caption{A definition of an algebraic signature of an imperative language.}
+\caption[An algebraic signature of an imperative language]{A definition of an algebraic signature of an imperative language.}
 \label{impSyntax}
 \end{figure}
 
@@ -263,7 +263,7 @@ module ARITH
                 </T>
 endmodule
 \end{lstlisting}
-\caption{File \texttt{arith.k}. Note the \texttt{ret} cell with an \texttt{exit} attribute.}
+\caption[Syntax and configuration of a language of arithmetic expressions]{File \texttt{arith.k}. Note the \texttt{ret} cell with an \texttt{exit} attribute.}
 \label{arithSource}
 \end{figure}
 
@@ -801,7 +801,7 @@ int f();
 char g[]{'a', 'b'};
 int h[3] = {1,2,3};
 \end{lstlisting}
-\caption{Declaration of variables \texttt{a},\texttt{b},\texttt{c},\texttt{d},\texttt{e},\texttt{g},\texttt{h}. The identifier \texttt{f} is not declared as a variable of type \texttt{int}, but as a function taking no parameters and returning an \texttt{int}.}
+\caption[Declarations and initializers]{Declaration of variables \texttt{a},\texttt{b},\texttt{c},\texttt{d},\texttt{e},\texttt{g},\texttt{h}. The identifier \texttt{f} is not declared as a variable of type \texttt{int}, but as a function taking no parameters and returning an \texttt{int}.}
 \label{fig:initializers}
 \end{figure}
 
@@ -831,7 +831,7 @@ struct S {
 };
 S s = {'a', {2, 3}};
 \end{lstlisting}
-\caption[An exaple of an aggregate initialization.]{An exaple of an aggregate initialization. The member \texttt{c} is initialized with the value of the expression \lstinline|double\{\}| , which is a floating-point zero.}
+\caption[Aggregate initialization.]{An exaple of an aggregate initialization. The member \texttt{c} is initialized with the value of the expression \lstinline|double\{\}| , which is a floating-point zero.}
 \label{fig:aggrInit}
 \end{figure}
 %TODO short captions for the 'List of Figures'
@@ -841,8 +841,33 @@ The \textit{aggregate initialization} happens, when an aggregate is initialized 
 
 \subsection{Value initialization}
 
+When an object is created with no initializer, it is \textit{default-initialized}, which in many situations means that no initialization is performed and the object has an undeterminate value. The language also defines a \textit{value initialization}, whose purpose is to somehow ,,complement'' the notion of ,,no initialization'':
+\begin{displayquote}
+\textelp{} An object that is value-initialized is deemed to be constructed and thus subject to provisions of this International Standard applying to “constructed” objects, objects “for which the constructor has completed,” etc., even if no constructor is invoked for the object’s initialization. \stdN{n4296}{\S 8.5/8}
+\end{displayquote}
+
+A value-initialization is performed in various different cases. For example, the standard says
+\begin{displayquote}
+An object whose initializer is an empty set of parentheses, i.e., (), shall be value-initialized.\textelp{}~\stdN{n4296}{\S 8.5/11}
+\end{displayquote}
+which is demostrated in Figure~\ref{fig:valueInitMember}. (However, the declaration of \texttt{f} in Figure~\ref{fig:initializers} does not declare an object, but a function; in that case, no value initialization is performed.) Value initialization is also performed for list-initialized objects of a class type with default constructor~\stdN{n4296}{\S 8.5.4/5.4}. Such class types are not aggregates, so no aggregate initialization can happen for them.
+
+\begin{figure}[ht]
+\begin{lstlisting}
+struct A {
+  T m;
+  A():m() {}
+};
+\end{lstlisting}
+\caption{A \textit{value-initialization} of a member variable in a constructor.}
+\label{fig:valueInitMember}
+\end{figure}
+
+\subsection{Zero initialization}
+In some cases, value initialization performs a \textit{zero initialization}.
+
 \section{Constant expressions}
-In C++, expressions are used almost everywhere. However, not every kind of expression can be used everywhere: one can hardly imagine the code in Figure~\ref{fig:getcharInEnum} to be valid. The expressions used in an enum declaration or as a \texttt{case} label of a \texttt{switch} statement have to be computable in the compilation time. Those kind of expressions are generally known as \textit{constant expressions}; they are defined in~\std{14}{\S 5.20}.
+In C++, expressions are used almost everywhere. However, not every kind of expression can be used everywhere: one can hardly imagine the code in Figure~\ref{fig:getcharInEnum} to be valid. The expressions used in an enum declaration or as a \texttt{case} label of a \texttt{switch} statement have to be computable in the compilation time. Those kind of expressions are generally known as \textit{constant expressions}; they are defined in~\stdN{n4296}{\S 5.20}.
 
 \begin{figure}
 \begin{lstlisting}
@@ -909,6 +934,8 @@ Although C/C++ standards does not go to implementation details, they contain the
 \fi %showoldstuff
 
 \chapter{Project overview}
+%TODO zminit to odlisovani sort, syntax a semantics modulu
+%TODO K Labels
 
 %\section{Build notes}
 The project of C/C++ semantics in \K is hosted on GitHub\footnote{\url{https://github.com/kframework/c-semantics}}. It can be built easily by simply following the build instructions in the repository; however, the process deserves a~few things to be mentioned here.
@@ -1140,6 +1167,10 @@ rule <k> sendString(FD::Int, S::String)
 \chapter{Implementation}\label{chap:implement}
 
 This chapter focuses on those parts of the C/C++ semantics project, which are related to the goal and contribution of this thesis. The chapter describes the implementation of the main features, shows relations between the implementation, standard and general architecture of the semantics, and highlights some aspects of the C++ language one may perhaps oversee when using the language as a~programmer. The last section of this chapter then gives a~short evaluation of the implementation.
+
+\section{Methodics}
+TODO jak jsem postupoval pri implementaci. Nejprve jsem nasel konkretni test-casy, ktere jsem porovnal se standardem, s prekladacema i s stackoverflow; pak jsem nasel vhodne misto v projektu a dopsel do nej kod; v prubehu casu jsem generoval ruzne hranicni pripady...
+
 
 %Cells - semantic components.
 %Co se ukládá do konfigurace? Kam se to ukládá? 
