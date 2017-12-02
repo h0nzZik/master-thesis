@@ -1358,7 +1358,7 @@ The clang fronted supports this intrinsic, too. Our tool \clangKast translates t
 When we were choosing the features to implement as a part of this thesis, we did not intend to implement anything class-related at all. Later, when most of the enumerations-related language features was implemented, the maintainer of the \Project suggested\footnote{\url{https://github.com/kframework/c-semantics/pull/275\#issuecomment-294241691}}
 that we could implement zero-initialization on class types (see Section~\ref{chap:lang:init}). Since we wanted to gain deeper understanding of both the C++ language and the \Project before attempting to tackle the problem of generalized constant expressions, and the implementation part of the zero-initialization of class-types seemed to be relatively straightforward, we agreed. However, the implementation of this feature turned out to be far more challenging than we thought.
 
-\subsection{First problem: nondeterminism}
+\subsection{A bug: nondeterminism}
 
 The first problem we encountered was quite surprising. It took us many hours, perhaps a few tens of hours, to identify it; however, the bug was quite easy to fix. The \Project contained two rules as in Figure~\ref{fig:nondetRules}, which had to differentiate between two cases in list-initialization: when the initializer list is empty, the object should be value-initialized (as in~\stdN{n4296}{\S 8.5.4/3.4}, the first rule), and when it is non-empty, the object should be constructed with a constructor (as in~\stdN{n4296}{\S 8.5.4/3.6}, the second rule). However, the second rule could apply even when the initializer list was empty, which was the bug.
 
@@ -1381,10 +1381,9 @@ If we had had a deeper understanding of how non-determinism works in \K, and had
 %TODO ani jsem se nepokusil porozumet presneji tomu, proc se to nekdy projevuje a nekdy ne
 %TODO zminit ze by to ale nemuselo stat tolik casu, kdybych vedel, ze problem s nedeterminismem muze nastat; pak bych asi mozna vyzkousel ty vlastnosti K, ktere umozni nedetermismus detekovat.
 
-\subsection{Second problem}
+\subsection{Another bug: no default initialization}
 
-The second problem manifested 
-\url{https://github.com/kframework/c-semantics/pull/291}. Both were merged into the upstream.
+The second problem caused some classes to not be default-initialized. The semantics contained a rule responsible for zero-initializing an object of a class type with subsequent default-initialization; the rule aimed to skip the default-initialization phase for classes with trivial default-constructor, but the phase was skipped in the other case instead. This caused an assertion failure for code in~Figure~\ref{fig:defaultCtor}. This bug was also easy to fix\footnote{Fixed in PR~\url{https://github.com/kframework/c-semantics/pull/291}. Note that the accompanying test-case tests default-initialization without preceding zero-initialization, which is not exactly what the patch fixes. This is probably due to the fact that in the time of fixing this, zero initialization of classes was not implemented yet, and therefore the correct test-case would not execute properly.}.
 
 \begin{figure}[ht]
 \begin{lstlisting}[language=c++]
@@ -1394,12 +1393,13 @@ struct Def {
 };
 
 int main() {
-  Def def;
+  Def def{};
   assert(def.y == 7);
 }
 \end{lstlisting}
+\caption{Non-trivial implicitly-defaulted default constructor.}
+\label{fig:defaultCtor}
 \end{figure}
-
 
 
 
