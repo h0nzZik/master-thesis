@@ -863,8 +863,43 @@ struct A {
 \label{fig:valueInitMember}
 \end{figure}
 
+To value initialize an array means to value initialize all its elements; to value initialize an object of a non-class non-array type means to zero-initialize it. Value initialization of an object of a class type performs default-initialization; the default-initialization is preceded by zero initialization if the class does not have a user-defined or deleted default constructor.
+
+\begin{figure}
+\begin{lstlisting}
+struct A {
+  int m;
+};
+struct B {
+  virtual ~B(){}
+  int m = 1;
+  int n;
+};
+int bar() {
+  A a{};
+  B b1{};
+  B b2;
+  int c{};
+}
+\end{lstlisting}
+\caption{Initialization from an empty initializer list.}
+\label{fig:valueInit}
+\end{figure}
+
+The source code in Figure~\ref{fig:valueInit} can serve as an example. The variables \texttt{a}, \texttt{b1} and \texttt{c} are list-initialized, while the variable \texttt{b2} is default-initialized; however, the meaning of the list-initialization among the variables differs. The variable \texttt{c} is value-initialized, and since it has a non-class non-array type, it is zero-initialed; after the initialization, the value of \lstinline|x| is zero. The variable \texttt{a} is aggregate-initialized, because the class \texttt{A} is an aggregate; since the initializer-list is empty, its member variable \texttt{m} is initialized with the initializer \lstinline|{}|, which performs zero-initialization as in the previous case. At the end, the integer \lstinline|a.m| has the value of zero.
+
+The variable \texttt{b1} is not aggregate-initialized, as the class \texttt{B} is not an aggregate, because it has a virtual member function (the destructor); the variable \texttt{n2} is value-initialized instead. The value-initialization performs a zero-initialization, because the class \texttt{A} does not have neither user-provided nor deleted default constructor, but the default constructor is implicitly-generated. After the zero initialization, a default-initialization happens, which runs the implicitly-generated default constructor. At the end, the value of \lstinline|b1.m| is one and the value of \lstinline|b1.n| is zero.
+In contrast, the variable \texttt{b2} is only default-initialized; the value of \lstinline|b2.m| is one as in the previous case, but the value of \lstinline|b1.n| indeterminate.
+
 \subsection{Zero initialization}
-In some cases, value initialization performs a \textit{zero initialization}.
+The exact meaning of \textit{zero-initialization} is described in \stdN{n4296}{\S 8.5/6}. References are not initialized at all, scalars are initialized to the value of zero converted to the particular scalar type, arrays are zero-initialized element-wise and objects of non-union class types are zero-initialized by zero-initializing all non-static data its members, base class subobjects and padding. We do not deal with union classes in this thesis.
+
+In addition to the cases described in previous paragraphs, zero initialization happens in a two more situations.
+\begin{itemize}
+\item When initializing a character array with a string literal that is not long enough, the rest of the array is zero-initialized.
+\item Before other initializations of variables with non-static storage duration. Programmers may known this in a simplified form as the rule ,,in C/C++, global variables are initialized to zero''.
+\end{itemize}
+This thesis is not concerned with these two situations.
 
 \section{Constant expressions}
 In C++, expressions are used almost everywhere. However, not every kind of expression can be used everywhere: one can hardly imagine the code in Figure~\ref{fig:getcharInEnum} to be valid. The expressions used in an enum declaration or as a \texttt{case} label of a \texttt{switch} statement have to be computable in the compilation time. Those kind of expressions are generally known as \textit{constant expressions}; they are defined in~\stdN{n4296}{\S 5.20}.
