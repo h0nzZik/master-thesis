@@ -782,7 +782,7 @@ enum E;
 %TODO where is the exact point of declaration?
 %TODO inicializer je jednou 'integral constant expression' a podruhe 'converted constant expression'.
 
-\section{Initialization}
+\section{Initialization} \label{chap:lang:init}
 As a part of this thesis we also implemented a language feature called \textit{zero initialization} on class types. In this section we describe how variables are initialized in general, and how \textit{zero initialization} fits into the overall scheme. The details of how we implemented \textit{zero initialization} are in Section~\ref{chp:implZeroInit}.
 
 \subsection{Initialization forms}
@@ -912,8 +912,7 @@ enum class E { A = getchar() };
 \label{fig:getcharInEnum}
 \end{figure}
 
-\subsection{The intuition behind the standard}
-%TODO basic concepts: object/value distinction
+\subsection{The intuition}
 
 The standard defines a couple terms with respect to constant expressions; this subsection attempts to give the reader an intuition which is behind them. The term \textit{core constant expression} (\std{14}{\S 5.20.2}) is used to represent an expression, which can be evaluated easily, using only the information the compiler has in the time of compilation. The term \textit{constant expressions} (\std{14}{\S 5.20:5}) denotes a core constant expression, whose value can exist and ,,makes sense'' in the compile time.
 
@@ -1355,6 +1354,54 @@ The clang fronted supports this intrinsic, too. Our tool \clangKast translates t
 %TODO zminit osklive chování. Že spoustu věcí je unspecified. A že se můžeme dotazovat na spoustu věcí uvnitř deklarace enumerátoru, dívat se do šablon etc.
 
 \section{Zero initialization of class types}\label{chp:implZeroInit}
+
+When we were choosing the features to implement as a part of this thesis, we did not intend to implement anything class-related at all. Later, when most of the enumerations-related language features was implemented, the maintainer of the \Project suggested\footnote{\url{https://github.com/kframework/c-semantics/pull/275\#issuecomment-294241691}}
+that we could implement zero-initialization on class types (see Section~\ref{chap:lang:init}). Since we wanted to gain deeper understanding of both the C++ language and the \Project before attempting to tackle the problem of generalized constant expressions, and the implementation part of the zero-initialization of class-types seemed to be relatively straightforward, we agreed. However, the implementation of this feature turned out to be far more challenging than we thought.
+
+\subsection{First problem: nondeterminism}
+
+The first problem we encountered was quite surprising. It took us many hours, perhaps a few tens of hours, to identify it; however, the bug was quite easy to fix. The \Project contained two rules as in Figure~\ref{fig:nondetRules}, which had to differentiate between two cases in list-initialization: when the initializer list is empty, the object should be value-initialized (as in~\stdN{n4296}{\S 8.5.4/3.4}, the first rule), and when it is non-empty, the object should be constructed with a constructor (as in~\stdN{n4296}{\S 8.5.4/3.6}, the second rule). However, the second rule could apply even when the initializer list was empty, which was the bug.
+
+\begin{figure}
+\begin{lstlisting}
+rule #figureInit(/*...*/, ExpressionList(.List),/*...*/)
+     => #valueInit(/*...*/)
+     
+rule #figureInit(/*...*/, ExpressionList(L::List),/*...*/)
+     => constructorInit(/*...*/)
+\end{lstlisting}
+\caption{The rules causing the nondeterminism}
+\label{fig:nondetRules}
+\end{figure}
+
+The bug was hard to identify, because if both rules could apply, the \K framework usually applied the first. However, when we began the implementation of the zero initialization on class types, the non-determinism manifested. When the newly-written zero-initialization code contained a bug which should cause the compilation to get stuck, then the second rule applied, thus bypassing our newly-written code.
+
+If we had had a deeper understanding of how non-determinism works in \K, and had we considered the possibility of existence of non-deterministic behavior in the translation semantics, we would probably found the bug sooner. Once we knew about this non-determinism, it was easy to fix it\footnote{\url{https://github.com/kframework/c-semantics/pull/287}}.
+
+%TODO ani jsem se nepokusil porozumet presneji tomu, proc se to nekdy projevuje a nekdy ne
+%TODO zminit ze by to ale nemuselo stat tolik casu, kdybych vedel, ze problem s nedeterminismem muze nastat; pak bych asi mozna vyzkousel ty vlastnosti K, ktere umozni nedetermismus detekovat.
+
+\subsection{Second problem}
+
+The second problem manifested 
+\url{https://github.com/kframework/c-semantics/pull/291}. Both were merged into the upstream.
+
+\begin{figure}[ht]
+\begin{lstlisting}[language=c++]
+struct Def {
+	int x;
+	int y = 7;
+};
+
+int main() {
+  Def def;
+  assert(def.y == 7);
+}
+\end{lstlisting}
+\end{figure}
+
+
+
 
 \section{Generalized constant expressions (constexpr)}
 
