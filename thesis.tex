@@ -938,7 +938,6 @@ The Figure~\ref{fig:constexprIntuition} can serve as an example here. The functi
 
 How is then possible that it may be used in the declaration (2)? Note that the variable is not initialized simply by the expression \lstinline{id(a)}{}, but with the rvalue-to-lvalue conversion of the result of that \lstinline{id(a)}{}; such composed expression is a \texttt{constant expression}. In other words, the declaration of \texttt{c} does not concerned with the identity of the object it is initialized with, but only with its value - and that value is known in the compile time, as the variable \texttt{a} is initialized with the constant expression \texttt{7}. The declaration (3) works because the variable \texttt{d} was declared \texttt{static}.
 
-
 \begin{figure}[ht]
 \begin{lstlisting}
 int main() {
@@ -949,6 +948,24 @@ int main() {
 \caption{Sometimes, \texttt{const} is enough.}
 \label{fig:constMayBeEnough}
 \end{figure}
+
+\begin{figure}[ht]
+\begin{lstlisting}
+$ cat foo.cpp
+int foo() { return 1; }
+int main() {
+    const int x = foo();
+    enum class E { A = x };
+}
+$ clang++ -std=c++14 foo.cpp
+error: enumerator value is not a constant expression
+note: initializer of 'x' is not a constant expression
+\end{lstlisting}
+\caption{Sometimes, \texttt{const} is not enough.}
+\end{figure}
+
+%a non-volatile glvalue of integral or enumeration type that refers to a complete non-volatile const
+%object with a preceding initialization, initialized with a constant expression
 
 %Const-qualified variables initialized with a constant expression can be used in constant expressions.
 %This can be seen in Figure~\ref{fig:constMayBeEnough}; the enumerator \texttt{E::A} is initialized with the initializer \texttt{x}, which has to be constant expression
@@ -1541,6 +1558,30 @@ Although the source code files for C and C++ execution semantics are located in 
 Before we started the work on generalized constant expressions, the module \texttt{C-CONFIGURATION} contained among other things a definition of configuration cell \texttt{thread-local}, which held most of the resources needed to run a single thread of execution - circa 100 lines of code. We decided to extract the definition into a newly created module \texttt{COMMON-THREAD-LOCAL}\footnote{in file \path{semantics/common/thread_local.k}} a reuse it in the C++ translation semantics.
 
 The problem with the reuse was that the cell \texttt{thread-local} contained some cells, whose names collided with names of cells already existing in the translation semantics. The collision was easily resolved by renaming the cells from the translation semantics (renaming the cells included in the \texttt{thread-local} cell would affect large parts of the C semantics).
+
+\subsection{Syntax}
+
+Another problem was that some syntactic constructs had a different meaning in the translation semantics than in the execution semantics. The constructor \texttt{IfStmt} (Figure~\ref{fig:ifStmt}) can serve as an example here. In the translation semantics, this statement could be processed only as a part of a function declaration; the translation semantics had to perform a contextual conversion on the expression and keep the rest of the work for the execution semantics. In the execution semantics, the statement could be processed only when executing a function, so it was needed to evaluate the condition first and then to rewrite the term to either the first statement (if-block) or the second (else-block).
+
+\begin{figure}[ht]
+\begin{lstlisting}
+syntax Stmt ::= IfStmt(Expr, Stmt, Stmt)
+\end{lstlisting}
+\caption{Syntactic construct for the C++ \texttt{if} statement.}
+\label{fig:ifStmt}
+\end{figure}
+
+However, if we tried to execute a function with an \texttt{IfStmt} during the translation semantics, the translation rules could still apply, which would be a problem. We solved this issue by two means. First, we introduced a nulary\footnote{It may still examine the current configuration using reflection.} boolean function \texttt{Execution}, which returns \texttt{true} in the execution semantics or when executing an expression during the translation semantics, and \texttt{false} when doing ,,real'' translation. Second, for many syntactic constructs (including \texttt{IfStmt} and \texttt{WhileStmt}) we introduced a new version of the construct only for the purpose of the translation semantics (e.g. \texttt{IfTStmt}, \texttt{WhileTStmt}) and changed the translation rules to work with these.
+
+
+
+%We also wanted to reuse the semantic rules from the execution semantics. For example, we wanted 
+
+%\begin{lstlisting}
+%rule IfStmt(prv(1, _, T:CPPBoolType), S::Stmt, _)
+%     => fullExpression ~> S
+%\end{lstlisting}
+
 
 \subsection{Evaluation and KResults}
 
