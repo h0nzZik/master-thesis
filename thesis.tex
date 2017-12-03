@@ -407,13 +407,15 @@ can be also written as
 rule I1:Int + I2:Int => I1 +Int I2
 \end{lstlisting}
 
-\section{Strictness and evaluation strategies}
+\section{Strictness and evaluation strategies} \label{sec:k:strictness}
 
 How to compute the sum of three numbers, say $1 + 2 + 3$? In the language Arith, the \texttt{+} constructor is left-associative, so the natural approach is to compute $1 + 2$ first, which yields a result $r$, and then to compute $r + 3$. Although it is possible to write such rules manually, \K provides a number of tools, which enable the programmer to describe such computations on higher level of abstraction.
 
 \subsection{Sort predicates}
 
-For every sort \texttt{Srt} \K automatically generates a~\textit{sort predicate} \texttt{isSrt} of sort \texttt{Bool}. The predicate takes any term and returns \texttt{true} if the term is of sort \texttt{Srt}, otherwise returns \texttt{false}. So far, the definition of Arith language can not evaluate nested expressions, as the built-in function~\texttt{+Int} can be applied only on terms of sort Int. Moreover, the left side of the rule requires the involved terms to be of sort \texttt{Int} With use of sort predicate, a rule
+For every sort \texttt{Srt} \K automatically generates a~\textit{sort predicate} \texttt{isSrt} of sort \texttt{Bool}. The predicate takes any term and returns \texttt{true} if the term is of sort \texttt{Srt}, otherwise returns \texttt{false}. One may override the default implementation of a sort predicate by writing a custom rule.
+
+So far, the definition of Arith language can not evaluate nested expressions, as the built-in function~\texttt{+Int} can be applied only on terms of sort Int. Moreover, the left side of the rule requires the involved terms to be of sort \texttt{Int} With use of sort predicate, a rule
 \begin{lstlisting}
 rule <l> E1:AExp + E2:AExp => -1 </l>
 requires notBool isInt(E1) orBool notBool isInt(E2)
@@ -566,6 +568,7 @@ This section describes some of the fundamental concepts of the C++ language. %Wi
 In C++, the memory consists of one or multiple sequences of contiguous bytes, where every \textit{byte} has an unique \textit{address}~\stdN{n4700}{\S 4.4/1}. Various constructs of the language can create and destroy \textit{objects}; an object occupies a region of storage, not necessarily contiguous~\stdN{n4700}{\S 4.5/1}. Objects can contain \textit{subobjects}; an objects not contained in any other objects is a \textit{complete object}. Every complete object has to occupy at least one byte of the storage; therefore, we can think of objects as having an \textit{identity} (we can identify them by the first byte of their storage).
 
 %TODO
+FIXME: this is not true, see \stdN{n4296}{3.9/4}.
 Objects are used to hold \textit{values}. Although the standard often refers to values, it does not specify what a \textit{value} is (at least until \cite{n4700}). One can think of value as of a \textit{datum} together with its \textit{interpretation}; an interpretation of a datum is some concrete, real-world entity\footnote{This notion of \textit{concrete entity} is something different than \textit{C++ entity} as defined in the C++ language~\stdN{n4296}{\S 3/3}. }. 
 %Types help to interpret values.
 More in-depth discussion about entities and their computer representations can be found in the first chapter of \cite{progelements}.
@@ -576,7 +579,7 @@ A \texttt{variable} can be either an object, or a \textit{reference} \stdN{n4700
 %Declaration...\std{14}{\S 3.1/1-2}
 %Expressions, value categories \std{14}{\S 3.10}
 
-An \textit{expression} is a language construct, which can be evaluated to get a value and to cause a side-effect. Every expression has an associated \textit{value category}: it can be either a \textit{glvalue}, which means that an evaluation of the expression determines an identity of an object (or function or bitfield), or a \textit{prvalue}, which means that the evaluation initializes an object or computes a value~\stdN{n4700}{6.10/1}.
+An \textit{expression} is a language construct, which can be evaluated to get a value and to cause a side-effect. Every expression has an associated \textit{value category}: it can be either a \textit{glvalue}, which means that an evaluation of the expression determines an identity of an object (or function or bitfield), or a \textit{prvalue}, which means that the evaluation initializes an object or computes a value~\stdN{n4700}{6.10/1}. The category of \textit{glvalue}s is further divided into \textit{lvalue}s and \textit{xvalue}s. 
 
 \section{Enumerations}
 
@@ -1030,9 +1033,41 @@ Hello woError: Execution failed.
 
 %The \krun tool can be also configured to traverse the transition system in a~different manner, e.g. to perform a~search for a~specific \textit{pattern}, or to stop the traversal after specified number of steps.
 
-The \Project internally consists of a clang-based tool \clangKast and many \K modules. The modules are composed into three language definitions: the definition of C11 translation semantics, the definition of C++14 translation semantics and the definition of C11/C++14 execution semantics. The language definitions has to be compiled by \kompile; the compilation of both \clangKast and the language definitions is driven by a Makefile.
+The \Project internally consists of a clang-based tool \clangKast and many \K modules. The modules are composed into three language definitions:
+\begin{itemize}
+\item the definition of C11 translation semantics, which we will refer to as \textit{C translation semantics};
+\item the definition of C++14 translation semantics, which we will refer to as \textit{C++ translation semantics}, or simply \textit{translation semantics}; and
+\item the definition of C11/C++14 execution semantics; which we will refer to as \textit{execution semantics}.
+\end{itemize}
+Some modules are included in multiple language definitions. All the language definitions has to be compiled by \kompile; the compilation of both \clangKast and the language definitions is driven by a Makefile.
 
-When \kcc is invoked on a~C++ program, a~clang-based tool \clangKast is used to convert each source file into the \K's internal representation (\K AST). Every converted file is then individually used as a program, which is interpreted (using the \K tool \krun) by the \textit{C++ translation semantics}; the resulting terminal configuration can be thought of as an equivalent of an object file. The outputs are then joined together with runtime library and the result is wrapped in a~generated Perl script. When the script is executed, it interprets (with \krun) the linked program using the \textit{C11/C++14 execution semantics}, possibly passing the script's command line arguments to the program.
+All the \K source files are contained in the \textit{semantics} directory in the project repository (Figure~\ref{fig:directoryStructure}). The directory contains subdirectories \texttt{c11} and \texttt{cpp14}, which contain source files for the repsective languages; it also contains a subdirectory \texttt{common}, which contains (some) source files common to both languages. The directory of each language contains \texttt{language} and \texttt{library} subdirectories, where the former is split into subdirectories containing sources for translation semantics, execution semantics, and both. From this point further, the term \textit{C++ semantics} will denote the content of \texttt{semantics/cpp14} subdirectory of the project.
+
+\begin{figure}[ht]
+\begin{lstlisting}[language=bash]
+$ tree -L 3 -d semantics
+semantics
+|-- common
+|-- cpp14
+|   |-- language
+|   |   |-- common
+|   |   |-- execution
+|   |   |-- linking
+|   |   \-- translation
+|   \-- library
+|-- c11
+|   |-- language
+|   |   |-- common
+|   |   |-- execution
+|   |   \-- translation
+|   \-- library
+\-- linking
+\end{lstlisting}
+\caption{The directory structure of the \Project.}
+\label{fig:directoryStructure}
+\end{figure}
+
+When \kcc is invoked on a~C++ program, a~clang-based tool \clangKast (from directory \texttt{cpp-parser}) is used to convert each source file into the \K's internal representation (\K AST). Every converted file is then individually used as a program, which is interpreted (using the \K tool \krun) by the \textit{C++ translation semantics}; the resulting terminal configuration can be thought of as an equivalent of an object file. The outputs are then joined together with runtime library and the result is wrapped in a~generated Perl script. When the script is executed, it interprets (with \krun) the linked program using the \textit{C11/C++14 execution semantics}, possibly passing the script's command line arguments to the program.
 %
 %\subsection{Structure of configurations}
 %
@@ -1197,6 +1232,51 @@ rule <k> sendString(FD::Int, S::String)
 
 % Zminit problem, na ktery jsem narazil pri implementaci constexpr ConditionalOp. Totiz PRExpr je PRVal jen behem prekladu. Hmmm... mozna by to nemelo byt PRVal nikdy. Nebo.. ja nevim! Spis by mela exekucni semantika, nebo alespon ty spolecne casti, nepouzivat PRVal na poznani toho, jestli je vyraz vyhodnoceny.
 
+% Je to jeste trochu jinak; my totiz implicitne pouzivame KResult
+
+
+\section{Sorts, syntax, semantics}
+
+The \Project contains three types of modules: \textit{sort} modules, which only define sorts; \textit{syntax} modules, which define sort constructors and functions; and \textit{semantic} modules, which contains mostly semantics rules usually a few definitions of sorts and syntactic construct used only by that module. This structure reduces intermodule dependencies, because semantic modules need to depend only on syntactic modules, and syntactic modules only on sort modules.
+
+\section{Value categories}
+
+In order to represent expressions of different value categories, the C++ semantics define sorts \texttt{LVal}, \texttt{XVal} and \texttt{PRVal} for lvalues, xvalues and prvalues, respectively. Each one of those sorts have a \textit{value} constructor, which represents an evaluated expression, and a subsort with an \textit{expression} constructor, which represents an unevaluated expression. For example, \textit{prvalue}s are represented by the sort \texttt{PRVal} as shown in the Figure~\ref{fig:prvSyntax}. All value sorts are subsorted to the sort \texttt{Val}. The C++ semantics also defines a function \texttt{isEvalVal}, which rewrites to \texttt{true} for terms representing an evaluated expression.
+
+\begin{figure}
+\begin{lstlisting}
+syntax PRVal  ::= prv(CPPValue, Trace, CPPTypeExpr)
+syntax PRExpr ::= pre(Expr, Trace, CPPTypeExpr)
+syntax PRVal  ::= PRExpr
+\end{lstlisting}
+\caption{Syntactic constructs for representation of \textit{prvalue}s.}
+\label{fig:prvSyntax}
+\end{figure}
+
+
+%The C++ programming language categorizes expressions into value categories. In the \Project, 
+
+\section{KResults}
+
+The C++ semantics relies on strictness attributes and evaluation context, as described in Section~\ref{sec:k:strictness}. To be able to do that, the sort predicate \texttt{isKResult} needs to be able to distinguish between the terms that should be the result of computations. This can be achieved by making the appropriate sorts to be subsorts of \texttt{KResult} and by tweaking \texttt{isKResult} with additional rewrite rules. For example, the semantics contains a rule as the one in Figure~\ref{lst:evalExprIsKResult}; the rule says that an evaluated expression (e.g. represented by a \texttt{prv} term) is a \texttt{KResult} if and only if it has a non-reference type.
+
+\begin{figure}[ht]
+\begin{lstlisting}
+rule isKResult(
+       Lbl:KLabel(_::CPPValue, _::Trace, T::CPPType)
+     )
+     => notBool isCPPRefType(T)
+     requires isValKLabel(#klabel(Lbl))
+\end{lstlisting}
+\caption{An evaluated expression may be a \texttt{KResult}.}
+\label{lst:evalExprIsKResult}
+\end{figure}
+
+The set of the computational results of the translation semantics has to be different then the set of the results of the execution semantics. For example, some expressions occurring in a body of a function cannot be fully evaluated when the function declaration is being processed, but they can be evaluated when the function is called. Therefore, some terms (e.g. a \texttt{pre} term) are results in the translation semantics, but they have to be evaluated further in the execution semantics. Because of that, the translation semantics contains a similar rule non-evaluated expressions (like \texttt{pre}). This is important for the implementation of generalized constant expressions (Section~\ref{sec:impl:constexpr}).
+
+
+
+%TODO co je TExpr?
 
 \chapter{Implementation}\label{chap:implement}
 
@@ -1401,9 +1481,30 @@ int main() {
 \label{fig:defaultCtor}
 \end{figure}
 
+\subsection{Implementation}
 
+To zero-initialize an object of a class type means to zero-initialize all its non-static members, its base classes and also all the padding among the subobjects. The initialization of non-static members was straightforward, because we could reuse an already existing syntax for member access and create computational items like
+\begin{lstlisting}
+zeroInit(Base . no-template Name(C, X), T)
+\end{lstlisting}
+which zero-initialize a (non-templated) member variable \texttt{X} (of type T) of an object \texttt{Base} of a class-type \texttt{C}. This syntax with dot member access is similar to the syntax of C++. In order to implement the zero-initialization of base-classes, we needed to create a means of obtaining a base-class subobject; in order to test the implementation, we needed to fix the semantics of accessing a non-static member variable of a base class (see Figure~\ref{fig:baseClassMemberAccess}). The fix \footnote{\url{https://github.com/kframework/c-semantics/pull/292}} was reviewed by the project maintainer and is likely to be merged soon.
 
-\section{Generalized constant expressions (constexpr)}
+\begin{figure}
+\begin{lstlisting}
+struct Base1 { int x; };
+struct Base2 { int y; };
+struct Derived : Base1, Base2 {};
+int foo(Derived const &d) {
+  return d.x + d.y;
+}
+\end{lstlisting}
+\caption{Accessing a non-static member variable of a base class.}
+\label{fig:baseClassMemberAccess}
+\end{figure}
+
+In order to implement zero-initialization of class padding, we needed to extend the code for class declaration. For every non-static data member it was necessary to store not only its offset in the class, but also an \textit{unaligned offset} - offset the member would have if its type had no requirements on alignment. We have not implemented the support for bit-fields or virtual base classes.
+
+\section{Generalized constant expressions (constexpr)} \label{sec:impl:constexpr}
 
 The \Project consists of the definition of translation semantics, and the execution semantics. Both have different configurations. Before we started the work, the translation semantics was already able to evaluate simple arithmetic or boolean C++ expressions (like \lstinline{1 + 1 == 2}{}. However, the translation semantics was not able to evaluate more complex expresions, and function calls in particular. To evaluate function calls, the configurations of execution semantics contains a set of cells which represents \textit{call stack}, but the configuration of translation semantics does not contain anything like that.
 
