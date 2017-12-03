@@ -938,6 +938,22 @@ The Figure~\ref{fig:constexprIntuition} can serve as an example here. The functi
 
 How is then possible that it may be used in the declaration (2)? Note that the variable is not initialized simply by the expression \lstinline{id(a)}{}, but with the rvalue-to-lvalue conversion of the result of that \lstinline{id(a)}{}; such composed expression is a \texttt{constant expression}. In other words, the declaration of \texttt{c} does not concerned with the identity of the object it is initialized with, but only with its value - and that value is known in the compile time, as the variable \texttt{a} is initialized with the constant expression \texttt{7}. The declaration (3) works because the variable \texttt{d} was declared \texttt{static}.
 
+
+\begin{figure}[ht]
+\begin{lstlisting}
+int main() {
+  const int x = 1;
+  enum class E { A = x };
+} 
+\end{lstlisting}
+\caption{Sometimes, \texttt{const} is enough.}
+\label{fig:constMayBeEnough}
+\end{figure}
+
+%Const-qualified variables initialized with a constant expression can be used in constant expressions.
+%This can be seen in Figure~\ref{fig:constMayBeEnough}; the enumerator \texttt{E::A} is initialized with the initializer \texttt{x}, which has to be constant expression
+
+
 \ifshowoldstuff
 
 
@@ -1258,7 +1274,7 @@ syntax PRVal  ::= PRExpr
 
 \section{KResults}
 
-The C++ semantics relies on strictness attributes and evaluation context, as described in Section~\ref{sec:k:strictness}. To be able to do that, the sort predicate \texttt{isKResult} needs to be able to distinguish between the terms that should be the result of computations. This can be achieved by making the appropriate sorts to be subsorts of \texttt{KResult} and by tweaking \texttt{isKResult} with additional rewrite rules. For example, the semantics contains a rule as the one in Figure~\ref{lst:evalExprIsKResult}; the rule says that an evaluated expression (e.g. represented by a \texttt{prv} term) is a \texttt{KResult} if and only if it has a non-reference type.
+The C++ semantics relies on strictness attributes and evaluation context, as described in Section~\ref{sec:k:strictness}. To be able to do that, the sort predicate \texttt{isKResult} needs to be able to distinguish the terms that should be the result of computations. This can be achieved by making the appropriate sorts to be subsorts of \texttt{KResult} and by tweaking \texttt{isKResult} with additional rewrite rules. For example, the semantics contains a rule as the one in Figure~\ref{lst:evalExprIsKResult}; the rule says that an evaluated expression (e.g. represented by a \texttt{prv} term) is a \texttt{KResult} if and only if it has a non-reference type.
 
 \begin{figure}[ht]
 \begin{lstlisting}
@@ -1506,15 +1522,36 @@ In order to implement zero-initialization of class padding, we needed to extend 
 
 \section{Generalized constant expressions (constexpr)} \label{sec:impl:constexpr}
 
-The \Project consists of the definition of translation semantics, and the execution semantics. Both have different configurations. Before we started the work, the translation semantics was already able to evaluate simple arithmetic or boolean C++ expressions (like \lstinline{1 + 1 == 2}{}. However, the translation semantics was not able to evaluate more complex expresions, and function calls in particular. To evaluate function calls, the configurations of execution semantics contains a set of cells which represents \textit{call stack}, but the configuration of translation semantics does not contain anything like that.
+In order to support generalized constant expressions in the \Project, three things needs to be done. First, the translation semantics has to be modified to allow evaluation of complex expressions, and function calls in particular. Second, the translation semantics needs to capture the precise meaning of constant expressions as defined in the standard. Third, the semantics for constant expressions has to be used in appropriate places, e.g. to evaluate enumerator initializers and case labels. In this thesis, we focus on the first thing.
 
-When designing the support for generalized constant expressions, several design alternatives seemed to be viable. One of them was to extend the translation semantics with new rules and configuration cell which would allow to evaluate the not-supported-yet expressions; another alternative was to reuse some of the rules from the execution semantics and modify the configuration accordingly. We decided to first try to reuse as much of existing code as possible, with the perspective that if that fails, we will fall back to other design alternative or try to explore the design space more carefully. It turned out that we could reuse almost everything; although the changes were quite extensive, there were only a few newly added rules and cells, and most of them had the character of ,,move this there'', ,,use this file from the execution semantics in the static semantics'' and ,,add a \texttt{require} rule here''.
+%The \Project consists of the definition of translation semantics, and the execution semantics. Both have different configurations.
+Before we started the work, the translation semantics was already able to evaluate simple arithmetic or boolean C++ expressions (like \lstinline{1 + 1 == 2}{}. However, the translation semantics was not able to evaluate function calls. To evaluate them, the configurations of execution semantics contains a set of cells which represents \textit{call stack}, but the configuration of translation semantics does not contain anything like that.
 
+When designing the support for generalized constant expressions, several design alternatives seemed to be viable. One of them was to extend the translation semantics with new rules and configuration cell which would allow to evaluate the not-supported-yet expressions; another alternative was to reuse some of the rules from the execution semantics and modify the configuration accordingly. We decided to first try to reuse as much of existing code as possible, with the perspective that if that fails, we will fall back to other design alternative or try to explore the design space more carefully. It turned out that we could reuse almost everything; although the changes were quite extensive, there were only a few newly added rules and cells, and most of them had the character of ,,move this there'', ,,use this file from the execution semantics in the translation semantics'' and ,,add a \texttt{require} clause here''.
 
-
+\subsection{Configuration}
 %TODO name collisions
+%TODO jak funguje hledani toplevel konfigurace
+
+%semantics/c11/language/execution/configuration.k
+
+Although the source code files for C and C++ execution semantics are located in different directories, they are compiled together as a part of one language definition. The main configuration structure for the execution semantics is defined in the module \texttt{C-CONFIGURATION}\footnote{in file \path{semantics/c11/language/execution/configuration.k}}; this module imports another modules, some of which (for example, the module \texttt{COMMON-CONFIGURATION}\footnote{in file \path{semantics/common/configuration.k}}) contains definitions of other parts of the configuration.
+
+
+Before we started the work on generalized constant expressions, the module \texttt{C-CONFIGURATION} contained among other things a definition of configuration cell \texttt{thread-local}, which held most of the resources needed to run a single thread of execution - circa 100 lines of code. We decided to extract the definition into a newly created module \texttt{COMMON-THREAD-LOCAL}\footnote{in file \path{semantics/common/thread_local.k}} a reuse it in the C++ translation semantics.
+
+The problem with the reuse was that the cell \texttt{thread-local} contained some cells, whose names collided with names of cells already existing in the translation semantics. The collision was easily resolved by renaming the cells from the translation semantics (renaming the cells included in the \texttt{thread-local} cell would affect large parts of the C semantics).
+
+\subsection{Evaluation and KResults}
+
+%When a variable is declared with \texttt{constexpr} specifier, the value of the variable 
+
+
+
 %TODO how does ExprLoc work
 %TODO KResults
+%TODO nepodporujeme reseni sequence pointu apod.
+%TODO ze meze poli stale bereme z clangu
 
 \chapter{Evaluation}\label{chap:evaluation}
 What works and what does not. The bugs we have found in compilers. Ambiguity or contradictions in the standard. The one thing we implement the same way gcc and clang does, but technically is incorrect.
