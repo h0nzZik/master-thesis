@@ -1377,7 +1377,7 @@ In order to implement enumerations, several parts of the semantics had to be mod
 % TODO zminit ze jsem chtel implementovat i operatory na enumech, ale nedal jsem to a~udelal to Dwight.
 %It was also needed to add a~support for operations
 
-\subsubsection{Declaration}
+\subsection{Declaration}
 %TODO reference the standard
 
 Enumeration declaration, including the \textit{opaque declaration}, is implemented in module \texttt{CPP-DECL-ENUM} of the semantics.
@@ -1414,7 +1414,7 @@ However, the semantics should be aware of this behaviour. Many real-world progra
 % Rikat, ze to je 'uvnitr enumerace' je nepresne. Protoze na ten enumerator se muzu odkazovat
 % i z nejake sablony, ktera je definovana pred tim enumem.
 
-\subsubsection{Enumerator lookup}
+\subsection{Enumerator lookup}
 
 The name of an enumerator can be referred to using the scope resolution operator applied to a~name of the enumeration. This was implemented easily using only a~few rules in the (static) semantics.
 %(3.4.3:1) 
@@ -1434,7 +1434,7 @@ enum F {
 \label{lst:enumDepends}
 \end{figure}
 
-\subsubsection{Underlying type}
+\subsection{Underlying type}
 
 The C++ \textit{language} does not have a direct support for determining the underlying type of an enumeration. Instead, such facility is provided by the standard library, as shown in Figure~\ref{fig:stdUnderlyingType}; the standard library then uses compiler's intrinsic functions to get the underlying type. For example, the GNU gcc compiler provides a function\footnote{It is not a function in the C/C++ sense, as it operates on types.} \lstinline{__underlying_type}{}, which 
 %takes an enumeration type and
@@ -1467,6 +1467,10 @@ The clang fronted supports this intrinsic, too. Our tool \clangKast translates t
 %TODO zminit osklive chování. Že spoustu věcí je unspecified. A že se můžeme dotazovat na spoustu věcí uvnitř deklarace enumerátoru, dívat se do šablon etc.
 
 \subsection{State of the implementation}
+
+We successfully implemented enumeration declaration and enumerator lookup for both scoped and unscoped enumerations. Our implementation allows enumerations to be declared in all scopes where enumerations can be declared according to the standard, that is, in a namespace scope, in a class scope or in a block scope (inside a function). We also implemented opaque enumeration declaration and redeclaration and a support for the standard library \lstinline|std::underlying_type_t| template. During the implementation we fixed a number of bugs in the \Project, including a bug which caused the lookup for a double nested name to fail. We also found a few defects in other projects (see Section~\ref{sec:defects}).
+
+We have not implemented the non-standard \lstinline|__attribute__((packed))| extension; however, it is likely that it will be implemented in the future, because the C semantics supports it. We also do not have precise semantics for the enumerator initializers, which should be different kinds of constant expression depending on the fixedness of the enumeration's underlying type (see also Section~\ref{sec:impl:constexpr}). Most of the implementation was merged into upstream in April 2017, but a few features are still implemented only in our (publicly-available) fork of the project.
 
 \section{Zero initialization of class types}\label{chp:implZeroInit}
 
@@ -1503,8 +1507,8 @@ The second problem caused some classes to not be default-initialized. The semant
 \begin{figure}[ht]
 \begin{lstlisting}[language=c++]
 struct Def {
-	int x;
-	int y = 7;
+  int x;
+  int y = 7;
 };
 
 int main() {
@@ -1537,9 +1541,11 @@ int foo(Derived const &d) {
 \label{fig:baseClassMemberAccess}
 \end{figure}
 
-In order to implement zero-initialization of class padding, we needed to extend the code for class declaration. For every non-static data member it was necessary to store not only its offset in the class, but also an \textit{unaligned offset} - offset the member would have if its type had no requirements on alignment. We have not implemented the support for bit-fields or virtual base classes.
+In order to implement zero-initialization of class padding, we needed to extend the code for class declaration. For every non-static data member it was necessary to store not only its offset in the class, but also an \textit{unaligned offset} - the offset the member would have if its type had no requirements on alignment. Zero-initialization of the padding is then implemented as zero-initialization of an array of characters.
 
 \subsection{State of the implementation}
+
+We successfully implemented zero initialization of classes, and during the implementation work we fixed a few bugs in the \Project. The implementation is ready to be merged into upstream and as far as we know, it is complete. The only limitation known to us is that zero-initialization of bit-fields and virtual base classes is not tested, because those language features are still not supported in the C++ semantics.
 
 \section{Generalized constant expressions (constexpr)} \label{sec:impl:constexpr}
 
@@ -1648,7 +1654,7 @@ What works and what does not. The bugs we have found in compilers. Ambiguity or 
 %No __attribute__((packed)) is supported. But maybe I will fix it?
 
 %TODO prejmenovat lepe.
-\section{Defects found in other projects}
+\section{Defects found in other projects}\label{sec:defects}
 During the work, we discovered a few defects in major C++ compilers and also in the C++ standard. While most of them was already known among the experts, some of them are new; such defects were reported.
 % which were reported /* ... */.
 In this section, we give a brief overview of the defects we found, including the ones which were already known but not fixed yet.
