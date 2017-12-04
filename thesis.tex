@@ -720,7 +720,7 @@ void foo(int x) { E e = x; }
 \label{fig:noConversionFromIntToEnum}
 \end{figure}
 
-An initializer of an enumerator may refer to previously declared enumerators of the same enumeration (see~\ref{fig:scopedEnumDecl}). Inside the enumeration declaration (prior its closing brace), the type of its enumerators is not the type of the enumerator, but always an integral type\footnote{We discuss this in more detail in Chapter~\ref{chap:evaluation}}. Because of the stronger-than-C type system, in some cases it would be even inconvenient if the types of enumerators were types of their enumerations. For example, the declaration in Figure~\ref{fig:scopedEnumDecl} declares an enumerator \texttt{B} with the initializer \lstinline{A + 3}{}. If the type of \texttt{A} in this expression were \texttt{E}, then the expression would be ill-formed, because the scoped enumeration does not convert to int, so it cannot be added to an int.
+An initializer of an enumerator may refer to previously declared enumerators of the same enumeration (see~\ref{fig:scopedEnumDecl}). Inside the enumeration declaration (prior its closing brace), the type of its enumerators is not the type of the enumerator, but always an integral type\footnote{We discuss this in more detail in Chapter~\ref{chap:contribToOtherProjects}}. Because of the stronger-than-C type system, in some cases it would be even inconvenient if the types of enumerators were types of their enumerations. For example, the declaration in Figure~\ref{fig:scopedEnumDecl} declares an enumerator \texttt{B} with the initializer \lstinline{A + 3}{}. If the type of \texttt{A} in this expression were \texttt{E}, then the expression would be ill-formed, because the scoped enumeration does not convert to int, so it cannot be added to an int.
 
 %
 %\begin{figure}
@@ -1664,15 +1664,15 @@ Despite the fact that the implementation of generalized constant expressions is 
 
 % we have shown that it is possible
 
+\section{Summary}
 
+Enumerations are fully implemented and most of the implementation is already merged in the upstream repository. Zero initialization of class types is also fully implemented, modulo some features which are not yet supported in the project at all; it is ready to be merged into the upstream. We have an elegant implementation of generalized constant expressions which is able to evaluate functions with recursion or nontrivial control-flow. The implementation is incomplete, not adhering to the standard and not production ready; however, it is based on good principles and can serve as a basis for future development.
 
-\chapter{Evaluation}\label{chap:evaluation}
-What works and what does not. The bugs we have found in compilers. Ambiguity or contradictions in the standard. The one thing we implement the same way gcc and clang does, but technically is incorrect.
-
-\section{Limitations}
-%No __attribute__((packed)) is supported. But maybe I will fix it?
+\chapter{Relation to other projects}\label{chap:contribToOtherProjects}
+%What works and what does not. The bugs we have found in compilers. Ambiguity or contradictions in the standard. The one thing we implement the same way gcc and clang does, but technically is incorrect.
 
 %TODO prejmenovat lepe.
+
 \section{Defects found in other projects}\label{sec:defects}
 During the work, we discovered a few defects in major C++ compilers and also in the C++ standard. While most of them was already known among the experts, some of them are new; such defects were reported.
 % which were reported /* ... */.
@@ -1763,17 +1763,24 @@ This issue was first discussed on StackOverflow\footnote{\url{https://stackoverf
 \chapter{Conclusion}
 
 \section{Future work}
-
+\begin{itemize}
+\item Merge the remaining code into upstream.
+\item Finish the implementation of constant expressions. Working with literal types.
+\item Finish the rest of the C++ semantics (switch, templates, sfinae, lambda functions, automatic type deduction, type traits, virtual inheritance, multiple inheritance, variable templates, variadic templates \ldots), so that \kcc can compile all the programs which can be compiled with gcc/clang.
+\item Somehow deal with C++ versions and defects. C++17? C++20?
+\item What about the concurrency?
+\item Design and implement some ACSL-like assertion language.
+\item Function calls in contracts? Can we check them?
+\item High-level reasoning about templates? And what about Concepts?
+\end{itemize}
 
 \ifshowoldstuff
 
 \chapter{-------------------------}
+\chapter{TODOs etc}
 
-\section{Motivation}
+%TODO \section{Motivation}
 
-
-
-\chapter{C++ semantics in K}
 % Neco o historii projektu, ze prvne byla C semantika (2012). Jak to pasuje do K frameworku i do jazyka C++. Ze 'oni' (kdo?) udrzuji fork K a~ocaml backend. 
 % Je nejaka moznost, jak vypnout diagnostiku u toho CLang parseru? Jo popsat K AST format.
 
@@ -1784,10 +1791,6 @@ This issue was first discussed on StackOverflow\footnote{\url{https://stackoverf
 % point to https://github.com/kframework/c-semantics
 % TODO data flow diagram jako je v Defining the Undefinedness of C.
 
-
-\section{•}
-
-TODO
 \begin{itemize}
 \item ze mame nejaky program-runner
 \item obrazek toho, jak funguje kompilacni pipeline
