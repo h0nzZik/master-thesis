@@ -1315,8 +1315,25 @@ The set of the computational results of the translation semantics has to be diff
 
 This chapter focuses on those parts of the C/C++ semantics project, which are related to the goal and contribution of this thesis. The chapter describes the implementation of the main features, shows relations between the implementation, standard and general architecture of the semantics, and highlights some aspects of the C++ language one may perhaps oversee when using the language as a~programmer. The last section of this chapter then gives a~short evaluation of the implementation.
 
-\section{Methodics}
-TODO jak jsem postupoval pri implementaci. Nejprve jsem nasel konkretni test-casy, ktere jsem porovnal se standardem, s prekladacema i s stackoverflow; pak jsem nasel vhodne misto v projektu a dopsel do nej kod; v prubehu casu jsem generoval ruzne hranicni pripady...
+\section{Our approach}
+%TODO jak jsem postupoval pri implementaci. Nejprve jsem nasel konkretni test-casy, ktere jsem porovnal se standardem, s prekladacema i s stackoverflow; pak jsem nasel vhodne misto v projektu a dopsel do nej kod; v prubehu casu jsem generoval ruzne hranicni pripady...
+
+When we began the work on this thesis, we had almost no knowledge of the \K framework and we knew the C++ language almost only from the position of a practicioner. Before we started extending the \Project with any language features, we went through the official \K tutorial\footnote{\url{http://www.kframework.org/index.php/K_Tutorial}} to familiarize ourselves with the framework. We then implemented the language features approximately in the order in which they are described in this chapter. The implementation work on each of the features can be divided into four phases, which are described in the following paragraphs.
+
+\paragraph{Understand the feature} In the first phase we focused on understanding the selected language feature. During this phase we wrote many snippets of C++ code related to the feature; the snippets were based on our reading of the standard as well as on our own programming experience and on C++ related answers on StackOverflow. One useful tool in this phase was GodBold's Compiler Explorer\footnote{\url{https://gcc.godbolt.org/}}; which allowed us to easily compile a piece of code with different versions of various compilers.
+
+\paragraph{Understand the relevant parts of the \Project} We then explored the \Project to see which parts of the feature are already implemented (if any), how the C++ semantics implements similar features and in which places the feature might be implemented. A simple \texttt{grep} tool was helpful in this place. We also the debugging switch of \kcc , as well as its ability to run the compilation up to a specified depth.
+
+\paragraph{Implement it} The third phase consisted of extending the implementation with our code and test-cases, which was usually done in a \textit{test-first} manner. Sometimes we reused some snippets from the first phase, but usually we created new tests. During this phase we often found some bugs in the \Project; if that happened, we sometimes needed to fix it immediately, but usually we just created a different test-cases which would not trigger the bug and postponed the fix for later.
+
+\paragraph{Do the rest} When the feature was implemented, we fixed the bugs we found or removed the technical debt we encountered or created in the implementation phase. A few times we needed to reiterate the whole process, because we discovered a new aspect of the feature we did not fully understand yet.
+
+%\begin{enumerate}
+%\item[Understand the feature] fff 
+%\item[Understand the feature] fAf
+%\item[Understand the feature] fdsd
+%\end{enumerate}
+
 
 
 %Cells - semantic components.
@@ -1372,7 +1389,7 @@ TODO jak jsem postupoval pri implementaci. Nejprve jsem nasel konkretni test-cas
 % Popsat co me vedlo k tomu, ze jsem se pustil zrovna do enumu. Ze je to pomerne samostatna vec, nezavisla na vetsine ostatnich featur C++, a~je jednoducha.
 
 %In the C++ standard~\cite{n4296}, enumerations are described mostly in
-In order to implement enumerations, several parts of the semantics had to be modified. The translation tool \clangKast was slightly modified to produce AST nodes for enumeration declarations; to process the declarations in the semantics, a~new file was added to the C++ translation semantics and a~new set of cells was added to common part of configuration. It was also needed to implement enumerator lookup, which required addition of a~few cells to configuration and a~slight modification of some of the name lookup rules. The semantics was to some extent already prepared to work with enumerations, and some of the relevant rules (e.g. for conversions) needed no change. To ensure correctness of implementation, several test cases were added to the test suite. Overall, most of the modifications were additive, and only little of the existing code needed to be changed. During the implementation process, a~few minor bugs were discovered and fixed. 
+When we were trying to understand enumerations, we created approximately 40 snippets of C++ source code. It then went out that in order to implement enumerations, several parts of the semantics had to be modified. The translation tool \clangKast was slightly modified to produce AST nodes for enumeration declarations; to process the declarations in the semantics, a~new file was added to the C++ translation semantics and a~new set of cells was added to common part of configuration. It was also needed to implement enumerator lookup, which required addition of a~few cells to configuration and a~slight modification of some of the existing name lookup rules. The semantics was to some extent already prepared to work with enumerations, and some of the relevant rules (e.g. for conversions) needed no change. To ensure correctness of implementation, several test cases were added to the test suite. Overall, most of the modifications were additive, and only little of the existing code needed to be changed. During the implementation process, a~few minor bugs were discovered and fixed. 
 
 % TODO zminit ze jsem chtel implementovat i operatory na enumech, ale nedal jsem to a~udelal to Dwight.
 %It was also needed to add a~support for operations
@@ -1467,6 +1484,8 @@ The clang fronted supports this intrinsic, too. Our tool \clangKast translates t
 %TODO zminit osklive chování. Že spoustu věcí je unspecified. A že se můžeme dotazovat na spoustu věcí uvnitř deklarace enumerátoru, dívat se do šablon etc.
 
 \subsection{State of the implementation}
+
+%TODO dwight napsal ty operatory apod.
 
 We successfully implemented enumeration declaration and enumerator lookup for both scoped and unscoped enumerations. Our implementation allows enumerations to be declared in all scopes where enumerations can be declared according to the standard, that is, in a namespace scope, in a class scope or in a block scope (inside a function). We also implemented opaque enumeration declaration and redeclaration and a support for the standard library \lstinline|std::underlying_type_t| template. During the implementation we fixed a number of bugs in the \Project, including a bug which caused the lookup for a double nested name to fail. We also found a few defects in other projects (see Section~\ref{sec:defects}).
 
