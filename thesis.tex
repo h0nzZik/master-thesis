@@ -96,12 +96,9 @@ faculty = {fi},
 
 Writing correct software is hard.
 %Software verification is hard.
-Although formal methods for software verification are being developed, there are only a few high quality tools on the market. In order to create a~production-ready tool based on a particular set of formal methods and targeting a particular language, it is necessary to understand the formal methods, the precise semantics of the target language, and possibly some other things. Researchers and engineers often work in teams, and various teams often implement different techniques for the same language; because of that, a platform, which would enable component reuse and separation of concerns, might significantly improve the productivity of the tool developers.
+Although formal methods for software verification are being developed, there are only a few high quality tools on the market. In order to create a~production-ready tool based on a particular set of formal methods and targeting a particular language, it is necessary to understand the formal methods, the precise semantics of the target language, and possibly some other things. Researchers and engineers often work in teams, and various teams often implement different techniques for the same language; because of that, a platform which would enable component reuse and separation of concerns might significantly improve the productivity of the tool developers.
 
-% Knowledge of precise semantics of the selected programming language is needed.
-%In recent years, one such platform named ,,\K framework'' is gaining popuparity.
-\K framework is one such platform.
-It is based on the idea that formal, executable language semantics can be used to derive a~large variety of tools, including interpreters, debuggers, model checkers or deductive program verifiers~\cite{rosu-2017-marktoberdorf} (see Figure~\ref{kidea}). Tool developers, skilled in a~particular area of formal methods, can work inside their area of expertise and developing language independent tools, while leaving language details to someone else. Thus, a~separation of concerns is achieved.
+\K framework is one such platform. It is based on the idea that formal, executable language semantics can be used to derive a~large variety of tools, including interpreters, debuggers, model checkers or deductive program verifiers~\cite{rosu-2017-marktoberdorf} (see Figure~\ref{kidea}). Tool developers skilled in a~particular area of formal methods can work inside their area of expertise and focus on developing language independent tools, while leaving language details to someone else. Thus a~separation of concerns is achieved.
 
 \begin{figure}[ht]
 \centering
@@ -111,7 +108,7 @@ It is based on the idea that formal, executable language semantics can be used t
 % The image is simply print-screen-ed. Je to ok? A muzu rikat, ze jsem ho adoptoval?
 \end{figure}
 
-\K framework has been successfully used to give formal semantics to a~varienty of languages, including Java~\cite{bogdanas-rosu-2015-popl}, Python, Javascript~\cite{park-stefanescu-rosu-2015-pldi}, and C~\cite{ellison-2012-thesis,hathhorn-ellison-rosu-2015-pldi}, all of which is publicly available. The C semantics has been used to create RV-Match, a~,,tool for checking C programs for
+\K framework has been successfully used to give formal semantics to various languages, including Java~\cite{bogdanas-rosu-2015-popl}, Python, Javascript~\cite{park-stefanescu-rosu-2015-pldi}, Agda~\cite{Tokarcik2015}, and C~\cite{ellison-2012-thesis,hathhorn-ellison-rosu-2015-pldi}, all of which is publicly available. The C semantics has been used to create RV-Match, a~,,tool for checking C programs for
 undefined behavior and other common programmer mistakes''~\cite{guth-hathhorn-saxena-rosu-2016-cav}.  At the time of writing, the C semantics is being extended to support the C++ programming language. The C++ support is also the focus of this thesis. From this point on, when we write ,,\Project'', we mean this project of defining C/C++ language semantics in \K.
 
 
