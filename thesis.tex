@@ -1272,7 +1272,7 @@ rule <k> sendString(FD::Int, S::String)
 
 The \Project contains three types of modules: \textit{sort} modules, which only define sorts; \textit{syntax} modules, which define sort constructors and functions; and \textit{semantic} modules, which contains mostly semantics rules usually a few definitions of sorts and syntactic construct used only by that module. This structure reduces intermodule dependencies, because semantic modules need to depend only on syntactic modules, and syntactic modules only on sort modules.
 
-\section{Value categories}
+\section{Value categories}\label{sec:proj:values}
 
 In order to represent expressions of different value categories, the C++ semantics define sorts \texttt{LVal}, \texttt{XVal} and \texttt{PRVal} for lvalues, xvalues and prvalues, respectively. Each one of those sorts have a \textit{value} constructor, which represents an evaluated expression, and a subsort with an \textit{expression} constructor, which represents an unevaluated expression. For example, \textit{prvalue}s are represented by the sort \texttt{PRVal} as shown in the Figure~\ref{fig:prvSyntax}. All value sorts are subsorted to the sort \texttt{Val}. The C++ semantics also defines a function \texttt{isEvalVal}, which rewrites to \texttt{true} for terms representing an evaluated expression.
 
@@ -1289,7 +1289,7 @@ syntax PRVal  ::= PRExpr
 
 %The C++ programming language categorizes expressions into value categories. In the \Project, 
 
-\section{KResults}
+\section{KResults}\label{sec:proj:kresults}
 
 The C++ semantics relies on strictness attributes and evaluation context, as described in Section~\ref{sec:k:strictness}. To be able to do that, the sort predicate \texttt{isKResult} needs to be able to distinguish the terms that should be the result of computations. This can be achieved by making the appropriate sorts to be subsorts of \texttt{KResult} and by tweaking \texttt{isKResult} with additional rewrite rules. For example, the semantics contains a rule as the one in Figure~\ref{lst:evalExprIsKResult}; the rule says that an evaluated expression (e.g. represented by a \texttt{prv} term) is a \texttt{KResult} if and only if it has a non-reference type.
 
@@ -1466,6 +1466,8 @@ The clang fronted supports this intrinsic, too. Our tool \clangKast translates t
 %TODO zmínit, že je ta sémantika na něčem testovaná.
 %TODO zminit osklive chování. Že spoustu věcí je unspecified. A že se můžeme dotazovat na spoustu věcí uvnitř deklarace enumerátoru, dívat se do šablon etc.
 
+\subsection{State of the implementation}
+
 \section{Zero initialization of class types}\label{chp:implZeroInit}
 
 When we were choosing the features to implement as a part of this thesis, we did not intend to implement anything class-related at all. Later, when most of the enumerations-related language features was implemented, the maintainer of the \Project suggested\footnote{\url{https://github.com/kframework/c-semantics/pull/275\#issuecomment-294241691}}
@@ -1537,6 +1539,8 @@ int foo(Derived const &d) {
 
 In order to implement zero-initialization of class padding, we needed to extend the code for class declaration. For every non-static data member it was necessary to store not only its offset in the class, but also an \textit{unaligned offset} - offset the member would have if its type had no requirements on alignment. We have not implemented the support for bit-fields or virtual base classes.
 
+\subsection{State of the implementation}
+
 \section{Generalized constant expressions (constexpr)} \label{sec:impl:constexpr}
 
 In order to support generalized constant expressions in the \Project, three things needs to be done. First, the translation semantics has to be modified to allow evaluation of complex expressions, and function calls in particular. Second, the translation semantics needs to capture the precise meaning of constant expressions as defined in the standard. Third, the semantics for constant expressions has to be used in appropriate places, e.g. to evaluate enumerator initializers and case labels. In this thesis, we focus on the first thing.
@@ -1559,9 +1563,9 @@ Before we started the work on generalized constant expressions, the module \text
 
 The problem with the reuse was that the cell \texttt{thread-local} contained some cells, whose names collided with names of cells already existing in the translation semantics. The collision was easily resolved by renaming the cells from the translation semantics (renaming the cells included in the \texttt{thread-local} cell would affect large parts of the C semantics).
 
-\subsection{Syntax}
+\subsection{Collision of semantic rules}
 
-Another problem was that some syntactic constructs had a different meaning in the translation semantics than in the execution semantics. The constructor \texttt{IfStmt} (Figure~\ref{fig:ifStmt}) can serve as an example here. In the translation semantics, this statement could be processed only as a part of a function declaration; the translation semantics had to perform a contextual conversion on the expression and keep the rest of the work for the execution semantics. In the execution semantics, the statement could be processed only when executing a function, so it was needed to evaluate the condition first and then to rewrite the term to either the first statement (if-block) or the second (else-block).
+We also wanted to reuse as many semantics rules as possible from the execution semantics. A problem with this was that some syntactic constructs had a different meaning in the translation semantics than in the execution semantics. The constructor \texttt{IfStmt} (Figure~\ref{fig:ifStmt}) can serve as an example here. In the translation semantics, an if-statement could be processed only as a part of a function declaration; the translation semantics had to perform a contextual conversion on the expression and keep the rest of the work for the execution semantics. In the execution semantics, the statement could be processed only when executing a function, so it was needed to evaluate the condition first and then to rewrite the term to either the first statement (if-block) or the second (else-block).
 
 \begin{figure}[ht]
 \begin{lstlisting}
@@ -1573,26 +1577,69 @@ syntax Stmt ::= IfStmt(Expr, Stmt, Stmt)
 
 However, if we tried to execute a function with an \texttt{IfStmt} during the translation semantics, the translation rules could still apply, which would be a problem. We solved this issue by two means. First, we introduced a nulary\footnote{It may still examine the current configuration using reflection.} boolean function \texttt{Execution}, which returns \texttt{true} in the execution semantics or when executing an expression during the translation semantics, and \texttt{false} when doing ,,real'' translation. Second, for many syntactic constructs (including \texttt{IfStmt} and \texttt{WhileStmt}) we introduced a new version of the construct only for the purpose of the translation semantics (e.g. \texttt{IfTStmt}, \texttt{WhileTStmt}) and changed the translation rules to work with these.
 
+\subsection{KResults}
 
-
-%We also wanted to reuse the semantic rules from the execution semantics. For example, we wanted 
-
-%\begin{lstlisting}
-%rule IfStmt(prv(1, _, T:CPPBoolType), S::Stmt, _)
-%     => fullExpression ~> S
-%\end{lstlisting}
-
-
-\subsection{Evaluation and KResults}
+Another problem was that the meaning of the \texttt{strict} attribute in the translation semantics was different than in the execution semantics, because the \texttt{KResult}s were different (see Section~\ref{sec:proj:kresults}). When we tried to evaluate an expression during a function call in the translation semantics, some cooling rules applied too early and the computation got stuck. We fixed this by modifying one rule for the sort predicate \texttt{isKResult} to return \texttt{false} for terms representing not fully evaluated expressions (e.g. \texttt{pre}, \texttt{le}), when the function \texttt{Execution} evaluates to \texttt{true}.
 
 %When a variable is declared with \texttt{constexpr} specifier, the value of the variable 
 
 
+%\subsection{How to evaluate a constant expression?}
 
 %TODO how does ExprLoc work
 %TODO KResults
 %TODO nepodporujeme reseni sequence pointu apod.
 %TODO ze meze poli stale bereme z clangu
+
+
+\subsection{State of the implementation}
+
+In the time of writing, the implementation of generalized constant expression is only experimental and not ready to be merged into the upstream. We still do not support some language constructs, the implementation contains a few bugs and does not fully adhere to the standard, and the semantics for undefined behavior developed in~\cite{hathhorn-ellison-rosu-2015-pldi} is not supported during the compile-time execution. That being said, we also have to mention that the whole project of C++ semantics in \K is still very experimental, contains bugs and do not support many language construct (including, for example, the \texttt{switch} statement).
+
+
+%https://github.com/kframework/c-semantics/issues/302
+
+\begin{figure}
+\begin{lstlisting}
+constexpr int fact(int n) {
+	int f = 1;
+	while (n > 0) {
+		f = f * n;
+		n = n - 1;
+	}
+	return f;
+}
+\end{lstlisting}
+\caption{A \texttt{constexpr} factorial.}
+\label{fig:constexprFactorial}
+\end{figure}
+
+\begin{figure}[ht]
+\begin{lstlisting}
+constexpr int fact(int n) {
+	return n <= 1 ? 1 : n * fact(n - 1);
+}
+int main() {
+	constexpr int f_4 = fact(4);
+	enum class Facts {
+		F_4 = f_4,
+		F_5 = fact(5)
+	};
+	assert(int(Facts::F_4) == 24);
+	assert(int(Facts::F_5) == 120);
+}
+\end{lstlisting}
+\caption{A \textit{recursive} \texttt{constexpr} factorial with tests.}
+\label{fig:recursiveConstexprFactorial}
+\end{figure}
+
+
+Despite the fact that the implementation of generalized constant expressions is still incomplete, we do consider the current state of the implementation to be a success, for at least two reasons. First, the \kcc is now able to compute values of functions in the compilation time (i.e. in the translation semantics), including functions containing control-flow statements (Figure~\ref{fig:constexprFactorial}) or recursive calls (Figure~\ref{fig:recursiveConstexprFactorial}). Second, in doing so, we were able to avoid code duplication and reuse large parts of the existing execution semantics. Therefore we have a reason to believe that the approach we chose was good and that it will be possible to complete the implementation in near future.
+
+
+% we have shown that it is possible
+
+
 
 \chapter{Evaluation}\label{chap:evaluation}
 What works and what does not. The bugs we have found in compilers. Ambiguity or contradictions in the standard. The one thing we implement the same way gcc and clang does, but technically is incorrect.
