@@ -689,11 +689,11 @@ int foo(E e) {
 \label{fig:enumNotReallyUnreachable}
 \end{figure}
 
-This behavior may be a source of confusion for programmers who do not know this; in past, it certainly was for the author of this text. The programmer may write a code similar to the one in Figure~\ref{fig:enumNotReallyUnreachable}, which assumes that the value of \texttt{e} has to be either \texttt{E::A} or \texttt{E::B}. This assumption may be justified, if the programmer knows the set of values which may be returned from the function \texttt{giveMeAnEnum}. The programmer may try to go one step further and say: ,,If the function \texttt{giveMeAnEnum} tries to return something different than \texttt{E::A} or \texttt{E::B}, than the behavior is already undefined in \textit{that} point; therefore, we do not need to handle that situation in \texttt{foo}.'' Such a reasoning is flawed, because the function \texttt{giveMeAnEnum} may return e.g \lstinline|static_cast<E>(-117)|, which is guaranteed to be well-defined, because \lstinline|-117| is a valid value for \texttt{int}, which is the underlying type of \texttt{E} here. The programmer's reasoning would be valid if the enumeration \texttt{E} was a plain unscoped enumeration without explicitly specified underlying type (i.e if we removed the \texttt{class} keyword). We will not go into detail here, as the reasoning would depend on the technical parts of~\std{14}{\S 7.2:8}.
+This behavior may be a source of confusion for programmers who do not know this; in past, it certainly was for the author of this text. The programmer may write a code similar to the one in Figure~\ref{fig:enumNotReallyUnreachable}, which assumes that the value of \texttt{e} has to be either \texttt{E::A} or \texttt{E::B}. This assumption may be justified if the programmer knows the set of values which may be returned from the function \texttt{giveMeAnEnum}. The programmer may try to go one step further and say: ,,If the function \texttt{giveMeAnEnum} tries to return something different than \texttt{E::A} or \texttt{E::B}, than the behavior is already undefined in \textit{that} point; therefore, we do not need to handle that situation in \texttt{foo}.'' Such a reasoning is flawed, because the function \texttt{giveMeAnEnum} may return e.g \lstinline|static_cast<E>(-117)|, which is guaranteed to be well-defined, because \lstinline|-117| is a valid value of \texttt{int}, which is the underlying type of \texttt{E} here. The programmer's reasoning would be valid if the enumeration \texttt{E} was a plain unscoped enumeration without explicitly specified underlying type (i.e if we removed the \texttt{class} keyword). We will not go into detail here, as the reasoning would depend on the technical parts of~\std{14}{\S 7.2:8}.
 
 \subsection{Enumerators}
 
-Declaration of an enumerator may contain an optional \textit{initializer}, which have to be implicitly convertible to an integral type\footnote{It is more complicated, but this is enough here.}. If the initializer is not specified, the value of the enumerator is zero if it is the first enumerator, otherwise it is the value of the previous enumerator plus one. When an enumeration is fully defined (,,following the closing brace of an enum-specifier''), the type of each enumerator is the type of the enumerator~\std{14}{\S 7.2:5}. For example, in the declaration of variable \texttt{e} in the Figure~\ref{fig:scopedEnumDecl}, the type of the expression \lstinline|E::B| is \texttt{E}.
+Declaration of an enumerator may contain an optional \textit{initializer}, which has to be implicitly convertible to an integral type\footnote{It is more complicated, but this is enough here.}. If the initializer is not specified, the value of the enumerator is zero if it is the first enumerator; otherwise, it is the value of the previous enumerator plus one. When an enumeration is fully defined (,,following the closing brace of an enum-specifier''), the type of each enumerator is the type of the enumerator~\std{14}{\S 7.2:5}. For example, in the declaration of variable \texttt{e} in the Figure~\ref{fig:scopedEnumDecl}, the type of the expression \lstinline|E::B| is \texttt{E}.
 
 \begin{figure}
 \begin{lstlisting}
@@ -721,7 +721,9 @@ void foo(int x) { E e = x; }
 \label{fig:noConversionFromIntToEnum}
 \end{figure}
 
-An initializer of an enumerator may refer to previously declared enumerators of the same enumeration (see~\ref{fig:scopedEnumDecl}). Inside the enumeration declaration (prior its closing brace), the type of its enumerators is not the type of the enumerator, but always an integral type\footnote{We discuss this in more detail in Chapter~\ref{chap:contribToOtherProjects}}. Because of the stronger-than-C type system, in some cases it would be even inconvenient if the types of enumerators were types of their enumerations. For example, the declaration in Figure~\ref{fig:scopedEnumDecl} declares an enumerator \texttt{B} with the initializer \lstinline|A + 3|. If the type of \texttt{A} in this expression were \texttt{E}, then the expression would be ill-formed, because the scoped enumeration does not convert to int, so it cannot be added to an int.
+An initializer of an enumerator may refer to previously declared enumerators of the same enumeration (see~\ref{fig:scopedEnumDecl}). Inside the enumeration declaration (prior its closing brace), the type of its enumerators is not the type of the enumerator, but always an integral type\footnote{We discuss this in more detail in Chapter~\ref{chap:contribToOtherProjects}}.
+%Because of the stronger-than-C type system,
+In some cases, it would be even inconvenient if the types of enumerators were types of their enumerations. For example, the declaration in Figure~\ref{fig:scopedEnumDecl} declares an enumerator \texttt{B} with the initializer \lstinline|A + 3|. If the type of \texttt{A} in this expression were \texttt{E}, then the expression would be ill-formed, because the scoped enumeration does not convert to int, so it cannot be added to an int.
 
 %
 %\begin{figure}
@@ -734,7 +736,7 @@ An initializer of an enumerator may refer to previously declared enumerators of 
 %
 
 \subsection{Incomplete types}
-Some types cannot be used to define objects; those are called \textit{incomplete}~\std{14}{\S 3.1:5}. A type may be incomplete at one point and complete at other point in a translation unit. Incomplete types are still useful; they may be used in function declarations to denote its parameters and return values, to define objects of pointer type or references. There are two categories of incomplete types: void types (e.g. \texttt{volatile void}) and incompletely-defined types. It is not allowed to apply the \texttt{sizeof} operator to an incomplete type. A programmer may choose to use incompletely-defined types to limit the number of dependencies between header files. An enumeration whose underlying type is not fixed is incomplete until the closing brace of its declaration.
+Some types cannot be used to define objects; those are called \textit{incomplete}~\std{14}{\S 3.1:5}. A type may be incomplete at one point and complete at another point in a translation unit. Incomplete types are still useful; they may be used in function declarations to denote its parameters and return values, to define objects of pointer type or references. There are two categories of incomplete types: void types (e.g. \texttt{volatile void}) and incompletely-defined types. It is not allowed to apply the operator \texttt{sizeof} to an incomplete type. A programmer may choose to use incompletely-defined types to limit the number of dependencies between header files. An enumeration whose underlying type is not fixed is incomplete until the closing brace of its declaration.
 
 \subsection{Opaque enumerations}
 
@@ -787,12 +789,12 @@ enum E;
 %TODO inicializer je jednou 'integral constant expression' a podruhe 'converted constant expression'.
 
 \section{Initialization} \label{chap:lang:init}
-As a part of this thesis we also implemented a language feature called \textit{zero initialization} on class types. In this section we describe how variables are initialized in general, and how \textit{zero initialization} fits into the overall scheme. The details of how we implemented \textit{zero initialization} are in Section~\ref{chp:implZeroInit}.
+As a part of this thesis, we also implemented a language feature called \textit{zero initialization} on class types. In this section, we describe how variables are initialized in general, and how \textit{zero initialization} fits into the overall scheme. The details of how we implemented \textit{zero initialization} are in Section~\ref{chp:implZeroInit}.
 
 \subsection{Initialization forms}
 When an identifier is being declared, an \textit{initializer} can be used to specify an initial value of the identifier~\stdN{n4296}{\S 8.5/1},~\stdN{n4700}{\S 11.6/1}. Initializers have many syntactical forms, all of which are shown in Figure~\ref{fig:initializers}. The form of initialization \lstinline|T x(a);| or \lstinline|T x{a};| is known as \textit{direct initialization}~\stdN{n4296}{\S 8.5/16}; this form is used in the declarations of variables \texttt{a} and \texttt{b} in the Figure~\ref{fig:initializers}.
 
-An initialization of the form \lstinline|T x{...};| or \lstinline|T x = {...}| (where the elipsis are meta-characters indicating a comma-separated list) is known as \textit{list-initialization}, where the former is \textit{direct-list-initialization} and the latter \textit{copy-list-initialization}. In the Figure~\ref{fig:initializers}, the variables \texttt{b} and \texttt{g} are \textit{direct-list-initialized} and the variables \texttt{d}, \texttt{h} \textit{copy-list-initialized}. The brace-enclosed comma-separated list is called \textit{braced-init-list}; the initialization in declarations of the form \lstinline|T a = E;| is known as \textit{copy-initialization}.
+An initialization of the form \lstinline|T x{...};| or \lstinline|T x = {...}| (where the ellipsis is a meta-character indicating a comma-separated list) is known as \textit{list-initialization}, where the former is \textit{direct-list-initialization} and the latter \textit{copy-list-initialization}. In the Figure~\ref{fig:initializers}, the variables \texttt{b} and \texttt{g} are \textit{direct-list-initialized} and the variables \texttt{d}, \texttt{h} \textit{copy-list-initialized}. The brace-enclosed comma-separated list is called \textit{braced-init-list}; the initialization in declarations of the form \lstinline|T a = E;| is known as \textit{copy-initialization}.
 
 \begin{figure}[ht]
 \begin{lstlisting}
@@ -809,7 +811,7 @@ int h[3] = {1,2,3};
 \label{fig:initializers}
 \end{figure}
 
-It is important to note that all the previous categories consider only the form of the declaration; the semantics of such declarations heavily depends on the types involved. For example, the \textit{copy-initialization} form is often used in a declaration of a reference; when used in a declaration of an object of a class type, a \textit{move constructor} may be invoked instead of \texttt{copy constructor}.
+It is important to note that all the previous categories consider only the form of the declaration; the semantics of such declarations heavily depends on the types involved. For example, the \textit{copy-initialization} form is often used in a declaration of a reference, and when it is used in a declaration of an object of a class type, it may invoke \textit{move constructor} as well as a \texttt{copy constructor}.
 
 %TODO inicializace muze probihat i jindy
 
@@ -824,7 +826,7 @@ protected non-static data members (Clause 11), no base classes (Clause 10), and 
 %TODO zeptat se Honzy Strejcka, jestli je ten odkaz na HoTT knihu dobry napad. Je to trosku unrelated.
 
 \subsection{Aggregate initialization}
-In newer versions of the language, the restrictions on aggregate classes are more relaxed; for example, an aggregate class may have a base class, but under the condition that it is non-virtual and public~\stdN{n4700}{\S 11.6.1/1}. Nevertheless, the idea is still the same: an \textit{aggregate} is ,,something \textit{simply} composed of other things''. Because of that, the language provides a special way to initialize an object of an aggregate type - an \textit{aggregate initialization}.
+In newer versions of the language, the restrictions on aggregate classes are more relaxed; for example, an aggregate class may have a base class, but under the condition that it is non-virtual and public~\stdN{n4700}{\S 11.6.1/1}. Nevertheless, the idea is still the same: an \textit{aggregate} is just something created by a natural composition of other things. Because of that, the language provides a special way to initialize an object of an aggregate type - an \textit{aggregate initialization}.
 
 \begin{figure}[ht]
 \begin{lstlisting}
@@ -841,11 +843,11 @@ S s = {'a', {2, 3}};
 %TODO short captions for the 'List of Figures'
 
 
-The \textit{aggregate initialization} happens, when an aggregate is initialized using \textit{list-initialization}. If it happens, the \textit{elements} of the aggregate, that is, the array elements or the non-static member variables, are initialized with the respective \textit{initializer clauses} in the order of increasing indices, or in the order of declarations, respectively~\stdN{n4296}{\S 8.5.1/2}. If there are not enough initializer clauses in the initializer list, the remaining aggregate elements are initialized from an empty initializer list (see Figure~\ref{fig:aggrInit}).
+The \textit{aggregate initialization} happens when an aggregate is initialized using \textit{list-initialization}. If it happens, the \textit{elements} of the aggregate, that is, the array elements or the non-static member variables, are initialized with the respective \textit{initializer clauses} in the order of increasing indices, or in the order of declarations, respectively~\stdN{n4296}{\S 8.5.1/2}. If there are not enough initializer clauses in the initializer list, the remaining aggregate elements are initialized from an empty initializer list (see Figure~\ref{fig:aggrInit}).
 
 \subsection{Value initialization}
 
-When an object is created with no initializer, it is \textit{default-initialized}, which in many situations means that no initialization is performed and the object has an undeterminate value. The language also defines a \textit{value initialization}, whose purpose is to somehow ,,complement'' the notion of ,,no initialization'':
+When an object is created with no initializer, it is \textit{default-initialized}, which in many situations means that no initialization is performed and the object has an indeterminate value. The language also defines a \textit{value initialization}, whose purpose is to somehow ,,complement'' the notion of ,,no initialization'':
 \begin{displayquote}
 \textelp{} An object that is value-initialized is deemed to be constructed and thus subject to provisions of this International Standard applying to “constructed” objects, objects “for which the constructor has completed,” etc., even if no constructor is invoked for the object’s initialization. \stdN{n4296}{\S 8.5/8}
 \end{displayquote}
@@ -854,7 +856,7 @@ A value-initialization is performed in various different cases. For example, the
 \begin{displayquote}
 An object whose initializer is an empty set of parentheses, i.e., (), shall be value-initialized.\textelp{}~\stdN{n4296}{\S 8.5/11}
 \end{displayquote}
-which is demostrated in Figure~\ref{fig:valueInitMember}. (However, the declaration of \texttt{f} in Figure~\ref{fig:initializers} does not declare an object, but a function; in that case, no value initialization is performed.) Value initialization is also performed for list-initialized objects of a class type with default constructor~\stdN{n4296}{\S 8.5.4/5.4}. Such class types are not aggregates, so no aggregate initialization can happen for them.
+which is demonstrated in Figure~\ref{fig:valueInitMember}. (However, the declaration of \texttt{f} in Figure~\ref{fig:initializers} does not declare an object, but a function; in that case, no value initialization is performed.) Value initialization is also performed for list-initialized objects of a class type with a default constructor~\stdN{n4296}{\S 8.5.4/5.4}. Such class types are not aggregates, so no aggregate initialization can happen for them.
 
 \begin{figure}[ht]
 \begin{lstlisting}
@@ -867,7 +869,7 @@ struct A {
 \label{fig:valueInitMember}
 \end{figure}
 
-To value initialize an array means to value initialize all its elements; to value initialize an object of a non-class non-array type means to zero-initialize it. Value initialization of an object of a class type performs default-initialization; the default-initialization is preceded by zero initialization if the class does not have a user-defined or deleted default constructor.
+To value-initialize an array means to value-initialize all its elements; to value-initialize an object of a non-class non-array type means to zero-initialize it. Value initialization of an object of a class type performs default-initialization; the default-initialization is preceded by zero initialization if the class does not have a user-defined or deleted default constructor.
 
 \begin{figure}
 \begin{lstlisting}
@@ -890,9 +892,9 @@ int bar() {
 \label{fig:valueInit}
 \end{figure}
 
-The source code in Figure~\ref{fig:valueInit} can serve as an example. The variables \texttt{a}, \texttt{b1} and \texttt{c} are list-initialized, while the variable \texttt{b2} is default-initialized; however, the meaning of the list-initialization among the variables differs. The variable \texttt{c} is value-initialized, and since it has a non-class non-array type, it is zero-initialed; after the initialization, the value of \lstinline|x| is zero. The variable \texttt{a} is aggregate-initialized, because the class \texttt{A} is an aggregate; since the initializer-list is empty, its member variable \texttt{m} is initialized with the initializer \lstinline|{}|, which performs zero-initialization as in the previous case. At the end, the integer \lstinline|a.m| has the value of zero.
+The source code in Figure~\ref{fig:valueInit} can serve as an example. The variables \texttt{a}, \texttt{b1} and \texttt{c} are list-initialized, while the variable \texttt{b2} is default-initialized; however, the meaning of the list-initialization among the variables differs. The variable \texttt{c} is value-initialized, and since it has a non-class non-array type, it is zero-initialed; after the initialization, the value of \lstinline|x| is zero. The variable \texttt{a} is aggregate-initialized because class \texttt{A} is an aggregate; since the initializer-list is empty, its member variable \texttt{m} is initialized with the initializer \lstinline|{}|, which performs zero-initialization as in the previous case. At the end, the integer \lstinline|a.m| has the value of zero.
 
-The variable \texttt{b1} is not aggregate-initialized, as the class \texttt{B} is not an aggregate, because it has a virtual member function (the destructor); the variable \texttt{n2} is value-initialized instead. The value-initialization performs a zero-initialization, because the class \texttt{A} does not have neither user-provided nor deleted default constructor, but the default constructor is implicitly-generated. After the zero initialization, a default-initialization happens, which runs the implicitly-generated default constructor. At the end, the value of \lstinline|b1.m| is one and the value of \lstinline|b1.n| is zero.
+The variable \texttt{b1} is not aggregate-initialized, as the class \texttt{B} is not an aggregate because it has a virtual member function (the destructor); the variable \texttt{n2} is value-initialized instead. The value-initialization performs a zero-initialization because class \texttt{A} has neither user-provided nor deleted default constructor, but the default constructor is implicitly-generated. After the zero initialization, a default-initialization happens, which runs the implicitly-generated default constructor. At the end, the value of \lstinline|b1.m| is one and the value of \lstinline|b1.n| is zero.
 In contrast, the variable \texttt{b2} is only default-initialized; the value of \lstinline|b2.m| is one as in the previous case, but the value of \lstinline|b1.n| indeterminate.
 
 \subsection{Zero initialization}
@@ -901,12 +903,12 @@ The exact meaning of \textit{zero-initialization} is described in \stdN{n4296}{\
 In addition to the cases described in previous paragraphs, zero initialization happens in a two more situations.
 \begin{itemize}
 \item When initializing a character array with a string literal that is not long enough, the rest of the array is zero-initialized.
-\item Before other initializations of variables with non-static storage duration. Programmers may known this in a simplified form as the rule ,,in C/C++, global variables are initialized to zero''.
+\item Before other initializations of variables with non-static storage duration. Programmers may know this in a simplified form as a rule ,,in C/C++, global variables are initialized to zero''.
 \end{itemize}
 This thesis is not concerned with these two situations.
 
 \section{Constant expressions}
-In C++, expressions are used almost everywhere. However, not every kind of expression can be used everywhere: one can hardly imagine the code in Figure~\ref{fig:getcharInEnum} to be valid. The expressions used in an enum declaration or as a \texttt{case} label of a \texttt{switch} statement have to be computable in the compilation time. Those kind of expressions are generally known as \textit{constant expressions}; they are defined in~\stdN{n4296}{\S 5.20}.
+In C++, expressions are used almost everywhere. However, not every kind of expression can be used everywhere: one can hardly imagine the code in Figure~\ref{fig:getcharInEnum} to be valid. The expressions used in an enum declaration or as a \texttt{case} label of a \texttt{switch} statement have to be computable in the compilation time. Expressions of that kind are generally known as \textit{constant expressions}; they are defined in~\stdN{n4296}{\S 5.20}.
 
 \begin{figure}
 \begin{lstlisting}
@@ -918,7 +920,7 @@ enum class E { A = getchar() };
 
 \subsection{The intuition}
 
-The standard defines a couple terms with respect to constant expressions; this subsection attempts to give the reader an intuition which is behind them. The term \textit{core constant expression} (\std{14}{\S 5.20.2}) is used to represent an expression, which can be evaluated easily, using only the information the compiler has in the time of compilation. The term \textit{constant expressions} (\std{14}{\S 5.20:5}) denotes a core constant expression, whose value can exist and ,,makes sense'' in the compile time.
+The standard defines a couple terms with respect to constant expressions; this subsection attempts to give the reader an intuition which is behind them. The term \textit{core constant expression} (\std{14}{\S 5.20.2}) is used to represent an expression, which can be evaluated easily, using only the information the compiler has during the compilation. The term \textit{constant expressions} (\std{14}{\S 5.20:5}) denotes a core constant expression, whose value is meaningful in the compilation time.
 
 \begin{figure}
 \begin{lstlisting}
@@ -937,7 +939,7 @@ void test() {
 
 The Figure~\ref{fig:constexprIntuition} can serve as an example here. The function \texttt{id} takes one parameter, which is a reference to a constant integer, and returns it back. The expression \lstinline|id(a)| is then a \textit{core constant expression}, as it can be easily evaluated (its value is equivalent to the value of the expression \lstinline|a|). It is not a \textit{constant expression}, because its value refers to a non-static local variable, and the memory location of a (non-static) is unknowable in the compile time (such memory location does not even exist in the execution time, or the variable may be instantiated multiple times in recursive calls). Therefore, its value cannot be used as the initializer of a constexpr reference (1).
 
-How is then possible that it may be used in the declaration (2)? Note that the variable is not initialized simply by the expression \lstinline|id(a)|, but with the rvalue-to-lvalue conversion of the result of that \lstinline|id(a)|; such composed expression is a \texttt{constant expression}. In other words, the declaration of \texttt{c} does not concerned with the identity of the object it is initialized with, but only with its value - and that value is known in the compile time, as the variable \texttt{a} is initialized with the constant expression \texttt{7}. The declaration (3) works because the variable \texttt{d} was declared \texttt{static}.
+How is then possible that it may be used in the declaration (2)? Note that the variable is not initialized simply by the expression \lstinline|id(a)|, but with the rvalue-to-lvalue conversion of the result of that \lstinline|id(a)|; such composed expression is a \texttt{constant expression}. In other words, the declaration of \texttt{c} does is not concerned with the identity of the object it is initialized with, but only with the object's value - and that value is known in the compile time, as the variable \texttt{a} is initialized with the constant expression \texttt{7}. The declaration (3) works because the variable \texttt{d} was declared \texttt{static}.
 
 \begin{figure}[ht]
 \begin{lstlisting}
@@ -977,7 +979,7 @@ note: initializer of 'x' is not a constant expression
 
 TODO popsat deklarace, neuplne typy a~jine zakladni koncepty.
 % Popisu C++ bude trochu odpovidat struktura projektu C/C++ semantiky. Mame tam oddelenou statickou a~dynamickou semantiku. Jak to souvisi se standardem? Je toto oddeleni bezne? Maji to ostatni K semantiky?
-% Taky v te semantice vyznacujeme, co je undefined, unspecified, implementation defined behaviour. I semantika enumu to vyuziva
+% Taky v te semantice vyznacujeme, co je undefined, unspecified, implementation defined behavior. I semantika enumu to vyuziva
 
 % Kde se nachazi normativni dokumenty? Na jakem je zalozena ta semantika? Neco k jejich strukture?
 
@@ -992,7 +994,7 @@ Real-world C++ programs usually consist of multiple source files. To build the p
 
 % Nejaky priklad
 
-Although C/C++ standards does not go to implementation details, they contain the idea of translation phases and separate translation. Translation unit (according to ???) is a~source file with its \textit{include} files included. Section 2.2 of the C++14 standard identifies 9 translation phases; the first five or six of them are usually referred to as \textit{preprocessing phases} (or one \textit{preprocessing phase}) , in the seventh phase the compilation of single translation unit takes place, phase number eight deals with template instantiation and in the ninth phase the whole program is linked together. In C language the phases are similar (but phase eight is missing).
+Although C/C++ standards do not go to implementation details, they contain the idea of translation phases and separate translation. Translation unit (according to ???) is a~source file with its \textit{include} files included. Section 2.2 of the C++14 standard identifies 9 translation phases; the first five or six of them are usually referred to as \textit{preprocessing phases} (or one \textit{preprocessing phase}) , in the seventh phase the compilation of single translation unit takes place, phase number eight deals with template instantiation and in the ninth phase the whole program is linked together. In C language the phases are similar (but phase eight is missing).
 
 \section{Translation units}
 
@@ -1013,9 +1015,9 @@ The project of C/C++ semantics in \K is hosted on GitHub\footnote{\url{https://g
 %TODO preformulovat lepe ^^^^^
 
 \begin{itemize}
-\item The projects depends on RuntimeVerification's implementation of the \K. The RV-\K builds and runs without problems, with a minor exception: it requires the lexical parser flex\footnote{\url{https://github.com/westes/flex}} to be present in the system.
+\item The project depends on RuntimeVerification's implementation of the \K framework. The RV-\K builds and runs without problems, with a minor exception: it requires the lexical parser flex\footnote{\url{https://github.com/westes/flex}} to be present in the system.
 \item The project uses clang as a~library to parse C++ sources; the currently required version 3.9 is a~bit outdated. It is not a problem, as clang can be built easily and the \Project can be configured to use clang installed in any directory.
-\item The officially supported operating system is Ubuntu 16.4 LTS, which already contains prebuilt clang libraries in the required version. But the projects works on Fedora 26 without any problems.
+\item The officially supported operating system is Ubuntu 16.4 LTS, which already contains prebuilt clang libraries in the required version. But the project works on Fedora 26 without any problems.
 \item The building process can take up to thirty minutes on this text's author's machine.
 \end{itemize}
 
@@ -1028,7 +1030,7 @@ The project of C/C++ semantics in \K is hosted on GitHub\footnote{\url{https://g
 \section{Basic usage}
 
 %TODO kde se kcc nachazi?
-Main user interface of the project consists of a~script \kcc~\cite{hathhorn-ellison-rosu-2015-pldi}, which implements a~compiler based on the C/C++ semantics. The script mimics the interface of the GNU GCC compiler and supports many of GCC's command-line parameters. It is therefore possible to use it to build programs instead of GCC; however, the generated executables are many times slower than the ones built by GCC.
+The main user interface of the project consists of a~script \kcc~\cite{hathhorn-ellison-rosu-2015-pldi}, which implements a~compiler based on the C/C++ semantics. The script mimics the interface of the GNU GCC compiler and supports many of GCC's command-line parameters. Therefore, it is possible to use it to build programs instead of GCC; however, the generated executables are many times slower than the ones built by GCC.
 
 \begin{figure}[ht]
 \begin{lstlisting}[language=bash]
@@ -1045,7 +1047,7 @@ Hello world
 \label{helloWorldSource}
 \end{figure}
 
-It has been said in Chapter~\ref{chap:k} that in the \K framework, a~semantics of a programming language L assigns to every program in L a~set of program configuration with a~transition system over them. The executable file \texttt{hello} generated by \kcc (as shown in Figure~\ref{helloWorldSource}) is a~perl script, which walks through the transition system in a~step-by-step manner. The walk starts in an initial configuration and ends in a~configuration for which no further transition is defined. The script then examines the final configuration and stops, possibly printing an error message whenever the walk ended abnormally.
+It has been said in Chapter~\ref{chap:k} that in the \K framework, a~semantics of a programming language L assigns to every program in L a~set of program configuration with a~transition system over them. The executable file \texttt{hello} generated by \kcc (as shown in Figure~\ref{helloWorldSource}) is a~Perl script, which walks through the transition system in a~step-by-step manner. The walk starts in an initial configuration and ends in a~configuration for which no further transition is defined. The script then examines the final configuration and stops, possibly printing an error message whenever the walk ended abnormally.
 
 It is possible to specify an exact number of computational steps to take by setting the variable \texttt{DEPTH} to the desired value. In this particular example, the executable is able to print only an incomplete portion of the text; then an error message is printed (Figure~\ref{fig:runCompiledProgramWithDepth}). The full list of accepted environment variables can be obtained by setting the environment variable \texttt{HELP}.
 
@@ -1067,15 +1069,17 @@ Hello woError: Execution failed.
 
 %The \krun tool can be also configured to traverse the transition system in a~different manner, e.g. to perform a~search for a~specific \textit{pattern}, or to stop the traversal after specified number of steps.
 
-The \Project internally consists of a clang-based tool \clangKast and many \K modules. The modules are composed into three language definitions:
+The \Project internally consists of a Clang-based tool \clangKast and 
+%many \K modules. The modules are composed into 
+three language definitions:
 \begin{itemize}
 \item the definition of C11 translation semantics, which we will refer to as \textit{C translation semantics};
 \item the definition of C++14 translation semantics, which we will refer to as \textit{C++ translation semantics}, or simply \textit{translation semantics}; and
 \item the definition of C11/C++14 execution semantics; which we will refer to as \textit{execution semantics}.
 \end{itemize}
-Some modules are included in multiple language definitions. All the language definitions has to be compiled by \kompile; the compilation of both \clangKast and the language definitions is driven by a Makefile.
+The language definitions are composed of many modules; some modules are included in multiple language definitions. All the language definitions have to be compiled by \kompile; the compilation of both \clangKast and the language definitions is driven by a Makefile.
 
-All the \K source files are contained in the \textit{semantics} directory in the project repository (Figure~\ref{fig:directoryStructure}). The directory contains subdirectories \texttt{c11} and \texttt{cpp14}, which contain source files for the repsective languages; it also contains a subdirectory \texttt{common}, which contains (some) source files common to both languages. The directory of each language contains \texttt{language} and \texttt{library} subdirectories, where the former is split into subdirectories containing sources for translation semantics, execution semantics, and both. From this point further, the term \textit{C++ semantics} will denote the content of \texttt{semantics/cpp14} subdirectory of the project.
+All the \K source files are contained in the \textit{semantics} directory in the project repository (Figure~\ref{fig:directoryStructure}). The directory contains subdirectories \texttt{c11} and \texttt{cpp14}, which contain source files for the respective languages; it also contains a subdirectory \texttt{common}, which contains (some) source files common to both languages. The directory of each language contains \texttt{language} and \texttt{library} subdirectories, where the former is split into subdirectories containing sources for translation semantics, execution semantics, and both. From this point further, the term \textit{C++ semantics} will denote the content of \texttt{semantics/cpp14} subdirectory of the project.
 
 \begin{figure}[ht]
 \begin{lstlisting}[language=bash]
@@ -1101,7 +1105,7 @@ semantics
 \label{fig:directoryStructure}
 \end{figure}
 
-When \kcc is invoked on a~C++ program, a~clang-based tool \clangKast (from directory \texttt{cpp-parser}) is used to convert each source file into the \K's internal representation (\K AST). Every converted file is then individually used as a program, which is interpreted (using the \K tool \krun) by the \textit{C++ translation semantics}; the resulting terminal configuration can be thought of as an equivalent of an object file. The outputs are then joined together with runtime library and the result is wrapped in a~generated Perl script. When the script is executed, it interprets (with \krun) the linked program using the \textit{C11/C++14 execution semantics}, possibly passing the script's command line arguments to the program.
+When \kcc is invoked on a~C++ program, a~Clang-based tool \clangKast (from directory \texttt{cpp-parser}) is used to convert each source file into the \K's internal representation (\K AST). Every converted file is then individually used as a program, which is interpreted (using the \K tool \krun) by the \textit{C++ translation semantics}; the resulting terminal configuration can be thought of as an equivalent of an object file. The outputs are then joined together with runtime library and the result is wrapped in a~generated Perl script. When the script is executed, it interprets (with \krun) the linked program using the \textit{C11/C++14 execution semantics}, possibly passing the script's command line arguments to the program.
 %
 %\subsection{Structure of configurations}
 %
@@ -1217,12 +1221,12 @@ rule <k> sendString(FD::Int, S::String) => .K ...</k>
   )...
 )
 \end{lstlisting}
-\caption{An excerpt of a generated configuration. Large portions of the configuration were replaced by elipsis (\ldots); the formatting (whitespaces) was added manually.}
+\caption{An excerpt of a generated configuration. Large portions of the configuration were replaced by ellipsis (\ldots); the formatting (whitespaces) was added manually.}
 \label{exampleConfigurationOutput}
 \end{figure}
 
 
-When an executable generated by \kcc is run in an environment with the variable \texttt{VERBOSE} set, the executable prints the final configuration in a text form to the standard output. For the ,,hello world'' program above (Figure~\ref{helloWorldSource}), the konfiguration produced by
+When an executable generated by \kcc is run in an environment with the variable \texttt{VERBOSE} set, the executable prints the final configuration in a text form to the standard output. For the ,,hello world'' program above (Figure~\ref{helloWorldSource}), the configuration produced by
 the command
 \begin{lstlisting}[language=bash]
 $ env VERBOSE=1 DEPTH=675 ./hello
@@ -1230,10 +1234,10 @@ $ env VERBOSE=1 DEPTH=675 ./hello
 has about 600 kilobytes. The excerpt in the Figure~\ref{exampleConfigurationOutput} contains a~thread with two \textit{computational items} on the top of its \texttt{K} cell. From that point, if the execution had not been stopped, the first computational item (\texttt{sendString}) would have sent the rest of the \texttt{Hello world} string to the standard output, then it would have been removed and the second computational item (\texttt{sent}) would have been processed.
 
 The project contains some rules, which give semantics to the \texttt{sendString} term.
-The rule in the Figure~\ref{fig:exampleCSemanticsRule} is one of them; it basically encodes the following piece of semantic information: ,,To send a~nonempty string means to send its first character and then to send the rest, unless the IO is disabled''. The Chapter~\ref{chap:k} contains everything needed to understand this rule, except a small detail: the elipsis (\lstinline|...|) in the \texttt{k} cell behaves exactly as \lstinline|~> _| and expresses the notion of ,,we do not care what is in the rest of this cell''. We provide an explanation of the rule only as a means for the reader to check his understanding. The rule says: ,,Every configuration, in which
+The rule in the Figure~\ref{fig:exampleCSemanticsRule} is one of them; it basically encodes the following piece of semantic information: ,,To send a~non-empty string means to send its first character and then to send the rest, unless the IO is disabled''. The Chapter~\ref{chap:k} contains everything needed to understand this rule, except a small detail: the ellipsis (\lstinline|...|) in the \texttt{k} cell behaves exactly as \lstinline|~> _| and expresses the notion of ,,we do not care what is in the rest of this cell''. We provide an explanation of the rule only as a means for the reader to check his understanding. The rule says: ,,Every configuration, in which
 \begin{enumerate}
-\item there is an \texttt{options} cell containing a~set not containing an \texttt{NoIO()} term, and in which
-\item there is also a~\texttt{k} cell having on its top a~\texttt{sendString} item parametrized with an integer and a~nonempty string \texttt{S},
+\item there is an \texttt{options} cell containing a~set not containing a \texttt{NoIO()} term, and in which
+\item there is also a~\texttt{k} cell having on its top a~\texttt{sendString} item parametrized with an integer and a~non-empty string \texttt{S},
 \end{enumerate}
 can be rewritten to another configuration by rewriting the \texttt{sendString} item to \texttt{\#putc} of the first character, followed by (\lstinline|~>|) the same \texttt{sendString} item, but without the first character of the string.''
 
@@ -1275,7 +1279,7 @@ The \Project contains three types of modules: \textit{sort} modules, which only 
 
 \section{Value categories}\label{sec:proj:values}
 
-In order to represent expressions of different value categories, the C++ semantics define sorts \texttt{LVal}, \texttt{XVal} and \texttt{PRVal} for lvalues, xvalues and prvalues, respectively. Each one of those sorts have a \textit{value} constructor, which represents an evaluated expression, and a subsort with an \textit{expression} constructor, which represents an unevaluated expression. For example, \textit{prvalue}s are represented by the sort \texttt{PRVal} as shown in the Figure~\ref{fig:prvSyntax}. All value sorts are subsorted to the sort \texttt{Val}. The C++ semantics also defines a function \texttt{isEvalVal}, which rewrites to \texttt{true} for terms representing an evaluated expression.
+In order to represent expressions of different value categories, the C++ semantics define sorts \texttt{LVal}, \texttt{XVal} and \texttt{PRVal} for lvalues, xvalues and prvalues, respectively. Each one of those sorts has a \textit{value} constructor, which represents an evaluated expression, and a subsort with an \textit{expression} constructor, which represents an unevaluated expression. For example, \textit{prvalue}s are represented by the sort \texttt{PRVal} as shown in the Figure~\ref{fig:prvSyntax}. All value sorts are subsorted to the sort \texttt{Val}. The C++ semantics also defines a function \texttt{isEvalVal}, which rewrites to \texttt{true} for terms representing an evaluated expression.
 
 \begin{figure}
 \begin{lstlisting}
@@ -1306,7 +1310,7 @@ rule isKResult(
 \label{lst:evalExprIsKResult}
 \end{figure}
 
-The set of the computational results of the translation semantics has to be different then the set of the results of the execution semantics. For example, some expressions occurring in a body of a function cannot be fully evaluated when the function declaration is being processed, but they can be evaluated when the function is called. Therefore, some terms (e.g. a \texttt{pre} term) are results in the translation semantics, but they have to be evaluated further in the execution semantics. Because of that, the translation semantics contains a similar rule non-evaluated expressions (like \texttt{pre}). This is important for the implementation of generalized constant expressions (Section~\ref{sec:impl:constexpr}).
+The set of the computational results of the translation semantics has to be different than the set of the results of the execution semantics. For example, some expressions occurring in a body of a function cannot be fully evaluated when the function declaration is being processed, but they can be evaluated when the function is called. Therefore, some terms (e.g. a \texttt{pre} term) are results in the translation semantics, but they have to be evaluated further in the execution semantics. Because of that, the translation semantics contains a similar rule non-evaluated expressions (like \texttt{pre}). This is important for the implementation of generalized constant expressions (Section~\ref{sec:impl:constexpr}).
 
 
 
@@ -1319,15 +1323,15 @@ This chapter focuses on those parts of the C/C++ semantics project, which are re
 \section{Our approach}
 %TODO jak jsem postupoval pri implementaci. Nejprve jsem nasel konkretni test-casy, ktere jsem porovnal se standardem, s prekladacema i s stackoverflow; pak jsem nasel vhodne misto v projektu a dopsel do nej kod; v prubehu casu jsem generoval ruzne hranicni pripady...
 
-When we began the work on this thesis, we had almost no knowledge of the \K framework and we knew the C++ language almost only from the position of a practicioner. Before we started extending the \Project with any language features, we went through the official \K tutorial\footnote{\url{http://www.kframework.org/index.php/K_Tutorial}} to familiarize ourselves with the framework. We then implemented the language features approximately in the order in which they are described in this chapter. The implementation work on each of the features can be divided into four phases, which are described in the following paragraphs.
+When we began the work on this thesis, we had almost no knowledge of the \K framework and we knew the C++ language almost only from the position of a practitioner. Before we started extending the \Project with any language features, we went through the official \K tutorial\footnote{\url{http://www.kframework.org/index.php/K_Tutorial}} to familiarize ourselves with the framework. We then implemented the language features approximately in the order in which they are described in this chapter. The implementation work on each of the features can be divided into four phases, which are described in the following paragraphs.
 
-\paragraph{Understand the feature} In the first phase we focused on understanding the selected language feature. During this phase we wrote many snippets of C++ code related to the feature; the snippets were based on our reading of the standard as well as on our own programming experience and on C++ related answers on StackOverflow. One useful tool in this phase was GodBold's Compiler Explorer\footnote{\url{https://gcc.godbolt.org/}}; which allowed us to easily compile a piece of code with different versions of various compilers.
+\paragraph{Understand the feature} In the first phase, we focused on understanding the selected language feature. During this phase we wrote many snippets of C++ code related to the feature; the snippets were based on our reading of the standard as well as on our own programming experience and on C++ related answers on StackOverflow. One useful tool in this phase was GodBold's Compiler Explorer\footnote{\url{https://gcc.godbolt.org/}}; which allowed us to easily compile a piece of code with different versions of various compilers.
 
 \paragraph{Understand the relevant parts of the \Project} We then explored the \Project to see which parts of the feature are already implemented (if any), how the C++ semantics implements similar features and in which places the feature might be implemented. A simple \texttt{grep} tool was helpful in this place. We also the debugging switch of \kcc , as well as its ability to run the compilation up to a specified depth.
 
-\paragraph{Implement it} The third phase consisted of extending the implementation with our code and test-cases, which was usually done in a \textit{test-first} manner. Sometimes we reused some snippets from the first phase, but usually we created new tests. During this phase we often found some bugs in the \Project; if that happened, we sometimes needed to fix it immediately, but usually we just created a different test-cases which would not trigger the bug and postponed the fix for later.
+\paragraph{Implement it} The third phase consisted of extending the implementation with our code and test-cases, which was usually done in a \textit{test-first} manner. Sometimes we reused a few snippets from the first phase, but most of the test cases used in this phase were newly created. During this phase we often found some bugs in the \Project; if that happened, we sometimes needed to fix it immediately, but more often we just created a different test-cases which would not trigger the bug and postponed the fix for later.
 
-\paragraph{Do the rest} When the feature was implemented, we fixed the bugs we found or removed the technical debt we encountered or created in the implementation phase. A few times we needed to reiterate the whole process, because we discovered a new aspect of the feature we did not fully understand yet.
+\paragraph{Do the rest} When the feature was implemented, we fixed the bugs we found or removed the technical debt we encountered or created in the implementation phase. A few times we needed to reiterate the whole process because we discovered a new aspect of the feature we did not fully understand yet.
 
 %\begin{enumerate}
 %\item[Understand the feature] fff 
@@ -1390,7 +1394,7 @@ When we began the work on this thesis, we had almost no knowledge of the \K fram
 % Popsat co me vedlo k tomu, ze jsem se pustil zrovna do enumu. Ze je to pomerne samostatna vec, nezavisla na vetsine ostatnich featur C++, a~je jednoducha.
 
 %In the C++ standard~\cite{n4296}, enumerations are described mostly in
-When we were trying to understand enumerations, we created approximately 40 snippets of C++ source code. It then went out that in order to implement enumerations, several parts of the semantics had to be modified. The translation tool \clangKast was slightly modified to produce AST nodes for enumeration declarations; to process the declarations in the semantics, a~new file was added to the C++ translation semantics and a~new set of cells was added to common part of configuration. It was also needed to implement enumerator lookup, which required addition of a~few cells to configuration and a~slight modification of some of the existing name lookup rules. The semantics was to some extent already prepared to work with enumerations, and some of the relevant rules (e.g. for conversions) needed no change. To ensure correctness of implementation, several test cases were added to the test suite. Overall, most of the modifications were additive, and only little of the existing code needed to be changed. During the implementation process, a~few minor bugs were discovered and fixed. 
+When we were trying to understand enumerations, we created approximately 40 snippets of C++ source code. It then went out that in order to implement enumerations, several parts of the semantics had to be modified. The translation tool \clangKast was slightly modified to produce AST nodes for enumeration declarations; to process the declarations in the semantics, a~new file was added to the C++ translation semantics and a~new set of cells was added to common part of the configuration. It was also needed to implement enumerator lookup, which required an addition of a~few cells to configuration and a~slight modification of some of the existing name lookup rules. The semantics was to some extent already prepared to work with enumerations, and some of the relevant rules (e.g. for conversions) needed no change. To ensure correctness of the implementation, several test cases were added to the test suite. Overall, most of the modifications were additive, and only little of the existing code needed to be changed. During the implementation process, a~few minor bugs were discovered and fixed. 
 
 % TODO zminit ze jsem chtel implementovat i operatory na enumech, ale nedal jsem to a~udelal to Dwight.
 %It was also needed to add a~support for operations
@@ -1402,16 +1406,14 @@ Enumeration declaration, including the \textit{opaque declaration}, is implement
 %cpp14/language/translation/decl/enum.k. In K abstract syntax, full enumeration declarations are represented by "EnumDef" node, whereas opaque enum declarations are represented by node "OpaqueEnumDeclaration". 
 Every enumeration declaration is processed as follows:
 \begin{enumerate}
-\item A new \texttt{cppenum} cell is created in the current translation unit. An error is reported if there already exist an enumeration with the same name, unless the declaratation is opaque.
-\item The enumeration being declared is added to environment, so that it could be later looked up.
+\item A new \texttt{cppenum} cell is created in the current translation unit. An error is reported if there already exists an enumeration with the same name unless the declaration is opaque.
+\item The enumeration being declared is added to the environment so that it could be later looked up.
 \item For full declarations, the enumerators are processed in the order of their declarations. Processed enumerators are stored in sub-cells of the \texttt{cppenum} cell; for unscoped enumerations, the enumerators are also added to the scope surrounding the enumeration declaration.
 \item For unscoped enumerations without a~fixed underlying type, the set of enumeration values and the underlying type is computed and stored in the \texttt{cppenum} cell.
 \end{enumerate}
 
-For declarations of enumerations with no fixed underlying type, the standard keeps one aspect of the declaration unspecified. Prior the closing bracket of the enumerator declaration
-\footnote{And inside the enumeration declaration in particular.},
-the type of an enumerator with initializer is the type of the initializer, and type of an enumerator without initializer is the type of previous enumerator, whenever possible. If there is no initializer specified for the first enumerator, the type of the enumerator is unspecified; it is also unspecified for enumerators (without initializers) whose value does not fit into the type of previous enumerator. 
-For example, in the declaration on figure~\ref{fig:ugly-enum}, the type of enumerator \lstinline|A| in the declaration of \lstinline|B| is not specified, and therefore the value of \lstinline|B| is not specified, too. Similarly, the value of enumerator \lstinline|D| on most platforms does not fit to unsigned char, which is the type of enumerator \lstinline|C|, and its type is thus unspecified. Note that the types of enumerators are unspecified only inside of the declaration of the enumeration, i.e. prior the closing bracket of the declaration. Type of every enumerator after the complete declaration is always the type of the enumeration, so this unspecified behaviour is usually not a~problem in practice, unless one writes code similar to the one in image~\ref{fig:ugly-enum}.
+For declarations of enumerations with no fixed underlying type, the standard keeps one aspect of the declaration unspecified. Prior the closing bracket of the enumerator declaration, and in particular, inside the enumeration declaration, the type of an enumerator with an initializer is the type of the initializer, and the type of an enumerator without an initializer is the type of the previous enumerator, whenever possible. If there is no initializer specified for the first enumerator, the type of the enumerator is unspecified; it is also unspecified for enumerators (without initializers) whose value does not fit into the type of previous enumerator. 
+For example, in the declaration on Figure~\ref{fig:ugly-enum}, the type of enumerator \lstinline|A| in the declaration of \lstinline|B| is not specified, and therefore the value of \lstinline|B| is not specified, too. Similarly, the value of enumerator \lstinline|D| on most platforms does not fit to unsigned char, which is the type of enumerator \lstinline|C|, and its type is thus unspecified. Note that the types of enumerators are unspecified only inside of the declaration of the enumeration, i.e. prior the closing bracket of the declaration. Type of every enumerator after the complete declaration is always the type of the enumeration, so this unspecified behavior is usually not a~problem in practice, unless one writes code similar to the one in Figure~\ref{fig:ugly-enum}. However, the semantics should be aware of it.
 
 \begin{figure}[ht]
 \begin{lstlisting}[language=C++]
@@ -1423,7 +1425,7 @@ enum E {
 \label{fig:ugly-enum}
 \end{figure}
 
-However, the semantics should be aware of this behaviour. Many real-world programs use enumerations whose enumerators does not have initializers, since the value of the enumerators is by default numbered from zero. Earlier versions of the semantics caused the semantic-based compiler kcc to stop the compilation whenever an undefined or unspecified behaviour was encoutered, which would be an unforunate thing to do for such programs. For this reason, the project maintainer added an error-reporting and recovery support to the semantics \footnote{\url{https://github.com/kframework/c-semantics/commit/584fa6ff4a90aca45de99d6b210177258ebd96d4}}. The current version of the semantics issues a~warning, whenever this unspecified behaviour occur. Ideally, the warning would be suppressed if the unspecified type is never used, but this enhancement was not implemented.
+Many real-world programs use enumerations whose enumerators do not have initializers, because the language provides reasonable default values. Earlier versions of the semantics caused the semantic-based compiler \kcc to stop the compilation whenever an undefined or unspecified behavior was encountered, which was an undesirable action for such programs. For this reason, the project maintainer added an error-reporting and recovery support to the semantics \footnote{\url{https://github.com/kframework/c-semantics/commit/584fa6ff4a90aca45de99d6b210177258ebd96d4}}. The current version of the semantics issues a~warning whenever this unspecified behavior occurs. Ideally, the warning would be suppressed if the unspecified type is never used, but this enhancement was not implemented.
 
 % Also, enumerations may be declared in block, class or namespace scope. There was no problem in supporting all three.
 
@@ -1436,11 +1438,11 @@ However, the semantics should be aware of this behaviour. Many real-world progra
 
 The name of an enumerator can be referred to using the scope resolution operator applied to a~name of the enumeration. This was implemented easily using only a~few rules in the (static) semantics.
 %(3.4.3:1) 
-Furthemore, the enumerators of an unscoped enumeration are declared in the scope immediately containing the declaration of the enumeration. To implement this, we have decided to add a~few new cells, which map names of enumerators of enums defined in the surrounding scope to their corresponding type. The lookup then reuses the rules from the previous case. 
+Furthermore, the enumerators of an unscoped enumeration are declared in the scope immediately containing the declaration of the enumeration. To implement this, we have decided to add a~few new cells, which map names of enumerators of enums defined in the surrounding scope to their corresponding type. The lookup then reuses the rules from the previous case. 
 %It might be possible to implement the lookup even without those extra cells, but the implemented solution seemed to be simplier.
 
 %TODO sjednotit s textem, ktery jsem psal drive nahore
-The rules for enumerator lookup also have to consider the context in which the lookup is performed. As noted earlier, it is mandated by the standard that the types of declared enumerators are different inside the declaration then after it. One may find that surprising; however, this is needed in order to easily create enumerator initializers, which depends on values of previous enumerators of the same enumeration, as it is ilustrated in figure~\ref{lst:enumDepends}. If the type of the enumerator \lstinline|A| in the initializer of the enumerator \lstinline|B| was the type of the enumeration (as it is after the declaration), the initializer expression would be ill-formed, as in C++ enumerations are not implicitly convertible to arithmetic types. Thus, an enumerator prior the closing bracket has always an integral type.
+The rules for enumerator lookup also have to consider the context in which the lookup is performed. As noted earlier, it is mandated by the standard that the types of declared enumerators are different inside the declaration then after it. One may find that surprising; however, this is needed in order to easily create enumerator initializers, which depends on values of previous enumerators of the same enumeration, as it is illustrated in Figure~\ref{lst:enumDepends}. If the type of the enumerator \lstinline|A| in the initializer of the enumerator \lstinline|B| was the type of the enumeration (as it is after the declaration), the initializer expression would be ill-formed, as in C++ enumerations are not implicitly convertible to arithmetic types. Thus, an enumerator prior the closing bracket has always an integral type.
 
 \begin{figure}[ht]
 \begin{lstlisting}[language=C++]
@@ -1488,14 +1490,14 @@ The clang fronted supports this intrinsic, too. Our tool \clangKast translates t
 
 %TODO dwight napsal ty operatory apod.
 
-We successfully implemented enumeration declaration and enumerator lookup for both scoped and unscoped enumerations. Our implementation allows enumerations to be declared in all scopes where enumerations can be declared according to the standard, that is, in a namespace scope, in a class scope or in a block scope (inside a function). We also implemented opaque enumeration declaration and redeclaration and a support for the standard library \lstinline|std::underlying_type_t| template. During the implementation we fixed a number of bugs in the \Project, including a bug which caused the lookup for a double nested name to fail. We also found a few defects in other projects (see Section~\ref{sec:defects}).
+We successfully implemented enumeration declaration and enumerator lookup for both scoped and unscoped enumerations. Our implementation allows enumerations to be declared in all scopes where enumerations can be declared according to the standard, that is, in a namespace scope, in a class scope or in a block scope (inside a function). We also implemented opaque enumeration declaration and redeclaration and a support for the standard library \lstinline|std::underlying_type_t| template. During the implementation work, we fixed a number of bugs in the \Project, including a bug which caused the lookup for a double nested name to fail. We also found a few defects in other projects (see Section~\ref{sec:defects}).
 
-We have not implemented the non-standard \lstinline|__attribute__((packed))| extension; however, it is likely that it will be implemented in the future, because the C semantics supports it. We also do not have precise semantics for the enumerator initializers, which should be different kinds of constant expression depending on the fixedness of the enumeration's underlying type (see also Section~\ref{sec:impl:constexpr}). Most of the implementation was merged into upstream in April 2017, but a few features are still implemented only in our (publicly-available) fork of the project.
+We have not implemented the non-standard \lstinline|__attribute__((packed))| extension; however, it is likely that it will be implemented in the future, as it is quite known among the practitioners and the C semantics also supports it. We also do not have precise semantics for the enumerator initializers, which should be different kinds of constant expression depending on the fixedness of the enumeration's underlying type (see also Section~\ref{sec:impl:constexpr}). Most of the implementation was merged into upstream in April 2017, but a few features are still implemented only in our (publicly-available) fork of the project.
 
 \section{Zero initialization of class types}\label{chp:implZeroInit}
 
 When we were choosing the features to implement as a part of this thesis, we did not intend to implement anything class-related at all. Later, when most of the enumerations-related language features was implemented, the maintainer of the \Project suggested\footnote{\url{https://github.com/kframework/c-semantics/pull/275\#issuecomment-294241691}}
-that we could implement zero-initialization on class types (see Section~\ref{chap:lang:init}). Since we wanted to gain deeper understanding of both the C++ language and the \Project before attempting to tackle the problem of generalized constant expressions, and the implementation part of the zero-initialization of class-types seemed to be relatively straightforward, we agreed. However, the implementation of this feature turned out to be far more challenging than we thought.
+that we could implement zero-initialization on class types (see Section~\ref{chap:lang:init}). Since we wanted to gain a deeper understanding of both the C++ language and the \Project before attempting to tackle the problem of generalized constant expressions, and the implementation part of the zero-initialization of class-types seemed to be relatively straightforward, we agreed. However, the implementation of this feature turned out to be far more challenging than we thought.
 
 \subsection{A bug: nondeterminism}
 
@@ -1513,9 +1515,9 @@ rule #figureInit(/*...*/, ExpressionList(L::List),/*...*/)
 \label{fig:nondetRules}
 \end{figure}
 
-The bug was hard to identify, because if both rules could apply, the \K framework usually applied the first. However, when we began the implementation of the zero initialization on class types, the non-determinism manifested. When the newly-written zero-initialization code contained a bug which should cause the compilation to get stuck, then the second rule applied, thus bypassing our newly-written code.
+The bug was hard to identify because when both rules could apply, the \K framework usually applied the first. However, when we began the implementation of the zero initialization on class types, the non-determinism manifested. When the newly-written zero-initialization code contained a bug which should cause the compilation to get stuck, then the second rule applied, thus bypassing our newly-written code.
 
-If we had had a deeper understanding of how non-determinism works in \K, and had we considered the possibility of existence of non-deterministic behavior in the translation semantics, we would probably found the bug sooner. Once we knew about this non-determinism, it was easy to fix it\footnote{\url{https://github.com/kframework/c-semantics/pull/287}}.
+If we had had a deeper understanding of how non-determinism works in \K, and had we considered the possibility of the existence of non-deterministic behavior in the translation semantics, we would probably found the bug sooner. Once we knew about this non-determinism, it was easy to fix it\footnote{\url{https://github.com/kframework/c-semantics/pull/287}}.
 
 %TODO ani jsem se nepokusil porozumet presneji tomu, proc se to nekdy projevuje a nekdy ne
 %TODO zminit ze by to ale nemuselo stat tolik casu, kdybych vedel, ze problem s nedeterminismem muze nastat; pak bych asi mozna vyzkousel ty vlastnosti K, ktere umozni nedetermismus detekovat.
@@ -1542,7 +1544,7 @@ int main() {
 
 \subsection{Implementation}
 
-To zero-initialize an object of a class type means to zero-initialize all its non-static members, its base classes and also all the padding among the subobjects. The initialization of non-static members was straightforward, because we could reuse an already existing syntax for member access and create computational items like
+To zero-initialize an object of a class type means to zero-initialize all its non-static members, its base classes and also all the padding among the subobjects. The initialization of non-static members was straightforward because we could reuse already existing syntax for member access and create computational items like
 \begin{lstlisting}
 zeroInit(Base . no-template Name(C, X), T)
 \end{lstlisting}
@@ -1810,7 +1812,7 @@ The project of C/C++ semantics is made of multiple modules, which are introduced
 %It also depends on some external tools.
 Main user interface of the project consists of a~script named kcc, which implements a~semantics-based compiler. The script mimincs the interface of the gnu GCC compiler and supports many of GCC's command-line parameters. It is possible to use it to build programs instead of GCC; however, the generated executables are many times slower then the ones built with GCC.
 
-The figure~\ref{fig:cpp-program-example} contains a~simple program, consisting of one C and one C++ source file. When compiled with GCC, it first compiles both source files separately, storing the resulting object code in separate object files, and then links the object files to final executable. The kcc script invoked by command
+The Figure~\ref{fig:cpp-program-example} contains a~simple program, consisting of one C and one C++ source file. When compiled with GCC, it first compiles both source files separately, storing the resulting object code in separate object files, and then links the object files to final executable. The kcc script invoked by command
 \begin{lstlisting}[language=bash]
 $ kcc foo.c main.cpp -o hello
 \end{lstlisting}
@@ -1886,7 +1888,7 @@ To sum up, the C/C++ semantics project consists of: one parser for C and another
 
 %Jak funguje ten preklad: to by asi melo byt v kapitole o C++. Standard v 2.2 definuje 9 fazi prekladu. Prvnich 6 je takzvany preprocesing, potom 7 - preklad translacni jednotky. Taky tu jsou instanciacni jednotky - to je pro sablony? 8 - kmobinace translacni a~instanciacnich jednotek. 9 - linkovani. Linkovani je pak popsano v 3.5. C to ma podobne.ioi
 
-%The K C++ semantics emerged from the project of C semantics and it shares a~repo with it. It consists of the following parts: clang-based C++ parser, linking semantics, ... and a~set of scripts driving the compilation. Static semantics 
+%The K C++ semantics emerged from the project of C semantics and it shares a~repo with it. It consists of the following parts: a Clang-based C++ parser, linking semantics, ... and a~set of scripts driving the compilation. Static semantics 
 
 
 % Naznacit, co patri kam. Jako ze name lookup je soucasti staticke semantiky, vyhodnocovani vyrazu je soucasti dynamicke (prestoze nektere casti jsou i soucasti staticke, a~pribude constexpr). Ridici smycky - dynamicke.
