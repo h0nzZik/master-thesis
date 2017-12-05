@@ -96,7 +96,7 @@ faculty = {fi},
 
 Writing correct software is hard.
 %Software verification is hard.
-Although formal methods for software verification are being developed, there are only a few high quality tools on the market. In order to create a~production-ready tool based on a particular set of formal methods and targeting a particular language, it is necessary to understand the formal methods, the precise semantics of the target language, and possibly some other things. Researchers and engineers often work in teams, and various teams often implement different techniques for the same language; because of that, a platform which would enable component reuse and separation of concerns might significantly improve the productivity of the tool developers.
+Although formal methods for software verification are being developed, there are only a few high-quality tools on the market. In order to create a~production-ready tool based on a particular set of formal methods and targeting a particular language, it is necessary to understand the formal methods, the precise semantics of the target language, and possibly some other things. Researchers and engineers often work in teams, and various teams often implement different techniques for the same language; because of that, a platform which would enable component reuse and separation of concerns might significantly improve the productivity of the tool developers.
 
 \K framework is one such platform. It is based on the idea that formal, executable language semantics can be used to derive a~large variety of tools, including interpreters, debuggers, model checkers or deductive program verifiers~\cite{rosu-2017-marktoberdorf} (see Figure~\ref{kidea}). Tool developers skilled in a~particular area of formal methods can work inside their area of expertise and focus on developing language independent tools, while leaving language details to someone else. Thus a~separation of concerns is achieved.
 
@@ -111,10 +111,10 @@ Although formal methods for software verification are being developed, there are
 \K framework has been successfully used to give formal semantics to various languages, including Java~\cite{bogdanas-rosu-2015-popl}, Python, Javascript~\cite{park-stefanescu-rosu-2015-pldi}, Agda~\cite{Tokarcik2015}, and C~\cite{ellison-2012-thesis,hathhorn-ellison-rosu-2015-pldi}, all of which is publicly available. The C semantics has been used to create RV-Match, a~,,tool for checking C programs for
 undefined behavior and other common programmer mistakes''~\cite{guth-hathhorn-saxena-rosu-2016-cav}.  At the time of writing, the C semantics is being extended to support the C++ programming language. The C++ support is also the focus of this thesis. From this point on, when we write ,,\Project'', we mean this project of defining C/C++ language semantics in \K.
 
-The thesis aimed to implement two language features: \textit{enumerations} and \textit{compile-time evaluation of constexpr functions}, where the latter is an important part of a language trait called \textit{constant expressions}. When we decided to implement the enumerations, we thought that it is a relatively simple language feature: they do not have any special runtime behavior, do not interfere much with other language features, and they exist in the language from its beginning. The \textit{scoped enumerations}, introduced in C++11~\cite{ISOcpp11}, are even simpler both from language and user point of view (the legacy C-style enumerations still need to be supported, though). However, careful reading of the standard~\cite{n4296} revealed us that the enumerations behave in many ways, some of which we considered to be surprising, as we did not know them from common programming practice.
+The thesis aimed to implement two language features, \textit{enumerations} and \textit{compile-time evaluation of constexpr functions}, where the latter is an important part of a language trait called \textit{constant expressions}. When we decided to implement the enumerations, we thought that it is a relatively simple language feature: they do not have any special runtime behavior, do not interfere much with other language features, and they exist in the language from its beginning. \textit{Scoped enumerations}, introduced in C++11~\cite{ISOcpp11}, are even simpler both from language and user point of view (the legacy C-style enumerations still need to be supported, though). However, careful reading of the standard~\cite{n4296} revealed us that the enumerations behave in many ways, some of which we considered to be surprising, as we did not know them from common programming practice.
 %TODO tady bych se jeste neodkazova na n4296
 
-\textit{Constant expressions}, on the contrary, had undergone a~deep change in C++11, which allowed a~restricted set of runtime computations to happen in the compilation time; the future revisions released the restrictions to the point that in C++17~\cite{ISOcpp17}, almost arbitrary side effect free computations can happen in the time of compilation. Because of that, we expected from the beginning that in order to implement the constant expressions (and compile-time function evaluation in particular) a~more fundamental change to the semantics would have to be made.
+\textit{Constant expressions}, on the contrary, had undergone a~deep change in C++11, which allowed a~restricted set of runtime computations to happen in the compilation time; the future revisions released the restrictions to the point that in C++17~\cite{ISOcpp17}, almost arbitrary side effect free computations can happen in the time of compilation. Because of that, we expected from the beginning that in order to implement the constant expressions (and \textit{compile-time function evaluation} in particular) a~more fundamental change to the semantics would have to be made.
 
 Both features were successfully implemented. The implementation of enumerations is production ready and was largely merged into the upstream; the compile-time function evaluation 
 %is not ready for production yet and 
@@ -216,7 +216,9 @@ syntax Pgm   ::= Stmt
 
 A part of a~program configuration can be stored in a~\textit{cell}, which can be thought of as a~labeled multiset~\cite{hathhorn-ellison-rosu-2015-pldi}. Cells may contain terms of a~given sort or other cells. In a~source code of a~language definition in \K, cells are written in an xml-style notation.
 
-Figure~\ref{impConfiguration} contains a~snippet of such source code. The keyword \texttt{configuration} here defines three cells (\texttt{T}, \texttt{k} and \texttt{state}), a~single structure for all configurations, and an initial configuration. Every cell in the definition has some content: the \texttt{state} cell contains \lstinline{.Map}, which has a~constructor of sort \texttt{Map}, representing an empty map; the \texttt{k} cell contains a~term of sort \texttt{Pgm} consisting of a~variable with name \texttt{\$PGM}, and the \texttt{T} cell contains the other two cells. The initial configuration for program \texttt{P} is just like that, except that the variable \texttt{\$PGM} is replaced by a~term, representing the program \texttt{P}.
+Figure~\ref{impConfiguration} contains a~snippet of such source code. The keyword \texttt{configuration} here defines three cells (\texttt{T}, \texttt{k} and \texttt{state}), a~single structure for all 
+configurations, and an initial configuration. Every cell in the definition has some content: the \texttt{state} cell contains \lstinline|.Map|, which has a~constructor of sort \texttt{Map}, representing an empty map; the \texttt{k} cell contains a~term of sort \texttt{Pgm} consisting of a~variable with name 
+\texttt{\$PGM}, and the \texttt{T} cell contains the other two cells. The initial configuration for program \texttt{P} is just like that, except that the variable \texttt{\$PGM} is replaced by a~term, representing the program \texttt{P}.
 
 \begin{figure}
 \begin{lstlisting}
@@ -266,7 +268,7 @@ endmodule
 \label{arithSource}
 \end{figure}
 
-Figure~\ref{arithSource} contains a~definition of a~simple language of arithmetic expressions. The definition contains a~few things we have not described yet. First, it is split into two modules; the \texttt{ARITH-SYNTAX} module contains everything which is needed to generate a~parser, while the \texttt{ARITH} module contains everything else. Second, one of the sort constructors is separated from the previous one by a~\lstinline{>} sign; that causes the preceding productions in the concrete syntax grammar to have a~higher priority than the following ones and thus to bind tighter. Third, some constructors have \textit{attributes} attached; the \texttt{left} attributes causes a~binary constructor to be left-associative, and the \texttt{bracket} attribute means that the corresponding unary constructor should be parsed as a~pair of brackets.
+Figure~\ref{arithSource} contains a~definition of a~simple language of arithmetic expressions. The definition contains a~few things we have not described yet. First, it is split into two modules; the \texttt{ARITH-SYNTAX} module contains everything which is needed to generate a~parser, while the \texttt{ARITH} module contains everything else. Second, one of the sort constructors is separated from the previous one by a~\lstinline|>| sign; that causes the preceding productions in the concrete syntax grammar to have a~higher priority than the following ones and thus to bind tighter. Third, some constructors have \textit{attributes} attached; the \texttt{left} attributes causes a~binary constructor to be left-associative, and the \texttt{bracket} attribute means that the corresponding unary constructor should be parsed as a~pair of brackets.
 %TODO mozna se to podoba Parsing Expression Grammar
 
 When stored in a~file with name \texttt{arith.k}, the definition may be compiled using UIUC-\K (the first command) or using RV-\K (the second one):
@@ -311,7 +313,7 @@ $ krun --output kast simple.arith
 _+__ARITH-SYNTAX`(#token("1","Int"),#token("3","Int")),
 #token("2","Int")))),`<ret>`(#token("0","Int")))
 \end{lstlisting}
-\caption{Another example of a~program in the language of arithmetic expressions. The last output corresponds to the expression \lstinline{+( /( 5, 2 ), /( +( 1, 3 ), 2 ) )}{}}
+\caption{Another example of a~program in the language of arithmetic expressions. The last output corresponds to the expression \lstinline|+( /( 5, 2 ), /( +( 1, 3 ), 2 ) )|}
 \label{arithMixed}
 \end{figure}
 
@@ -324,7 +326,7 @@ For example, the module \texttt{ARITH} of the language Arith may be extended wit
 rule <T><k>I1:Int + I2:Int</k><ret>R:Int</ret></T> 
   => <T><k>I1 +Int I2</k><ret>R</ret></T>
 \end{lstlisting}
-The left hand side of the rewriting operator (\lstinline{=>}{}) contains three free variables (\texttt{I1}, \texttt{I2}, \texttt{R}), all of which required to have a sort \texttt{Int}. The variables \texttt{I1}, \texttt{I2} are used as the two parameters of the constructor~\lstinline{+}{}, while the variable \texttt{R} represents the content of the \texttt{ret} cell. On the right hand side, \texttt{I1} and \texttt{I2} are given as parameters to built-in function~\lstinline{+Int}{}, which implements the addition of two integers; the variable~\texttt{R} is used in the same place as on the left side, thus leaving the \texttt{ret} cell unchanged.
+The left hand side of the rewriting operator (\lstinline|=>|) contains three free variables (\texttt{I1}, \texttt{I2}, \texttt{R}), all of which required to have a sort \texttt{Int}. The variables \texttt{I1}, \texttt{I2} are used as the two parameters of the constructor~\lstinline|+|, while the variable \texttt{R} represents the content of the \texttt{ret} cell. On the right hand side, \texttt{I1} and \texttt{I2} are given as parameters to built-in function~\lstinline|+Int|, which implements the addition of two integers; the variable~\texttt{R} is used in the same place as on the left side, thus leaving the \texttt{ret} cell unchanged.
 
 The compiled definition takes two numbers and adds them together:
 \begin{lstlisting}[language=bash]
@@ -343,12 +345,12 @@ $ krun --depth 1 simple.arith
 \end{lstlisting}
 
 \subsection{Local rewriting}
-The semantic rule above applies the rewriting operator (\lstinline{=>}{}) to whole configuration, although it changes only the content of the \texttt{k} cell. \K implements a~concept called \textit{local rewriting}, which allows language definition developers to use the rewriting operator inside a~cell or inside a~term. With use of local rewriting, the above rule can be written as:
+The semantic rule above applies the rewriting operator (\lstinline|=>|) to whole configuration, although it changes only the content of the \texttt{k} cell. \K implements a~concept called \textit{local rewriting}, which allows language definition developers to use the rewriting operator inside a~cell or inside a~term. With use of local rewriting, the above rule can be written as:
 \begin{lstlisting}
 rule <T> <k> I1:Int + I2:Int => I1 +Int I2 </k>
          <ret> R:Int </ret> </T>
 \end{lstlisting}
-The rule can be even more simplified with use of an anonymous free variable, denoted by an underscore (\lstinline{_}{}):
+The rule can be even more simplified with use of an anonymous free variable, denoted by an underscore (\lstinline|_|):
 \begin{lstlisting}
 rule <T> <k> I1:Int + I2:Int => I1 +Int I2 </k>
          <ret> _ </ret> </T>
@@ -377,15 +379,15 @@ Such semantics rules are not only shorter and easier to write, but they are also
 
 
 \section{Computations}
-When creating a language definition, it is often needed to compute something first, and then use the result of the computation to compute something else. In \K, the notion of \textit{first} and \textit{then} is formalized in terms of \textit{computations} and their \textit{chaining}. Computations have the sort \texttt{K}; all user-defined sorts are automatically subsorted to \texttt{K}. Computations can be composed using the~\lstinline{~>}{} constructor, which is associative. The sort \texttt{K} has a nulary constructor \texttt{.K}, which represents an empty computation and acts as a unit with respect to~\lstinline{~>}{}. Thus \texttt{K} with~\lstinline{~>}{} and \texttt{.K} form a monoid.
+When creating a language definition, it is often needed to compute something first, and then use the result of the computation to compute something else. In \K, the notion of \textit{first} and \textit{then} is formalized in terms of \textit{computations} and their \textit{chaining}. Computations have the sort \texttt{K}; all user-defined sorts are automatically subsorted to \texttt{K}. Computations can be composed using the~\lstinline|~>| constructor, which is associative. The sort \texttt{K} has a nullary constructor \texttt{.K}, which represents an empty computation and acts as a unit with respect to~\lstinline|~>|. Thus \texttt{K} with~\lstinline|~>| and \texttt{.K} form a monoid.
 
-In practice, the monoidal structure means that any term consisting of computations and the~\lstinline{~>}{} constructor behave as a \textit{chain} of computations, with hidden empty computations everywhere inside. One can then insert a computation \texttt{c} to any position in the chain simply by rewriting an empty computation on that position \texttt{c}. It also allows replacing the rule~\ref{ruleAddInKCell} with
+In practice, the monoidal structure means that any term consisting of computations and the~\lstinline|~>| constructor behave as a \textit{chain} of computations, with hidden empty computations everywhere inside. One can then insert a computation \texttt{c} to any position in the chain simply by rewriting an empty computation on that position \texttt{c}. It also allows replacing the rule~\ref{ruleAddInKCell} with
 \begin{lstlisting}
 rule (<k> I1:Int + I2:Int => I1 +Int I2) ~> _</k>
 \end{lstlisting}
-without losing any existing behavior. If the old rule matches a configuration with a term \lstinline{C}{} in the \texttt{k} cell, then the new rule matches the term \lstinline{C ~> .K}{}, as the anonymous variable binds to the empty computation. But the new rule matches also the term \lstinline{C}{}, because due the monoidal structure, configurations \lstinline{C}{} and \lstinline{C ~> .K}{} are equal.
+without losing any existing behavior. If the old rule matches a configuration with a term \lstinline|C| in the \texttt{k} cell, then the new rule matches the term \lstinline|C ~> .K|, as the anonymous variable binds to the empty computation. But the new rule matches also the term \lstinline|C|, because due the monoidal structure, configurations \lstinline|C| and \lstinline|C ~> .K| are equal.
 On the other hand, the new rule adds some behaviors, because it matches not only when the \texttt{k} cell contains exactly an addition of two integers, but also when it contains any sequence of computations, where the first computation is an addition of two integers. The first computation in the list is called \textit{the top}.
-The parenthesis in the new rule are needed, as the constructor \lstinline{~>}{} binds tighter then the operator~\lstinline{=>}{}.
+The parenthesis in the new rule are needed, as the constructor \lstinline|~>| binds tighter then the operator~\lstinline|=>|.
 
 % Nerozumim presne, jak funguji ty tri tecky
 
@@ -419,7 +421,7 @@ So far, the definition of Arith language can not evaluate nested expressions, as
 rule <l> E1:AExp + E2:AExp => -1 </l>
 requires notBool isInt(E1) orBool notBool isInt(E2)
 \end{lstlisting}
-can be added into the language definition; the rule rewrites a sum of two terms of sort \texttt{AExp} to \lstinline{-1}{}, unless both of the terms have the sort \texttt{Int}. The \texttt{notBool} and \texttt{orBool} are built-in functions; \texttt{isInt} is a~sort predicate for the sort \texttt{Int}.
+can be added into the language definition; the rule rewrites a sum of two terms of sort \texttt{AExp} to \lstinline|-1|, unless both of the terms have the sort \texttt{Int}. The \texttt{notBool} and \texttt{orBool} are built-in functions; \texttt{isInt} is a~sort predicate for the sort \texttt{Int}.
 
 
 \subsection{Heating/cooling}
@@ -475,7 +477,7 @@ which significantly reduces the amount of code. When compiled, the generated int
 \end{figure}
 
 \subsection{Strictness attributes}
-\K defines a sort \texttt{KResult}, which represents results of computations. When no \texttt{result} attribute is given to a context declaration, the declaration behaves as with \lstinline{[result(KResult)]}{}. When writing a larger language definition, it is convenient to identify the sorts of desired results and subsort them to \texttt{KResult}.
+\K defines a sort \texttt{KResult}, which represents results of computations. When no \texttt{result} attribute is given to a context declaration, the declaration behaves as with \lstinline|[result(KResult)]|. When writing a larger language definition, it is convenient to identify the sorts of desired results and subsort them to \texttt{KResult}.
 
 \begin{figure}
 \begin{lstlisting}
@@ -687,11 +689,11 @@ int foo(E e) {
 \label{fig:enumNotReallyUnreachable}
 \end{figure}
 
-This behavior may be a source of confusion for programmers who do not know this; in past, it certainly was for the author of this text. The programmer may write a code similar to the one in Figure~\ref{fig:enumNotReallyUnreachable}, which assumes that the value of \texttt{e} has to be either \texttt{E::A} or \texttt{E::B}. This assumption may be justified, if the programmer knows the set of values which may be returned from the function \texttt{giveMeAnEnum}. The programmer may try to go one step further and say: ,,If the function \texttt{giveMeAnEnum} tries to return something different than \texttt{E::A} or \texttt{E::B}, than the behavior is already undefined in \textit{that} point; therefore, we do not need to handle that situation in \texttt{foo}.'' Such a reasoning is flawed, because the function \texttt{giveMeAnEnum} may return e.g \lstinline{static_cast<E>(-117)}{}, which is guaranteed to be well-defined, because \lstinline{-117}{} is a valid value for \texttt{int}, which is the underlying type of \texttt{E} here. The programmer's reasoning would be valid if the enumeration \texttt{E} was a plain unscoped enumeration without explicitly specified underlying type (i.e if we removed the \texttt{class} keyword). We will not go into detail here, as the reasoning would depend on the technical parts of~\std{14}{\S 7.2:8}.
+This behavior may be a source of confusion for programmers who do not know this; in past, it certainly was for the author of this text. The programmer may write a code similar to the one in Figure~\ref{fig:enumNotReallyUnreachable}, which assumes that the value of \texttt{e} has to be either \texttt{E::A} or \texttt{E::B}. This assumption may be justified, if the programmer knows the set of values which may be returned from the function \texttt{giveMeAnEnum}. The programmer may try to go one step further and say: ,,If the function \texttt{giveMeAnEnum} tries to return something different than \texttt{E::A} or \texttt{E::B}, than the behavior is already undefined in \textit{that} point; therefore, we do not need to handle that situation in \texttt{foo}.'' Such a reasoning is flawed, because the function \texttt{giveMeAnEnum} may return e.g \lstinline|static_cast<E>(-117)|, which is guaranteed to be well-defined, because \lstinline|-117| is a valid value for \texttt{int}, which is the underlying type of \texttt{E} here. The programmer's reasoning would be valid if the enumeration \texttt{E} was a plain unscoped enumeration without explicitly specified underlying type (i.e if we removed the \texttt{class} keyword). We will not go into detail here, as the reasoning would depend on the technical parts of~\std{14}{\S 7.2:8}.
 
 \subsection{Enumerators}
 
-Declaration of an enumerator may contain an optional \textit{initializer}, which have to be implicitly convertible to an integral type\footnote{It is more complicated, but this is enough here.}. If the initializer is not specified, the value of the enumerator is zero if it is the first enumerator, otherwise it is the value of the previous enumerator plus one. When an enumeration is fully defined (,,following the closing brace of an enum-specifier''), the type of each enumerator is the type of the enumerator~\std{14}{\S 7.2:5}. For example, in the declaration of variable \texttt{e} in the Figure~\ref{fig:scopedEnumDecl}, the type of the expression \lstinline{E::B}{} is \texttt{E}.
+Declaration of an enumerator may contain an optional \textit{initializer}, which have to be implicitly convertible to an integral type\footnote{It is more complicated, but this is enough here.}. If the initializer is not specified, the value of the enumerator is zero if it is the first enumerator, otherwise it is the value of the previous enumerator plus one. When an enumeration is fully defined (,,following the closing brace of an enum-specifier''), the type of each enumerator is the type of the enumerator~\std{14}{\S 7.2:5}. For example, in the declaration of variable \texttt{e} in the Figure~\ref{fig:scopedEnumDecl}, the type of the expression \lstinline|E::B| is \texttt{E}.
 
 \begin{figure}
 \begin{lstlisting}
@@ -719,7 +721,7 @@ void foo(int x) { E e = x; }
 \label{fig:noConversionFromIntToEnum}
 \end{figure}
 
-An initializer of an enumerator may refer to previously declared enumerators of the same enumeration (see~\ref{fig:scopedEnumDecl}). Inside the enumeration declaration (prior its closing brace), the type of its enumerators is not the type of the enumerator, but always an integral type\footnote{We discuss this in more detail in Chapter~\ref{chap:contribToOtherProjects}}. Because of the stronger-than-C type system, in some cases it would be even inconvenient if the types of enumerators were types of their enumerations. For example, the declaration in Figure~\ref{fig:scopedEnumDecl} declares an enumerator \texttt{B} with the initializer \lstinline{A + 3}{}. If the type of \texttt{A} in this expression were \texttt{E}, then the expression would be ill-formed, because the scoped enumeration does not convert to int, so it cannot be added to an int.
+An initializer of an enumerator may refer to previously declared enumerators of the same enumeration (see~\ref{fig:scopedEnumDecl}). Inside the enumeration declaration (prior its closing brace), the type of its enumerators is not the type of the enumerator, but always an integral type\footnote{We discuss this in more detail in Chapter~\ref{chap:contribToOtherProjects}}. Because of the stronger-than-C type system, in some cases it would be even inconvenient if the types of enumerators were types of their enumerations. For example, the declaration in Figure~\ref{fig:scopedEnumDecl} declares an enumerator \texttt{B} with the initializer \lstinline|A + 3|. If the type of \texttt{A} in this expression were \texttt{E}, then the expression would be ill-formed, because the scoped enumeration does not convert to int, so it cannot be added to an int.
 
 %
 %\begin{figure}
@@ -933,9 +935,9 @@ void test() {
 \label{fig:constexprIntuition}
 \end{figure}
 
-The Figure~\ref{fig:constexprIntuition} can serve as an example here. The function \texttt{id} takes one parameter, which is a reference to a constant integer, and returns it back. The expression \lstinline{id(a)}{} is then a \textit{core constant expression}, as it can be easily evaluated (its value is equivalent to the value of the expression \lstinline{a}{}). It is not a \textit{constant expression}, because its value refers to a non-static local variable, and the memory location of a (non-static) is unknowable in the compile time (such memory location does not even exist in the execution time, or the variable may be instantiated multiple times in recursive calls). Therefore, its value cannot be used as the initializer of a constexpr reference (1).
+The Figure~\ref{fig:constexprIntuition} can serve as an example here. The function \texttt{id} takes one parameter, which is a reference to a constant integer, and returns it back. The expression \lstinline|id(a)| is then a \textit{core constant expression}, as it can be easily evaluated (its value is equivalent to the value of the expression \lstinline|a|). It is not a \textit{constant expression}, because its value refers to a non-static local variable, and the memory location of a (non-static) is unknowable in the compile time (such memory location does not even exist in the execution time, or the variable may be instantiated multiple times in recursive calls). Therefore, its value cannot be used as the initializer of a constexpr reference (1).
 
-How is then possible that it may be used in the declaration (2)? Note that the variable is not initialized simply by the expression \lstinline{id(a)}{}, but with the rvalue-to-lvalue conversion of the result of that \lstinline{id(a)}{}; such composed expression is a \texttt{constant expression}. In other words, the declaration of \texttt{c} does not concerned with the identity of the object it is initialized with, but only with its value - and that value is known in the compile time, as the variable \texttt{a} is initialized with the constant expression \texttt{7}. The declaration (3) works because the variable \texttt{d} was declared \texttt{static}.
+How is then possible that it may be used in the declaration (2)? Note that the variable is not initialized simply by the expression \lstinline|id(a)|, but with the rvalue-to-lvalue conversion of the result of that \lstinline|id(a)|; such composed expression is a \texttt{constant expression}. In other words, the declaration of \texttt{c} does not concerned with the identity of the object it is initialized with, but only with its value - and that value is known in the compile time, as the variable \texttt{a} is initialized with the constant expression \texttt{7}. The declaration (3) works because the variable \texttt{d} was declared \texttt{static}.
 
 \begin{figure}[ht]
 \begin{lstlisting}
@@ -1164,7 +1166,7 @@ When \kcc is invoked on a~C++ program, a~clang-based tool \clangKast (from direc
 %
 %% TODO budu se muset odkazovat na konkretni verze tech naostroju i semantiky.
 %\paragraph{Rewriting rules}
-%Rewriting rules specify the transition relation on configurations. Rules usually consists of a~\texttt{rule} keyword, followed by a~list of configuration cells, and a~\texttt{requires} clause. Inside the cells, a~rewriting may take place, which is then denoted by ,,\lstinline{=>}{}''. If there are more rewritings inside one rule, they all happen at once; in the C/C++ semantics, this is often used when declaring an entity.
+%Rewriting rules specify the transition relation on configurations. Rules usually consists of a~\texttt{rule} keyword, followed by a~list of configuration cells, and a~\texttt{requires} clause. Inside the cells, a~rewriting may take place, which is then denoted by ,,\lstinline|=>|''. If there are more rewritings inside one rule, they all happen at once; in the C/C++ semantics, this is often used when declaring an entity.
 
 
 
@@ -1228,12 +1230,12 @@ $ env VERBOSE=1 DEPTH=675 ./hello
 has about 600 kilobytes. The excerpt in the Figure~\ref{exampleConfigurationOutput} contains a~thread with two \textit{computational items} on the top of its \texttt{K} cell. From that point, if the execution had not been stopped, the first computational item (\texttt{sendString}) would have sent the rest of the \texttt{Hello world} string to the standard output, then it would have been removed and the second computational item (\texttt{sent}) would have been processed.
 
 The project contains some rules, which give semantics to the \texttt{sendString} term.
-The rule in the Figure~\ref{fig:exampleCSemanticsRule} is one of them; it basically encodes the following piece of semantic information: ,,To send a~nonempty string means to send its first character and then to send the rest, unless the IO is disabled''. The Chapter~\ref{chap:k} contains everything needed to understand this rule, except a small detail: the elipsis (\lstinline{...}{}) in the \texttt{k} cell behaves exactly as \lstinline{~> _}{} and expresses the notion of ,,we do not care what is in the rest of this cell''. We provide an explanation of the rule only as a means for the reader to check his understanding. The rule says: ,,Every configuration, in which
+The rule in the Figure~\ref{fig:exampleCSemanticsRule} is one of them; it basically encodes the following piece of semantic information: ,,To send a~nonempty string means to send its first character and then to send the rest, unless the IO is disabled''. The Chapter~\ref{chap:k} contains everything needed to understand this rule, except a small detail: the elipsis (\lstinline|...|) in the \texttt{k} cell behaves exactly as \lstinline|~> _| and expresses the notion of ,,we do not care what is in the rest of this cell''. We provide an explanation of the rule only as a means for the reader to check his understanding. The rule says: ,,Every configuration, in which
 \begin{enumerate}
 \item there is an \texttt{options} cell containing a~set not containing an \texttt{NoIO()} term, and in which
 \item there is also a~\texttt{k} cell having on its top a~\texttt{sendString} item parametrized with an integer and a~nonempty string \texttt{S},
 \end{enumerate}
-can be rewritten to another configuration by rewriting the \texttt{sendString} item to \texttt{\#putc} of the first character, followed by (\lstinline{~>}) the same \texttt{sendString} item, but without the first character of the string.''
+can be rewritten to another configuration by rewriting the \texttt{sendString} item to \texttt{\#putc} of the first character, followed by (\lstinline|~>|) the same \texttt{sendString} item, but without the first character of the string.''
 
 \begin{figure}[ht]
 \begin{lstlisting}
@@ -1409,7 +1411,7 @@ Every enumeration declaration is processed as follows:
 For declarations of enumerations with no fixed underlying type, the standard keeps one aspect of the declaration unspecified. Prior the closing bracket of the enumerator declaration
 \footnote{And inside the enumeration declaration in particular.},
 the type of an enumerator with initializer is the type of the initializer, and type of an enumerator without initializer is the type of previous enumerator, whenever possible. If there is no initializer specified for the first enumerator, the type of the enumerator is unspecified; it is also unspecified for enumerators (without initializers) whose value does not fit into the type of previous enumerator. 
-For example, in the declaration on figure~\ref{fig:ugly-enum}, the type of enumerator \lstinline{A}{} in the declaration of \lstinline{B}{} is not specified, and therefore the value of \lstinline{B}{} is not specified, too. Similarly, the value of enumerator \lstinline{D}{} on most platforms does not fit to unsigned char, which is the type of enumerator \lstinline{C}{}, and its type is thus unspecified. Note that the types of enumerators are unspecified only inside of the declaration of the enumeration, i.e. prior the closing bracket of the declaration. Type of every enumerator after the complete declaration is always the type of the enumeration, so this unspecified behaviour is usually not a~problem in practice, unless one writes code similar to the one in image~\ref{fig:ugly-enum}.
+For example, in the declaration on figure~\ref{fig:ugly-enum}, the type of enumerator \lstinline|A| in the declaration of \lstinline|B| is not specified, and therefore the value of \lstinline|B| is not specified, too. Similarly, the value of enumerator \lstinline|D| on most platforms does not fit to unsigned char, which is the type of enumerator \lstinline|C|, and its type is thus unspecified. Note that the types of enumerators are unspecified only inside of the declaration of the enumeration, i.e. prior the closing bracket of the declaration. Type of every enumerator after the complete declaration is always the type of the enumeration, so this unspecified behaviour is usually not a~problem in practice, unless one writes code similar to the one in image~\ref{fig:ugly-enum}.
 
 \begin{figure}[ht]
 \begin{lstlisting}[language=C++]
@@ -1438,7 +1440,7 @@ Furthemore, the enumerators of an unscoped enumeration are declared in the scope
 %It might be possible to implement the lookup even without those extra cells, but the implemented solution seemed to be simplier.
 
 %TODO sjednotit s textem, ktery jsem psal drive nahore
-The rules for enumerator lookup also have to consider the context in which the lookup is performed. As noted earlier, it is mandated by the standard that the types of declared enumerators are different inside the declaration then after it. One may find that surprising; however, this is needed in order to easily create enumerator initializers, which depends on values of previous enumerators of the same enumeration, as it is ilustrated in figure~\ref{lst:enumDepends}. If the type of the enumerator \lstinline{A} in the initializer of the enumerator \lstinline{B} was the type of the enumeration (as it is after the declaration), the initializer expression would be ill-formed, as in C++ enumerations are not implicitly convertible to arithmetic types. Thus, an enumerator prior the closing bracket has always an integral type.
+The rules for enumerator lookup also have to consider the context in which the lookup is performed. As noted earlier, it is mandated by the standard that the types of declared enumerators are different inside the declaration then after it. One may find that surprising; however, this is needed in order to easily create enumerator initializers, which depends on values of previous enumerators of the same enumeration, as it is ilustrated in figure~\ref{lst:enumDepends}. If the type of the enumerator \lstinline|A| in the initializer of the enumerator \lstinline|B| was the type of the enumeration (as it is after the declaration), the initializer expression would be ill-formed, as in C++ enumerations are not implicitly convertible to arithmetic types. Thus, an enumerator prior the closing bracket has always an integral type.
 
 \begin{figure}[ht]
 \begin{lstlisting}[language=C++]
@@ -1452,7 +1454,7 @@ enum F {
 
 \subsection{Underlying type}
 
-The C++ \textit{language} does not have a direct support for determining the underlying type of an enumeration. Instead, such facility is provided by the standard library, as shown in Figure~\ref{fig:stdUnderlyingType}; the standard library then uses compiler's intrinsic functions to get the underlying type. For example, the GNU gcc compiler provides a function\footnote{It is not a function in the C/C++ sense, as it operates on types.} \lstinline{__underlying_type}{}, which 
+The C++ \textit{language} does not have a direct support for determining the underlying type of an enumeration. Instead, such facility is provided by the standard library, as shown in Figure~\ref{fig:stdUnderlyingType}; the standard library then uses compiler's intrinsic functions to get the underlying type. For example, the GNU gcc compiler provides a function\footnote{It is not a function in the C/C++ sense, as it operates on types.} \lstinline|__underlying_type|, which 
 %takes an enumeration type and
 translates to the underlying type of its argument (Figure~\ref{fig:gccEnumUtIntrinsic}).
 
@@ -1570,7 +1572,7 @@ We successfully implemented zero initialization of classes, and during the imple
 In order to support generalized constant expressions in the \Project, three things needs to be done. First, the translation semantics has to be modified to allow evaluation of complex expressions, and function calls in particular. Second, the translation semantics needs to capture the precise meaning of constant expressions as defined in the standard. Third, the semantics for constant expressions has to be used in appropriate places, e.g. to evaluate enumerator initializers and case labels. In this thesis, we focus on the first thing.
 
 %The \Project consists of the definition of translation semantics, and the execution semantics. Both have different configurations.
-Before we started the work, the translation semantics was already able to evaluate simple arithmetic or boolean C++ expressions (like \lstinline{1 + 1 == 2}{}. However, the translation semantics was not able to evaluate function calls. To evaluate them, the configurations of execution semantics contains a set of cells which represents \textit{call stack}, but the configuration of translation semantics does not contain anything like that.
+Before we started the work, the translation semantics was already able to evaluate simple arithmetic or boolean C++ expressions (like \lstinline|1 + 1 == 2|. However, the translation semantics was not able to evaluate function calls. To evaluate them, the configurations of execution semantics contains a set of cells which represents \textit{call stack}, but the configuration of translation semantics does not contain anything like that.
 
 When designing the support for generalized constant expressions, several design alternatives seemed to be viable. One of them was to extend the translation semantics with new rules and configuration cell which would allow to evaluate the not-supported-yet expressions; another alternative was to reuse some of the rules from the execution semantics and modify the configuration accordingly. We decided to first try to reuse as much of existing code as possible, with the perspective that if that fails, we will fall back to other design alternative or try to explore the design space more carefully. It turned out that we could reuse almost everything; although the changes were quite extensive, there were only a few newly added rules and cells, and most of them had the character of ,,move this there'', ,,use this file from the execution semantics in the translation semantics'' and ,,add a \texttt{require} clause here''.
 
@@ -1599,7 +1601,7 @@ syntax Stmt ::= IfStmt(Expr, Stmt, Stmt)
 \label{fig:ifStmt}
 \end{figure}
 
-However, if we tried to execute a function with an \texttt{IfStmt} during the translation semantics, the translation rules could still apply, which would be a problem. We solved this issue by two means. First, we introduced a nulary\footnote{It may still examine the current configuration using reflection.} boolean function \texttt{Execution}, which returns \texttt{true} in the execution semantics or when executing an expression during the translation semantics, and \texttt{false} when doing ,,real'' translation. Second, for many syntactic constructs (including \texttt{IfStmt} and \texttt{WhileStmt}) we introduced a new version of the construct only for the purpose of the translation semantics (e.g. \texttt{IfTStmt}, \texttt{WhileTStmt}) and changed the translation rules to work with these.
+However, if we tried to execute a function with an \texttt{IfStmt} during the translation semantics, the translation rules could still apply, which would be a problem. We solved this issue by two means. First, we introduced a nullary\footnote{It may still examine the current configuration using reflection.} boolean function \texttt{Execution}, which returns \texttt{true} in the execution semantics or when executing an expression during the translation semantics, and \texttt{false} when doing ,,real'' translation. Second, for many syntactic constructs (including \texttt{IfStmt} and \texttt{WhileStmt}) we introduced a new version of the construct only for the purpose of the translation semantics (e.g. \texttt{IfTStmt}, \texttt{WhileTStmt}) and changed the translation rules to work with these.
 
 \subsection{KResults}
 
@@ -1736,23 +1738,23 @@ enum class E {
     B = E::A // 1
 };
 \end{lstlisting}
-\caption{What is the type of \lstinline{E::A}{} in (1)?}
+\caption{What is the type of \lstinline|E::A| in (1)?}
 \label{fig:typeOfAQualifiedEnumerator}
 \end{figure}
 
-The contradiction can be illustrated on the code in Figure~\ref{fig:typeOfAQualifiedEnumerator}. The problem is that the standard gives two different answers to the question: ,,What is the type of the expression \lstinline{E::A}{} in the declaration of \texttt{B}?''. An answer can be based on \std{14}{\S 7.2/5}, which says:
+The contradiction can be illustrated on the code in Figure~\ref{fig:typeOfAQualifiedEnumerator}. The problem is that the standard gives two different answers to the question: ,,What is the type of the expression \lstinline|E::A| in the declaration of \texttt{B}?''. An answer can be based on \std{14}{\S 7.2/5}, which says:
 \begin{displayquote}
 \textelp{} Following the closing brace of an enum-specifier, each enumerator has the type of its enumeration. If the underlying type is fixed, \textbf{the type of each enumerator prior to the closing brace is the underlying type} and the constant-expression in the enumerator-definition shall be a converted constant expression of the underlying type \textelp{}
 \end{displayquote}
-Therefore, the type of \lstinline{E::A}{} should be \texttt{int}, which is the default underlying type of scoped enumerations. However, the standard also says (\std{14}{\S 5.1.1/11}):
+Therefore, the type of \lstinline|E::A| should be \texttt{int}, which is the default underlying type of scoped enumerations. However, the standard also says (\std{14}{\S 5.1.1/11}):
 \begin{displayquote}
 A nested-name-specifier that denotes an enumeration (7.2), followed by the name of an enumerator of that enumeration, is a qualified-id that refers to the enumerator. The result is the enumerator. \textbf{The type of the result is the type of the enumeration.} The result is a prvalue.
 \end{displayquote}
-So the type of \lstinline{E::A}{} should be \texttt{E}. This is clearly a defect in the standard. The only way to satisfy both requirements is to make the types \texttt{E} and \texttt{int} the same, which would directly contradict the standard, because ,,Each enumeration defines a type that is different from all other types.''\std{14}{\S 7.2/5}.
+So the type of \lstinline|E::A| should be \texttt{E}. This is clearly a defect in the standard. The only way to satisfy both requirements is to make the types \texttt{E} and \texttt{int} the same, which would directly contradict the standard, because ,,Each enumeration defines a type that is different from all other types.''\std{14}{\S 7.2/5}.
 
 One possible solution to this conflict is to change \std{14}{\S 5.1.1/11} to say
 that the type of the result is the type of the \textbf{enumerator},
-or to remove the relevant sentence completely. That is also how compilers seem to implement it: if \lstinline{E::A}{} had the type of an enumeration, such enumerator declaration would be ill-formed (\std{14}{\S 5.1.1/5}). Our language definition also takes this approach.
+or to remove the relevant sentence completely. That is also how compilers seem to implement it: if \lstinline|E::A| had the type of an enumeration, such enumerator declaration would be ill-formed (\std{14}{\S 5.1.1/5}). Our language definition also takes this approach.
 
 This issue was first discussed on StackOverflow\footnote{\url{https://stackoverflow.com/q/42369314/6209703}}, than it was raised in the ISO C++ Google Group\footnote{\url{https://isocpp.org/forums/iso-c-standard-discussion?place=msg\%2Fstd-discussion\%2Fj63Em3eUa5c\%2FDwdIEjBJAgAJ}}. Later we also reported this (incorrectly) as an editorial issue of the standard\footnote{\url{https://github.com/cplusplus/draft/issues/1845}} and it seems that someone is already working on that.
 
