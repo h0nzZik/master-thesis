@@ -819,9 +819,9 @@ It is important to note that all the previous categories consider only the form 
 \subsection{Aggregates}
 
 The C++ language enables programmers to declare \textit{classes}. From the programming methodology standpoint, not all classes are the same kind: for example, some classes are designed to hold values (e.g. \texttt{std::complex}); other ones encapsulate behavior and while the identities of their instances are really important to programmers, their values are not. Classes can also be categorized from another perspective: some of them maintain a non-trivial \textit{invariant}, thus restricting the set of possible values their member variables may hold (e.g. \texttt{std::vector}); other classes consider their members to be independent of each other (e.g. \texttt{std::pair}), and the set of possible values of such class is then equal to the Cartesian product of the possible values of its members. Such types are commonly known as \textit{product types}\footnote{More formal treatment of product types can be found in \cite[Chapter~1.5]{hottbook}.}. In C++, the notion of types composed freely from other types is present in the form of \textit{aggregates}:
-\begin{displayquote}
+\begin{displayquote}[\stdN{n4296}{\S 8.5.1/1}]
 An aggregate is an array or a class (Clause 9) with no user-provided constructors (12.1), no private or
-protected non-static data members (Clause 11), no base classes (Clause 10), and no virtual functions (10.3). \stdN{n4296}{\S 8.5.1/1}
+protected non-static data members (Clause 11), no base classes (Clause 10), and no virtual functions (10.3).
 \end{displayquote}
 %TODO zeptat se Honzy Strejcka, jestli je ten odkaz na HoTT knihu dobry napad. Je to trosku unrelated.
 
@@ -848,13 +848,13 @@ The \textit{aggregate initialization} happens when an aggregate is initialized u
 \subsection{Value initialization}
 
 When an object is created with no initializer, it is \textit{default-initialized}, which in many situations means that no initialization is performed and the object has an indeterminate value. The language also defines a \textit{value initialization}, whose purpose is to somehow ,,complement'' the notion of ,,no initialization'':
-\begin{displayquote}
-\textelp{} An object that is value-initialized is deemed to be constructed and thus subject to provisions of this International Standard applying to “constructed” objects, objects “for which the constructor has completed,” etc., even if no constructor is invoked for the object’s initialization. \stdN{n4296}{\S 8.5/8}
+\begin{displayquote}[\stdN{n4296}{\S 8.5/8}]
+\textelp{} An object that is value-initialized is deemed to be constructed and thus subject to provisions of this International Standard applying to “constructed” objects, objects “for which the constructor has completed,” etc., even if no constructor is invoked for the object’s initialization.
 \end{displayquote}
 
 A value-initialization is performed in various different cases. For example, the standard says
-\begin{displayquote}
-An object whose initializer is an empty set of parentheses, i.e., (), shall be value-initialized.\textelp{}~\stdN{n4296}{\S 8.5/11}
+\begin{displayquote}[\stdN{n4296}{\S 8.5/11}]
+An object whose initializer is an empty set of parentheses, i.e., (), shall be value-initialized.\textelp{}
 \end{displayquote}
 which is demonstrated in Figure~\ref{fig:valueInitMember}. (However, the declaration of \texttt{f} in Figure~\ref{fig:initializers} does not declare an object, but a function; in that case, no value initialization is performed.) Value initialization is also performed for list-initialized objects of a class type with a default constructor~\stdN{n4296}{\S 8.5.4/5.4}. Such class types are not aggregates, so no aggregate initialization can happen for them.
 
@@ -1714,9 +1714,9 @@ int z = int(A); // 3
 \end{figure}
 
 The Figure~\ref{fig:clangInconsistencyBug} shows a forward-declaration of an enumeration \texttt{E} in the namespace \texttt{N}, followed by a redeclaration of the enumeration; the redeclaration itself is contained in the scope of the global namespace. In which scope are the enumerators \texttt{A}, \texttt{B} declared? The standard says:
-\begin{displayquote}
+\begin{displayquote}[\std{14}{\S 7.2:11}]
 Each enum-name and each unscoped enumerator is declared in the scope that immediately contains the
-enum-specifier. \std{14}{\S 7.2:11}
+enum-specifier.
 \end{displayquote}
 Therefore, from the standard's point of view, the declaration (1) is ill-formed, while the declarations (2) and (3) are valid. However, the compilers we have tried (the GNU GCC compiler in version 7.2, the MSVC compiler in version 19, and Intel's ICC in version 18) all declare the enumerators in the scope, in which the enumeration is declared, and they therefore accept the declaration (1) and reject (2) and (3).
 
@@ -1748,8 +1748,8 @@ The contradiction can be illustrated on the code in Figure~\ref{fig:typeOfAQuali
 \begin{displayquote}
 \textelp{} Following the closing brace of an enum-specifier, each enumerator has the type of its enumeration. If the underlying type is fixed, \textbf{the type of each enumerator prior to the closing brace is the underlying type} and the constant-expression in the enumerator-definition shall be a converted constant expression of the underlying type \textelp{}
 \end{displayquote}
-Therefore, the type of \lstinline|E::A| should be \texttt{int}, which is the default underlying type of scoped enumerations. However, the standard also says (\std{14}{\S 5.1.1/11}):
-\begin{displayquote}
+Therefore, the type of \lstinline|E::A| should be \texttt{int}, which is the default underlying type of scoped enumerations. However, the standard also says:
+\begin{displayquote}[\std{14}{\S 5.1.1/11}]
 A nested-name-specifier that denotes an enumeration (7.2), followed by the name of an enumerator of that enumeration, is a qualified-id that refers to the enumerator. The result is the enumerator. \textbf{The type of the result is the type of the enumeration.} The result is a prvalue.
 \end{displayquote}
 So the type of \lstinline|E::A| should be \texttt{E}. This is clearly a defect in the standard. The only way to satisfy both requirements is to make the types \texttt{E} and \texttt{int} the same, which would directly contradict the standard, because ,,Each enumeration defines a type that is different from all other types.''\std{14}{\S 7.2/5}.
