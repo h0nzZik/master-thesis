@@ -562,15 +562,15 @@ In this thesis we mostly use the document \texttt{n4296}~\cite{n4296}, which is 
 %TODO citable project with assigned DOI https://guides.github.com/activities/citable-code/
 
 \section{Fundamentals}
-%Stepanov, chapter 1,  foundations
 
-This section describes some of the fundamental concepts of the C++ language. %Without going to details.
+%This section describes some of the fundamental concepts of the C++ language.
 
-In C++, the memory consists of one or multiple sequences of contiguous bytes, where every \textit{byte} has a unique \textit{address}~\stdN{n4700}{\S 4.4/1}. Various constructs of the language can create and destroy \textit{objects}; an object occupies a region of storage, not necessarily contiguous~\stdN{n4700}{\S 4.5/1}. Objects can contain \textit{subobjects}; an object not contained in any other objects is a \textit{complete object}. Every complete object has to occupy at least one byte of the storage; therefore, we can think of objects as having an \textit{identity} (we can identify them by the first byte of their storage).
+In C++, the memory consists of one or multiple sequences of contiguous bytes, where every \textit{byte} has a unique \textit{address}~\stdN{n4700}{\S 4.4/1}. Various constructs of the language can create and destroy \textit{objects} of some \textit{type}; an object occupies a region of storage, not necessarily contiguous~\stdN{n4700}{\S 4.5/1}. Objects can contain \textit{subobjects}; an object not contained in any other objects is a \textit{complete object}. Every complete object has to occupy at least one byte of the storage; therefore, we can think of objects as having an \textit{identity} (we can identify them by the first byte of their storage).
 
-%TODO
-FIXME: this is not true, see \stdN{n4296}{3.9/4}.
-Objects are used to hold \textit{values}. Although the standard often refers to values, it does not specify what a \textit{value} is (at least until \cite{n4700}). One can think of value as of a \textit{datum} together with its \textit{interpretation}; an interpretation of a datum is some concrete, real-world entity\footnote{This notion of \textit{concrete entity} is something different than \textit{C++ entity} as defined in the C++ language~\stdN{n4296}{\S 3/3}. }. 
+Objects are intended to hold \textit{values}. An object of a type \texttt{T} can be represented by a sequence of \lstinline|sizeof(T)| objects of type \lstinline|unsigned char|; a value can be represented as a set of bits~\stdN{n4296}{\S 3.9/4}.
+%FIXME: this is not true, see \stdN{n4296}{3.9/4}.
+%Although the standard often refers to values, it does not specify what a \textit{value} is (at least until \cite{n4700}).
+One can think of a value as of a \textit{datum} together with its \textit{interpretation}; an interpretation of a datum is some concrete, real-world entity\footnote{This notion of \textit{concrete entity} is something different than \textit{C++ entity} as defined in the C++ language~\stdN{n4296}{\S 3/3}. }. 
 %Types help to interpret values.
 More in-depth discussion about entities and their computer representations can be found in the first chapter of \cite{progelements}.
 
@@ -597,7 +597,7 @@ enum E e = B;
 \label{CStyleEnumDeclaration}
 \end{figure}
 
-Figure~\ref{CStyleEnumDeclaration} shows a basic C-style declaration of an enumeration \texttt{E}, with a subsequent declaration of an object of the enumeration's type. Both declarations are valid in both C and C++. In C++14, the C-style enumerations are called \textit{unscoped enumerations}. An enumeration may contain an unbounded number of named values, called \textit{enumerators}. Here, \texttt{E} contains two enumerators: \texttt{A} and \texttt{B}. In C++14, enumerators of an unscoped enumeration are called \textit{unscoped enumerators} and they are declared in the scope which contains the enumeration declaration (or, in the terms of the standard, the \textit{enum-specifier}~\std{\S 7.2:11}). Therefore, it is possible to refer to them simply as in this example.
+Figure~\ref{CStyleEnumDeclaration} shows a basic C-style declaration of an enumeration \texttt{E}, with a subsequent declaration of an object of the enumeration's type. Both declarations are valid in both C and C++. In C++14, the C-style enumerations are called \textit{unscoped enumerations}. An enumeration may contain an unbounded number of named values, called \textit{enumerators}. Here, \texttt{E} contains two enumerators: \texttt{A} and \texttt{B}. In C++14, enumerators of an unscoped enumeration are called \textit{unscoped enumerators} and they are declared in the scope which contains the enumeration declaration (or, in the terms of the standard, the \textit{enum-specifier}~\std{\S 7.2/11}). Therefore, it is possible to refer to them simply as in this example.
 
 Because of this simplicity, it is not possible to declare two unscoped enumerations with the same enumerator, in the same scope. It is still possible to create the second enumeration in a different scope, though; the enumeration may even have the same name, as in the Figure~\ref{fig:collidingEnumerators}. If that happens, the old enumerator is \textit{shadowed} with the new one, but it is still possible to access the old one using the scope resolution operator (i.e. \texttt{::B} in this example).
 \begin{figure}
@@ -618,7 +618,7 @@ When a name of an enumeration (or a struct) is used in C, for example in a decla
 
 \subsection{Scoped enumerations}
 
-The revision C++11 introduced \texttt{scoped enumerations}. They are declared using the phrase \texttt{enum class} or \texttt{enum struct}, and enumerators of a scoped enumeration are called \textit{scoped enumerators}. Scoped enumerations differ from the plain enumerations in a number of aspects; the most significant difference is what they have their name for: scoped enumerators are declared in the scope of their enumeration\std{14}{\S 7.2:11}. Because of that, the enumerators have to be referred to using the scope resolution operator (at least outside the enumeration declaration, see Figure~\ref{fig:scopedEnumDecl}). However, unscoped enumerators can be referred to this way, too (\std{14}{\S 5.1.1/11}).
+The revision C++11 introduced \texttt{scoped enumerations}. They are declared using the phrase \texttt{enum class} or \texttt{enum struct}, and enumerators of a scoped enumeration are called \textit{scoped enumerators}. Scoped enumerations differ from the plain enumerations in a number of aspects; the most significant difference is what they have their name for: scoped enumerators are declared in the scope of their enumeration\std{14}{\S 7.2/11}. Because of that, the enumerators have to be referred to using the scope resolution operator (at least outside the enumeration declaration, see Figure~\ref{fig:scopedEnumDecl}). However, unscoped enumerators can be referred to this way, too (\std{14}{\S 5.1.1/11}).
 
 %In C, enumerators have an integral type; in C++14, the
 
@@ -645,7 +645,7 @@ std::underlying_type_t<E> x = 5;
 \label{fig:stdUnderlyingType}
 \end{figure}
 
-An enumeration's underlying type can be explicitly specified \std{14}{\S 7.2:5}. This is achieved by appending a colon followed by a name of an integral type right after the \texttt{enum-name} in the declaration, as shown in Figure~\ref{fig:explicityleSpecifiedUnderlyingType}. The usual reason why would anyone want to specify an enum's underlying type is to limit the enumeration's size, perhaps because of hardware constraints. Before C++11, this was often achieved through an extension of a particular compiler; for example, the GNU GCC compiler provides a special attribute \texttt{packed}, which causes an enumeration's size to be as small as possible (Figure~\ref{fig:packedEnum}).
+An enumeration's underlying type can be explicitly specified \std{14}{\S 7.2/5}. This is achieved by appending a colon followed by a name of an integral type right after the \texttt{enum-name} in the declaration, as shown in Figure~\ref{fig:explicityleSpecifiedUnderlyingType}. The usual reason why would anyone want to specify an enum's underlying type is to limit the enumeration's size, perhaps because of hardware constraints. Before C++11, this was often achieved through an extension of a particular compiler; for example, the GNU GCC compiler provides a special attribute \texttt{packed}, which causes an enumeration's size to be as small as possible (Figure~\ref{fig:packedEnum}).
 
 \begin{figure}
 \begin{lstlisting}[language=C++]
@@ -664,13 +664,13 @@ enum E { A, B } __attribute__((packed));
 \label{fig:packedEnum}
 \end{figure}
 
-If the underlying type of a scoped enumeration is not explicitly specified, it is automatically defined to \texttt{int}. All scoped enumerations, as well as unscoped enumerations with explicitly specified underlying type, are said to have a \textit{fixed underlying type}. This stands in contrast to unscoped enumeration without an explicitly specified underlying type. Their underlying type is not fixed, but it is an \textit{implementation-defined} integral type, which can represent all values of the enumeration~\std{14}{\S 7.2:7}. That also suggests that the underlying type is not known prior the closing brace of the declaration.
+If the underlying type of a scoped enumeration is not explicitly specified, it is automatically defined to \texttt{int}. All scoped enumerations, as well as unscoped enumerations with explicitly specified underlying type, are said to have a \textit{fixed underlying type}. This stands in contrast to unscoped enumeration without an explicitly specified underlying type. Their underlying type is not fixed, but it is an \textit{implementation-defined} integral type, which can represent all values of the enumeration~\std{14}{\S 7.2/7}. That also suggests that the underlying type is not known prior the closing brace of the declaration.
 
 The fact that the standard does not specify the exact underlying type for enumerations whose underlying type is not fixed is also the reason why in pre-C++11 (including C11), the enumerations whose size matters to the programmer have to be declared with use of compiler-specific language constructs (as in Figure~\ref{fig:packedEnum}). Without that, the compiler could simply choose the underlying type (and thus the size) of the enumeration (with respect to some standard-given restrictions); in practice, the chosen underlying type is often \texttt{int}.
 
 \subsection{Values of an enumeration}
 
-The standard also defines the set of values of an enumeration; those are the values, which can be written or read from an object of the enumeration's type. For an enumeration whose underlying type is not fixed, the set of values limits the choice of the underlying type; it is defined such that the values of all its enumerators and all values between the enumerators are also values of the enumeration. The definition is rather technical, though; an inquisitive reader shall find it in~\std{14}{\S 7.2:8}. For an enumeration with fixed underlying type, the values of the enumeration are exactly the values of its underlying type. 
+The standard also defines the set of values of an enumeration; those are the values, which can be written or read from an object of the enumeration's type. For an enumeration whose underlying type is not fixed, the set of values limits the choice of the underlying type; it is defined such that the values of all its enumerators and all values between the enumerators are also values of the enumeration. The definition is rather technical, though; an inquisitive reader shall find it in~\std{14}{\S 7.2/8}. For an enumeration with fixed underlying type, the values of the enumeration are exactly the values of its underlying type. 
 
 \begin{figure}
 \begin{lstlisting}
@@ -689,11 +689,11 @@ int foo(E e) {
 \label{fig:enumNotReallyUnreachable}
 \end{figure}
 
-This behavior may be a source of confusion for programmers who do not know this; in past, it certainly was for the author of this text. The programmer may write a code similar to the one in Figure~\ref{fig:enumNotReallyUnreachable}, which assumes that the value of \texttt{e} has to be either \texttt{E::A} or \texttt{E::B}. This assumption may be justified if the programmer knows the set of values which may be returned from the function \texttt{giveMeAnEnum}. The programmer may try to go one step further and say: ,,If the function \texttt{giveMeAnEnum} tries to return something different than \texttt{E::A} or \texttt{E::B}, than the behavior is already undefined in \textit{that} point; therefore, we do not need to handle that situation in \texttt{foo}.'' Such a reasoning is flawed, because the function \texttt{giveMeAnEnum} may return e.g \lstinline|static_cast<E>(-117)|, which is guaranteed to be well-defined, because \lstinline|-117| is a valid value of \texttt{int}, which is the underlying type of \texttt{E} here. The programmer's reasoning would be valid if the enumeration \texttt{E} was a plain unscoped enumeration without an explicitly specified underlying type (i.e if we removed the \texttt{class} keyword). We will not go into detail here, as the reasoning would depend on the technical parts of~\std{14}{\S 7.2:8}.
+This behavior may be a source of confusion for programmers who do not know this; in past, it certainly was for the author of this text. The programmer may write a code similar to the one in Figure~\ref{fig:enumNotReallyUnreachable}, which assumes that the value of \texttt{e} has to be either \texttt{E::A} or \texttt{E::B}. This assumption may be justified if the programmer knows the set of values which may be returned from the function \texttt{giveMeAnEnum}. The programmer may try to go one step further and say: ,,If the function \texttt{giveMeAnEnum} tries to return something different than \texttt{E::A} or \texttt{E::B}, than the behavior is already undefined in \textit{that} point; therefore, we do not need to handle that situation in \texttt{foo}.'' Such a reasoning is flawed, because the function \texttt{giveMeAnEnum} may return e.g \lstinline|static_cast<E>(-117)|, which is guaranteed to be well-defined, because \lstinline|-117| is a valid value of \texttt{int}, which is the underlying type of \texttt{E} here. The programmer's reasoning would be valid if the enumeration \texttt{E} was a plain unscoped enumeration without an explicitly specified underlying type (i.e if we removed the \texttt{class} keyword). We will not go into detail here, as the reasoning would depend on the technical parts of~\std{14}{\S 7.2/8}.
 
 \subsection{Enumerators}
 
-Declaration of an enumerator may contain an optional \textit{initializer}, which has to be implicitly convertible to an integral type\footnote{It is more complicated, but this is enough here.}. If the initializer is not specified, the value of the enumerator is zero if it is the first enumerator; otherwise, it is the value of the previous enumerator plus one. When an enumeration is fully defined (i.e. \enquote{following the closing brace of an enum-specifier}), the type of each enumerator is the type of the enumerator~\std{14}{\S 7.2:5}. For example, in the declaration of variable \texttt{e} in the Figure~\ref{fig:scopedEnumDecl}, the type of the expression \lstinline|E::B| is \texttt{E}.
+Declaration of an enumerator may contain an optional \textit{initializer}, which has to be implicitly convertible to an integral type\footnote{It is more complicated, but this is enough here.}. If the initializer is not specified, the value of the enumerator is zero if it is the first enumerator; otherwise, it is the value of the previous enumerator plus one. When an enumeration is fully defined (i.e. \enquote{following the closing brace of an enum-specifier}), the type of each enumerator is the type of the enumerator~\std{14}{\S 7.2/5}. For example, in the declaration of variable \texttt{e} in the Figure~\ref{fig:scopedEnumDecl}, the type of the expression \lstinline|E::B| is \texttt{E}.
 
 \begin{figure}
 \begin{lstlisting}
@@ -710,7 +710,7 @@ void goo() {
 \end{figure}
 
 
-This is different from C, where enumerators have the type \texttt{int}. Still, unscoped enumerations can be implicitly converted to \texttt{int}~\std{14}{\S 7.2:10}, so they behave somewhat similarly to C. This conversion does not work for scoped enumerations. The other conversion (from integer types to enumerations) is not defined neither for scoped nor unscoped enumerations (Figure~\ref{fig:noConversionFromIntToEnum}).
+This is different from C, where enumerators have the type \texttt{int}. Still, unscoped enumerations can be implicitly converted to \texttt{int}~\std{14}{\S 7.2/10}, so they behave somewhat similarly to C. This conversion does not work for scoped enumerations. The other conversion (from integer types to enumerations) is not defined neither for scoped nor unscoped enumerations (Figure~\ref{fig:noConversionFromIntToEnum}).
 
 \begin{figure}
 \begin{lstlisting}
@@ -736,11 +736,11 @@ In some cases, it would be even inconvenient if the types of enumerators were ty
 %
 
 \subsection{Incomplete types}
-Some types cannot be used to define objects; those are called \textit{incomplete}~\std{14}{\S 3.1:5}. A type may be incomplete at one point and complete at another point in a translation unit. Incomplete types are still useful; they may be used in function declarations to denote its parameters and return values, to define objects of pointer type or references. There are two categories of incomplete types: void types (e.g. \texttt{volatile void}) and incompletely-defined types. It is not allowed to apply the operator \texttt{sizeof} to an incomplete type. A programmer may choose to use incompletely-defined types to limit the number of dependencies between header files. An enumeration whose underlying type is not fixed is incomplete until the closing brace of its declaration.
+Some types cannot be used to define objects; those are called \textit{incomplete}~\std{14}{\S 3.1/5}. A type may be incomplete at one point and complete at another point in a translation unit. Incomplete types are still useful; they may be used in function declarations to denote its parameters and return values, to define objects of pointer type or references. There are two categories of incomplete types: void types (e.g. \texttt{volatile void}) and incompletely-defined types. It is not allowed to apply the operator \texttt{sizeof} to an incomplete type. A programmer may choose to use incompletely-defined types to limit the number of dependencies between header files. An enumeration whose underlying type is not fixed is incomplete until the closing brace of its declaration.
 
 \subsection{Opaque enumerations}
 
-Enumerations with fixed underlying type can be declared \textit{opaque}, that is, without the list of enumerators (see Figure~\ref{fig:opaqueEnumDeclarations}). An enumeration declared using an \textit{opaque-enum-declaration} is a complete type (it is not an incomplete type); therefore, it can be used almost as a fully declared enumeration, except that its enumerators are not available. Such an enumeration needs to have a fixed underlying type (see Figure~\ref{fig:opaqueEnumNotFixedUT}). An opaque enumeration can be fully redeclared later in the program~\std{14}{\S 7.2:3}.
+Enumerations with fixed underlying type can be declared \textit{opaque}, that is, without the list of enumerators (see Figure~\ref{fig:opaqueEnumDeclarations}). An enumeration declared using an \textit{opaque-enum-declaration} is a complete type (it is not an incomplete type); therefore, it can be used almost as a fully declared enumeration, except that its enumerators are not available. Such an enumeration needs to have a fixed underlying type (see Figure~\ref{fig:opaqueEnumNotFixedUT}). An opaque enumeration can be fully redeclared later in the program~\std{14}{\S 7.2/3}.
 
 \begin{figure}
 \begin{lstlisting}[language=C++]
@@ -756,7 +756,7 @@ enum class E3;
 \begin{lstlisting}[language=C++]
 enum E;
 \end{lstlisting}
-\caption{Not a~valid declaration, because \enquote{opaque-enum-declaration declaring an unscoped enumeration shall not omit the enum-base}~\std{14}{\S 7.2:2}}
+\caption{Not a~valid declaration, because \enquote{opaque-enum-declaration declaring an unscoped enumeration shall not omit the enum-base}~\std{14}{\S 7.2/2}}
 \label{fig:opaqueEnumNotFixedUT}
 \end{figure}
 
@@ -780,7 +780,7 @@ enum E;
 %enum { A };
 %enum : char { B, C };
 %\end{lstlisting}
-%\caption{,,The optional identifier shall not be omitted in the declaration of a~scoped enumeration''(7.2:2), however, it may be omitted in the declaration of an unscoped enumeration.}
+%\caption{,,The optional identifier shall not be omitted in the declaration of a~scoped enumeration''(7.2/2), however, it may be omitted in the declaration of an unscoped enumeration.}
 %\end{figure}
 %
 
@@ -847,9 +847,9 @@ The \textit{aggregate initialization} happens when an aggregate is initialized u
 
 \subsection{Value initialization}
 
-When an object is created with no initializer, it is \textit{default-initialized}, which in many situations means that no initialization is performed and the object has an indeterminate value. The language also defines a \textit{value initialization}, whose purpose is to somehow ,,complement'' the notion of ,,no initialization'':
+When an object is created with no initializer, it is \textit{default-initialized}, which in many situations means that no initialization is performed and the object has an indeterminate value. The language also defines a \textit{value initialization}, whose purpose is to somehow complement the notion of default-initialization:
 \begin{displayquote}[\stdN{n4296}{\S 8.5/8}]
-\textelp{} An object that is value-initialized is deemed to be constructed and thus subject to provisions of this International Standard applying to “constructed” objects, objects “for which the constructor has completed,” etc., even if no constructor is invoked for the object’s initialization.
+\textelp{} An object that is value-initialized is deemed to be constructed and thus subject to provisions of this International Standard applying to \enquote{constructed} objects, objects \enquote{for which the constructor has completed,} etc., even if no constructor is invoked for the object’s initialization.
 \end{displayquote}
 
 A value-initialization is performed in various different cases. For example, the standard says
@@ -920,7 +920,7 @@ enum class E { A = getchar() };
 
 \subsection{The intuition}
 
-The standard defines a couple terms with respect to constant expressions; this subsection attempts to give the reader an intuition which is behind them. The term \textit{core constant expression} (\std{14}{\S 5.20.2}) is used to represent an expression, which can be evaluated easily, using only the information the compiler has during the compilation. The term \textit{constant expressions} (\std{14}{\S 5.20:5}) denotes a core constant expression, whose value is meaningful in the compilation time.
+The standard defines a couple terms with respect to constant expressions; this subsection attempts to give the reader an intuition which is behind them. The term \textit{core constant expression} (\std{14}{\S 5.20.2}) is used to represent an expression, which can be evaluated easily, using only the information the compiler has during the compilation. The term \textit{constant expressions} (\std{14}{\S 5.20/5}) denotes a core constant expression, whose value is meaningful in the compilation time.
 
 \begin{figure}
 \begin{lstlisting}
@@ -1437,7 +1437,7 @@ Many real-world programs use enumerations whose enumerators do not have initiali
 \subsection{Enumerator lookup}
 
 The name of an enumerator can be referred to using the scope resolution operator applied to a~name of the enumeration. This was implemented easily using only a~few rules in the (static) semantics.
-%(3.4.3:1) 
+%(3.4.3/1) 
 Furthermore, the enumerators of an unscoped enumeration are declared in the scope immediately containing the declaration of the enumeration. To implement this, we have decided to add a~few new cells, which map names of enumerators of enums defined in the surrounding scope to their corresponding type. The lookup then reuses the rules from the previous case. 
 %It might be possible to implement the lookup even without those extra cells, but the implemented solution seemed to be simplier.
 
@@ -1714,7 +1714,7 @@ int z = int(A); // 3
 \end{figure}
 
 The Figure~\ref{fig:clangInconsistencyBug} shows a forward-declaration of an enumeration \texttt{E} in the namespace \texttt{N}, followed by a redeclaration of the enumeration; the redeclaration itself is contained in the scope of the global namespace. In which scope are the enumerators \texttt{A}, \texttt{B} declared? The standard says:
-\begin{displayquote}[\std{14}{\S 7.2:11}]
+\begin{displayquote}[\std{14}{\S 7.2/11}]
 Each enum-name and each unscoped enumerator is declared in the scope that immediately contains the
 enum-specifier.
 \end{displayquote}
