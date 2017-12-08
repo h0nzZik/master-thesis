@@ -120,7 +120,7 @@ Both features were successfully implemented. The implementation of enumerations 
 %is not ready for production yet and 
 will be probably merged later when the precise semantics of constant expressions is implemented. 
 %It went out that the they play together rather nicely: C++ requires enumerators to be initialized with constant expressions; therefore, the implementation of enumerations was used to test the implementation of constant expressions. 
-In addition, we fixed several bugs in the project, including one hard-to-debug nondeterministic behavior, and implemented \textit{zero initialization} for objects of classes types.
+In addition, we fixed several bugs in the Project, including one hard-to-debug nondeterministic behavior, and implemented \textit{zero initialization} for objects of classes types.
 
 %TODO mam v textu rozebrat ten problem zero-inicializace trid?
 % (TODO tohle asi prijde dat do vice minuleho casu).
@@ -1015,9 +1015,9 @@ The project of C/C++ semantics in \K is hosted on GitHub\footnote{\url{https://g
 %TODO preformulovat lepe ^^^^^
 
 \begin{itemize}
-\item The project depends on RuntimeVerification's implementation of the \K framework. The RV-\K builds and runs without problems, with a minor exception: it requires the lexical parser flex\footnote{\url{https://github.com/westes/flex}} to be present in the system.
-\item The project uses clang as a~library to parse C++ sources; the currently required version 3.9 is a~bit outdated. It is not a problem, as clang can be built easily and the \Project can be configured to use clang installed in any directory.
-\item The officially supported operating system is Ubuntu 16.4 LTS, which already contains prebuilt clang libraries in the required version. But the project works on Fedora 26 without any problems.
+\item The Project depends on RuntimeVerification's implementation of the \K framework. The RV-\K builds and runs without problems, with a minor exception: it requires the lexical parser flex\footnote{\url{https://github.com/westes/flex}} to be present in the system.
+\item The Project uses clang as a~library to parse C++ sources; the currently required version 3.9 is a~bit outdated. It is not a problem, as clang can be built easily and the \Project can be configured to use clang installed in any directory.
+\item The officially supported operating system is Ubuntu 16.4 LTS, which already contains prebuilt clang libraries in the required version. But the Project works on Fedora 26 without any problems.
 \item The building process can take up to thirty minutes on this text's author's machine.
 \end{itemize}
 
@@ -1030,7 +1030,7 @@ The project of C/C++ semantics in \K is hosted on GitHub\footnote{\url{https://g
 \section{Basic usage}
 
 %TODO kde se kcc nachazi?
-The main user interface of the project consists of a~script \kcc~\cite{hathhorn-ellison-rosu-2015-pldi}, which implements a~compiler based on the C/C++ semantics. The script mimics the interface of the GNU GCC compiler and supports many of GCC's command-line parameters. Therefore, it is possible to use it to build programs instead of GCC; however, the generated executables are many times slower than the ones built by GCC.
+The main user interface of the Project consists of a~script \kcc~\cite{hathhorn-ellison-rosu-2015-pldi}, which implements a~compiler based on the C/C++ semantics. The script mimics the interface of the GNU GCC compiler and supports many of GCC's command-line parameters. Therefore, it is possible to use it to build programs instead of GCC; however, the generated executables are many times slower than the ones built by GCC.
 
 \begin{figure}[ht]
 \begin{lstlisting}[language=bash]
@@ -1079,7 +1079,7 @@ three language definitions:
 \end{itemize}
 The language definitions are composed of many modules; some modules are included in multiple language definitions. All the language definitions have to be compiled by \kompile; the compilation of both \clangKast and the language definitions is driven by a Makefile.
 
-All the \K source files are contained in the \textit{semantics} directory in the project repository (Figure~\ref{fig:directoryStructure}). The directory contains subdirectories \texttt{c11} and \texttt{cpp14}, which contain source files for the respective languages; it also contains a subdirectory \texttt{common}, which contains (some) source files common to both languages. The directory of each language contains \texttt{language} and \texttt{library} subdirectories, where the former is split into subdirectories containing sources for translation semantics, execution semantics, and both. From this point further, the term \textit{C++ semantics} will denote the content of \texttt{semantics/cpp14} subdirectory of the project.
+All the \K source files are contained in the \textit{semantics} directory in the Project repository (Figure~\ref{fig:directoryStructure}). The directory contains subdirectories \texttt{c11} and \texttt{cpp14}, which contain source files for the respective languages; it also contains a subdirectory \texttt{common}, which contains (some) source files common to both languages. The directory of each language contains \texttt{language} and \texttt{library} subdirectories, where the former is split into subdirectories containing sources for translation semantics, execution semantics, and both. From this point further, the term \textit{C++ semantics} will denote the content of \texttt{semantics/cpp14} subdirectory of the Project.
 
 \begin{figure}[ht]
 \begin{lstlisting}[language=bash]
@@ -1122,7 +1122,7 @@ When \kcc is invoked on a~C++ program, a~Clang-based tool \clangKast (from direc
 %syntax KItem ::= sendString(Int, String)
 %\end{lstlisting}
 %which declares all terms with label \texttt{sendString}, one parameter of sort \texttt{Int}, and one of sort \texttt{String}, to be of sort \texttt{KItem}. Terms of that sort represent computational items; however, terms with label \texttt{sendString} are never parsed as a~part of the program and their purpose is purely semantic. 
-%%From the abstract syntax, \K is able to infere a~concrete text representation; however, this feature is not used in the project.
+%%From the abstract syntax, \K is able to infere a~concrete text representation; however, this feature is not used in the Project.
 %
 %%Here is an example configuration:
 %%\begin{displaymath}
@@ -1233,7 +1233,7 @@ $ env VERBOSE=1 DEPTH=675 ./hello
 \end{lstlisting}
 has about 600 kilobytes. The excerpt in the Figure~\ref{exampleConfigurationOutput} contains a~thread with two \textit{computational items} on the top of its \texttt{K} cell. From that point, if the execution had not been stopped, the first computational item (\texttt{sendString}) would have sent the rest of the \texttt{Hello world} string to the standard output, then it would have been removed and the second computational item (\texttt{sent}) would have been processed.
 
-The project contains some rules, which give semantics to the \texttt{sendString} term.
+The Project contains some rules, which give semantics to the \texttt{sendString} term.
 The rule in the Figure~\ref{fig:exampleCSemanticsRule} is one of them; it basically encodes the following piece of semantic information: \enquote{To send a~non-empty string means to send its first character and then to send the rest, unless the IO is disabled}. The Chapter~\ref{chap:k} contains everything needed to understand this rule, except a small detail: the ellipsis (\lstinline|...|) in the \texttt{k} cell behaves exactly as \lstinline|~> _| and expresses the notion of \enquote{we do not care what is in the rest of this cell}. We provide an explanation of the rule only as a means for the reader to check his understanding. The rule says: ,,Every configuration, in which
 \begin{enumerate}
 \item there is an \texttt{options} cell containing a~set not containing a \texttt{NoIO()} term, and in which
@@ -1425,7 +1425,7 @@ enum E {
 \label{fig:ugly-enum}
 \end{figure}
 
-Many real-world programs use enumerations whose enumerators do not have initializers, because the language provides reasonable default values. Earlier versions of the semantics caused the semantic-based compiler \kcc to stop the compilation whenever an undefined or unspecified behavior was encountered, which was an undesirable action for such programs. For this reason, the project maintainer added an error-reporting and recovery support to the semantics \footnote{\url{https://github.com/kframework/c-semantics/commit/584fa6ff4a90aca45de99d6b210177258ebd96d4}}. The current version of the semantics issues a~warning whenever this unspecified behavior occurs. Ideally, the warning would be suppressed if the unspecified type is never used, but this enhancement was not implemented.
+Many real-world programs use enumerations whose enumerators do not have initializers, because the language provides reasonable default values. Earlier versions of the semantics caused the semantic-based compiler \kcc to stop the compilation whenever an undefined or unspecified behavior was encountered, which was an undesirable action for such programs. For this reason, the maintainer of the Project added an error-reporting and recovery support to the semantics \footnote{\url{https://github.com/kframework/c-semantics/commit/584fa6ff4a90aca45de99d6b210177258ebd96d4}}. The current version of the semantics issues a~warning whenever this unspecified behavior occurs. Ideally, the warning would be suppressed if the unspecified type is never used, but this enhancement was not implemented.
 
 % Also, enumerations may be declared in block, class or namespace scope. There was no problem in supporting all three.
 
@@ -1492,7 +1492,7 @@ The clang fronted supports this intrinsic, too. Our tool \clangKast translates t
 
 We successfully implemented enumeration declaration and enumerator lookup for both scoped and unscoped enumerations. Our implementation allows enumerations to be declared in all scopes where enumerations can be declared according to the standard, that is, in a namespace scope, in a class scope or in a block scope (inside a function). We also implemented opaque enumeration declaration and redeclaration and a support for the standard library \lstinline|std::underlying_type_t| template. During the implementation work, we fixed a number of bugs in the \Project, including a bug which caused the lookup for a double nested name to fail. We also found a few defects in other projects (see Section~\ref{sec:defects}).
 
-We have not implemented the non-standard \lstinline|__attribute__((packed))| extension; however, it is likely that it will be implemented in the future, as it is quite known among the practitioners and the C semantics also supports it. We also do not have precise semantics for the enumerator initializers, which should be different kinds of constant expression depending on the fixedness of the enumeration's underlying type (see also Section~\ref{sec:impl:constexpr}). Most of the implementation was merged into upstream in April 2017, but a few features are still implemented only in our (publicly-available) fork of the project.
+We have not implemented the non-standard \lstinline|__attribute__((packed))| extension; however, it is likely that it will be implemented in the future, as it is quite known among the practitioners and the C semantics also supports it. We also do not have precise semantics for the enumerator initializers, which should be different kinds of constant expression depending on the fixedness of the enumeration's underlying type (see also Section~\ref{sec:impl:constexpr}). Most of the implementation was merged into upstream in April 2017, but a few features are still implemented only in our (publicly-available) fork of the Project.
 
 \section{Zero initialization of class types}\label{chp:implZeroInit}
 
@@ -1548,7 +1548,7 @@ To zero-initialize an object of a class type means to zero-initialize all its no
 \begin{lstlisting}
 zeroInit(Base . no-template Name(C, X), T)
 \end{lstlisting}
-which zero-initialize a (non-templated) member variable \texttt{X} (of type T) of an object \texttt{Base} of a class-type \texttt{C}. This syntax with dot member access is similar to the syntax of C++. In order to implement the zero-initialization of base-classes, we needed to create a means of obtaining a base-class subobject; in order to test the implementation, we needed to fix the semantics of accessing a non-static member variable of a base class (see Figure~\ref{fig:baseClassMemberAccess}). The fix \footnote{\url{https://github.com/kframework/c-semantics/pull/292}} was reviewed by the project maintainer and is likely to be merged soon.
+which zero-initialize a (non-templated) member variable \texttt{X} (of type T) of an object \texttt{Base} of a class-type \texttt{C}. This syntax with dot member access is similar to the syntax of C++. In order to implement the zero-initialization of base-classes, we needed to create a means of obtaining a base-class subobject; in order to test the implementation, we needed to fix the semantics of accessing a non-static member variable of a base class (see Figure~\ref{fig:baseClassMemberAccess}). The fix \footnote{\url{https://github.com/kframework/c-semantics/pull/292}} was reviewed by the maintainer of the Project and is likely to be merged soon.
 
 \begin{figure}
 \begin{lstlisting}
@@ -1669,7 +1669,7 @@ Despite the fact that the implementation of generalized constant expressions is 
 
 \section{Summary}
 
-Enumerations are fully implemented and most of the implementation is already merged in the upstream repository. Zero initialization of class types is also fully implemented, modulo some features which are not yet supported in the project at all; it is ready to be merged into the upstream. We have an elegant implementation of generalized constant expressions which is able to evaluate functions with recursion or nontrivial control-flow. The implementation is incomplete, not adhering to the standard and not production ready; however, it is based on good principles and can serve as a basis for future development.
+Enumerations are fully implemented and most of the implementation is already merged in the upstream repository. Zero initialization of class types is also fully implemented, modulo some features which are not yet supported in the Project at all; it is ready to be merged into the upstream. We have an elegant implementation of generalized constant expressions which is able to evaluate functions with recursion or nontrivial control-flow. The implementation is incomplete, not adhering to the standard and not production ready; however, it is based on good principles and can serve as a basis for future development.
 
 \chapter{Relation to other projects}\label{chap:contribToOtherProjects}
 %What works and what does not. The bugs we have found in compilers. Ambiguity or contradictions in the standard. The one thing we implement the same way GCC and clang does, but technically is incorrect.
@@ -1802,7 +1802,7 @@ This issue was first discussed on StackOverflow\footnote{\url{https://stackoverf
 \item Princip prelozene semantiky: je to transformator konfigurace. Nejprve se nejaka konfigurace nacte odnekud (ze souboru danem parametrem prikazove radky) a~pak se tak dlouho transformuje, dokud to jde. Pak beh skonci a~krun vypise konecnou konfiguraci. Te se opet muze ujmout spousteci skript 
 \end{itemize}
 
-\section{Structure of the project}
+\section{Structure of the Project}
 
 %Ze ta semantika se sklada z vice 'projektu'? Nebo 'semantik'? Nebo jak oni to nazyvaji. kcc/k++ skripty. Jo a~parser zalozeny na CLang. Language definitions
 
@@ -1810,7 +1810,7 @@ This issue was first discussed on StackOverflow\footnote{\url{https://stackoverf
 
 The project of C/C++ semantics is made of multiple modules, which are introduced in this section. 
 %It also depends on some external tools.
-Main user interface of the project consists of a~script named kcc, which implements a~semantics-based compiler. The script mimincs the interface of the gnu GCC compiler and supports many of GCC's command-line parameters. It is possible to use it to build programs instead of GCC; however, the generated executables are many times slower then the ones built with GCC.
+Main user interface of the Project consists of a~script named kcc, which implements a~semantics-based compiler. The script mimincs the interface of the gnu GCC compiler and supports many of GCC's command-line parameters. It is possible to use it to build programs instead of GCC; however, the generated executables are many times slower then the ones built with GCC.
 
 The Figure~\ref{fig:cpp-program-example} contains a~simple program, consisting of one C and one C++ source file. When compiled with GCC, it first compiles both source files separately, storing the resulting object code in separate object files, and then links the object files to final executable. The kcc script invoked by command
 \begin{lstlisting}[language=bash]
@@ -1836,7 +1836,7 @@ $ ./hello
 
 
 % Neco k parsovani
-%(The project contains two tools for this purpose: the older one, \textit{cparser}, is based on OCaml CIL library\footnote{https://github.com/cil-project/cil} and supports only C language; the newer \textit{clang-kast} based on Clang\footnote{http://clang.llvm.org/} llvm fronted was created specifically for the C++ semantics, but it might be used for C in future.)
+%(The Project contains two tools for this purpose: the older one, \textit{cparser}, is based on OCaml CIL library\footnote{https://github.com/cil-project/cil} and supports only C language; the newer \textit{clang-kast} based on Clang\footnote{http://clang.llvm.org/} llvm fronted was created specifically for the C++ semantics, but it might be used for C in future.)
 
 
 % which drives semantics-based compilation and mimics the interface of GCC.
