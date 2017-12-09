@@ -717,7 +717,7 @@ int foo(E e) {
 
 This behavior may be a source of confusion for programmers who do not know this; in past, it certainly was for the author of this text. The programmer may write a code similar to the one of Figure~\ref{fig:enumNotReallyUnreachable}, which assumes that the value of \texttt{e} has to be either \texttt{E::A} or \texttt{E::B}. This assumption may be justified if the programmer knows the set of values which may be returned from the function \texttt{giveMeAnEnum}. The programmer may try to go one step further and say: ,,If the function \texttt{giveMeAnEnum} tries to return something different than \texttt{E::A} or \texttt{E::B}, than the behavior is already undefined in \textit{that} point; therefore, we do not need to handle that situation in \texttt{foo}.'' Such a reasoning is flawed, because the function \texttt{giveMeAnEnum} may return e.g.~\lstinline|static_cast<E>(-117)|, which is guaranteed to be well-defined, because \lstinline|-117| is a valid value of \texttt{int}, which is the underlying type of \texttt{E} here. The programmer's reasoning would be valid if the enumeration \texttt{E} was a plain unscoped enumeration without an explicitly specified underlying type (i.e.~if we removed the \texttt{class} keyword). We will not go into detail here, as the reasoning would depend on the technical parts of~\stdN{n4296}{\S 7.2/8}.
 
-\subsection{Enumerators}
+\subsection{Enumerators}\label{sec:enumerators}
 
 Declaration of an enumerator may contain an optional \textit{initializer}, which has to be implicitly convertible to an integral type\footnote{It is more complicated, but this is enough here.}. If the initializer is not specified, the value of the enumerator is zero if it is the first enumerator; otherwise, it is the value of the previous enumerator plus one. When an enumeration is fully defined (i.e. \enquote{following the closing brace of an enum-specifier}), the type of each enumerator is the type of the enumeration~\stdN{n4296}{\S 7.2/5}. For example, in the declaration of variable \texttt{e} in the Figure~\ref{fig:scopedEnumDecl}, the type of the expression \lstinline|E::B| is \texttt{E}.
 
@@ -743,7 +743,7 @@ This is different from C, where enumerators have the type \texttt{int}. Still, i
 enum E { A };
 void foo(int x) { E e = x; }
 \end{lstlisting}
-\caption{A C++ compiler would not compile this code, as C++ does not allow an implicit conversion from int to enum. However, this is a valid C code.}
+\caption{This is a valid C code, but a C++ compiler would not compile it. The C++ language does not allow an implicit conversion from int to enum. }
 \label{fig:noConversionFromIntToEnum}
 \end{figure}
 
@@ -1331,7 +1331,14 @@ When we began the work on this thesis, we had almost no knowledge of the \K fram
 % Popsat co me vedlo k tomu, ze jsem se pustil zrovna do enumu. Ze je to pomerne samostatna vec, nezavisla na vetsine ostatnich featur C++, a~je jednoducha.
 
 %In the C++ standard~\cite{n4296}, enumerations are described mostly in
-When we were trying to understand enumerations, we created approximately 40 snippets of C++ source code. It then went out that in order to implement enumerations, several parts of the semantics had to be modified. The translation tool \clangKast was slightly modified to produce AST nodes for enumeration declarations; to process the declarations in the semantics, a~new file was added to the C++ translation semantics and a~new set of cells was added to common part of the configuration. It was also needed to implement enumerator lookup, which required an addition of a~few cells to configuration and a~slight modification of some of the existing name lookup rules. The semantics was to some extent already prepared to work with enumerations, and some of the relevant rules (e.g. for conversions) needed no change. To ensure correctness of the implementation, several test cases were added to the test suite. Overall, most of the modifications were additive, and only little of the existing code needed to be changed. During the implementation process, a~few minor bugs were discovered and fixed. 
+When we were trying to understand enumerations, we created approximately 40 snippets of C++ source code. It then went out that in order to implement enumerations, several parts of the semantics had to be modified.
+\begin{itemize}
+\item We slightly modified the translation tool \clangKast in order to produce AST nodes for enumeration declarations.
+\item To process the declarations in the semantics, we added a~new file\footnote{\path{semantics/cpp14/language/translation/decl/enum.k}} to the C++ translation semantics, and a~new set of cells to the configurations.
+\item It was also needed to implement enumerator lookup. To implement it, we added a~few cells to the configurations and we slightly modified of some of the existing name lookup rules.
+\item To ensure correctness of the implementation, we added several test cases to the test suite.
+\end{itemize}
+The semantics was to some extent already prepared to work with enumerations, and some of the relevant rules (e.g. those related to type conversions) needed no change. Overall, most of the modifications we made were additive, and only little of the existing code needed to be changed. During the implementation process, a~few minor bugs were discovered and fixed. 
 
 % TODO zminit ze jsem chtel implementovat i operatory na enumech, ale nedal jsem to a~udelal to Dwight.
 %It was also needed to add a~support for operations
@@ -1339,7 +1346,7 @@ When we were trying to understand enumerations, we created approximately 40 snip
 \subsection{Declaration}
 %TODO reference the standard
 
-Enumeration declaration, including the \textit{opaque declaration}, is implemented in module \texttt{CPP-DECL-ENUM} of the semantics.
+Enumeration declaration, including the \textit{opaque declaration}, is implemented in the module \texttt{CPP-DECL-ENUM} of the semantics.
 %cpp14/language/translation/decl/enum.k. In K abstract syntax, full enumeration declarations are represented by "EnumDef" node, whereas opaque enum declarations are represented by node "OpaqueEnumDeclaration". 
 Every enumeration declaration is processed as follows:
 \begin{enumerate}
@@ -1349,10 +1356,11 @@ Every enumeration declaration is processed as follows:
 \item For unscoped enumerations without a~fixed underlying type, the set of enumeration values and the underlying type is computed and stored in the \texttt{cppenum} cell.
 \end{enumerate}
 
-For declarations of enumerations with no fixed underlying type, the standard keeps one aspect of the declaration unspecified. Prior the closing brace of the enumerator declaration, and in particular, inside the enumeration declaration, the type of an enumerator with an initializer is the type of the initializer, and the type of an enumerator without an initializer is the type of the previous enumerator, whenever possible. If there is no initializer specified for the first enumerator, the type of the enumerator is unspecified; it is also unspecified for enumerators (without initializers) whose value does not fit into the type of previous enumerator. 
-For example, in the declaration on Figure~\ref{fig:ugly-enum}, the type of enumerator \lstinline|A| in the declaration of \lstinline|B| is not specified, and therefore the value of \lstinline|B| is not specified, too. Similarly, the value of enumerator \lstinline|D| on most platforms does not fit to unsigned char, which is the type of enumerator \lstinline|C|, and its type is thus unspecified. Note that the types of enumerators are unspecified only inside of the declaration of the enumeration, i.e. prior the closing brace of the declaration. Type of every enumerator after the complete declaration is always the type of the enumeration, so this unspecified behavior is usually not a~problem in practice, unless one writes code similar to the one in Figure~\ref{fig:ugly-enum}. However, the semantics should be aware of it.
+For declarations of enumerations with no fixed underlying type, the standard keeps one aspect of the declaration unspecified. Prior the closing brace of the enumerator declaration, and in particular, inside the enumeration declaration, the type of an enumerator with an initializer is the type of the initializer, and the type of an enumerator without an initializer is the type of the previous enumerator, whenever possible. If there is no initializer specified for the first enumerator, the type of the enumerator is unspecified; it is also unspecified for enumerators (without initializers) whose value does not fit into the type of the previous enumerator. 
 
-\begin{figure}[ht]
+For example, in the declaration in Figure~\ref{fig:ugly-enum}, the type of the enumerator \lstinline|A| in the declaration of \lstinline|B| is not specified, and therefore the value of \lstinline|B| is not specified, too. Similarly, the value of the enumerator \lstinline|D| on most platforms does not fit to unsigned char, which is the type of the enumerator \lstinline|C|, and its type is thus unspecified. Note that the types of enumerators are unspecified only inside of the declaration of the enumeration, i.e. prior the closing brace of the declaration. Type of every enumerator after the complete declaration is always the type of the enumeration, so this unspecified behavior is usually not a~problem in practice, unless one writes a code similar to the one in Figure~\ref{fig:ugly-enum}. However, the semantics should be aware of it.
+
+\begin{figure}[t]
 \begin{lstlisting}[language=C++]
 enum E {
 	A, B=sizeof(A), C=(unsigned char)255, D
@@ -1362,7 +1370,7 @@ enum E {
 \label{fig:ugly-enum}
 \end{figure}
 
-Many real-world programs use enumerations whose enumerators do not have initializers, because the language provides reasonable default values. Earlier versions of the semantics caused the semantic-based compiler \kcc to stop the compilation whenever an undefined or unspecified behavior was encountered, which was an undesirable action for such programs. For this reason, the maintainer of the Project added an error-reporting and recovery support to the semantics \footnote{\url{https://github.com/kframework/c-semantics/commit/584fa6ff4a90aca45de99d6b210177258ebd96d4}}. The current version of the semantics issues a~warning whenever this unspecified behavior occurs. Ideally, the warning would be suppressed if the unspecified type is never used, but this enhancement was not implemented.
+Many real-world programs use enumerations whose enumerators do not have initializers, because the language provides reasonable default values. Earlier versions of the semantics caused the semantic-based compiler \kcc to stop the compilation whenever an undefined or unspecified behavior was encountered. Such behavior would be undesirable for programs like this. For this reason, the maintainer of the Project added an error-reporting and recovery support to the semantics \footnote{\url{https://github.com/kframework/c-semantics/commit/584fa6ff4a90aca45de99d6b210177258ebd96d4}}. The current version of the semantics issues a~warning whenever this unspecified behavior occurs. Ideally, the warning would be suppressed if the unspecified type is never used, but this enhancement is not implemented so far.
 
 % Also, enumerations may be declared in block, class or namespace scope. There was no problem in supporting all three.
 
@@ -1373,29 +1381,16 @@ Many real-world programs use enumerations whose enumerators do not have initiali
 
 \subsection{Enumerator lookup}
 
-The name of an enumerator can be referred to using the scope resolution operator applied to a~name of the enumeration. This was implemented easily using only a~few rules in the (static) semantics.
+The name of an enumerator can be referred to using the scope resolution operator applied to the name of the enumeration. We implemented this by adding a~few simple rules to the (static) semantics.
 %(3.4.3/1) 
-Furthermore, the enumerators of an unscoped enumeration are declared in the scope immediately containing the declaration of the enumeration. To implement this, we have decided to add a~few new cells, which map names of enumerators of enums defined in the surrounding scope to their corresponding type. The lookup then reuses the rules from the previous case. 
-%It might be possible to implement the lookup even without those extra cells, but the implemented solution seemed to be simplier.
+Furthermore, the enumerators of an unscoped enumeration are declared in the scope immediately containing the declaration of the enumeration. To implement this, we have decided to add a~few new cells, which map names of enumerators to their enumerations, whenever the lookup is performed in the scope surrounding the definition of the enumeration. The lookup then reuses the rules from the previous case.
 
-%TODO sjednotit s textem, ktery jsem psal drive nahore
-The rules for enumerator lookup also have to consider the context in which the lookup is performed. As noted earlier, it is mandated by the standard that the types of declared enumerators are different inside the declaration then after it. One may find that surprising; however, this is needed in order to easily create enumerator initializers, which depends on values of previous enumerators of the same enumeration, as it is illustrated in Figure~\ref{lst:enumDepends}. If the type of the enumerator \lstinline|A| in the initializer of the enumerator \lstinline|B| was the type of the enumeration (as it is after the declaration), the initializer expression would be ill-formed, as in C++ enumerations are not implicitly convertible to arithmetic types. Thus, an enumerator prior the closing brace has always an integral type.
+The rules for enumerator lookup also have to consider the context in which the lookup is performed. As noted in Section~\ref{sec:enumerators}, it is mandated by the standard that the types of declared enumerators are different inside the declaration than after it.
 
-\begin{figure}[ht]
-\begin{lstlisting}[language=C++]
-enum F {
-	A=1, B=A+2
-};
-\end{lstlisting}
-\caption{An enumerator depends on value of previous enumerator.}
-\label{lst:enumDepends}
-\end{figure}
 
 \subsection{Underlying type}
 
-The C++ \textit{language} does not have a direct support for determining the underlying type of an enumeration. Instead, such facility is provided by the standard library, as shown in Figure~\ref{fig:stdUnderlyingType}; the standard library then uses compiler's intrinsic functions to get the underlying type. For example, the GNU GCC compiler provides a function\footnote{It is not a function in the C/C++ sense, as it operates on types.} \lstinline|__underlying_type|, which 
-%takes an enumeration type and
-translates to the underlying type of its argument (Figure~\ref{fig:gccEnumUtIntrinsic}).
+The C++ \textit{language} does not have a direct support for determining the underlying type of an enumeration. Instead, such facility is provided by the standard library, as shown in Figure~\ref{fig:stdUnderlyingType}; the standard library then uses compiler's intrinsic functions to get the underlying type. For example, the GNU GCC compiler provides the construct \lstinline|__underlying_type|, which translates to the underlying type of its argument (Figure~\ref{fig:gccEnumUtIntrinsic}). The clang fronted supports this intrinsic, too. Our tool \clangKast translates this intrinsic to the constructor \texttt{GnuEnumUnderlyingType} of sort \texttt{AType}; the translation semantics then contain a few straightforward rules which find the declared enumeration and its underlying type.
 
 \begin{figure}[ht]
 \begin{lstlisting}
@@ -1405,19 +1400,6 @@ __underlying_type(E) x = 5;
 \caption{Use of GCC's intrinsic function for determining the underlying type of an enumeration.}
 \label{fig:gccEnumUtIntrinsic}
 \end{figure}
-
-The clang fronted supports this intrinsic, too. Our tool \clangKast translates this intrinsic to the constructor \texttt{GnuEnumUnderlyingType} of sort \texttt{AType}; the translation semantics then contain a few straightforward rules which find the declared enumeration and its underlying type.
-
-% TODO porovnani vykonu constexpr a~ne-constexpr
-
-% Jo, ale delalo to trochu problemy.
-% Rict, ze nerozumim spoustu veci o tom, jak to treba muze interagovat se sablonama. Ale to se vyresi, az budeme podporovat sablony.
-%In the semantics, 
-
-%Kde se to nachází fyzicky v té sémantice? cpp14/language/translation/decl/enum.k
-%A kde se nachází popis té abstraktní syntaxe? cpp14/language/common/syntax.k?
-
-%The translation unit is processed from top to bottom.
 
 %TODO link na repo
 %TODO zmínit, že je ta sémantika na něčem testovaná.
@@ -1429,16 +1411,21 @@ The clang fronted supports this intrinsic, too. Our tool \clangKast translates t
 
 We successfully implemented enumeration declaration and enumerator lookup for both scoped and unscoped enumerations. Our implementation allows enumerations to be declared in all scopes where enumerations can be declared according to the standard, that is, in a namespace scope, in a class scope or in a block scope (inside a function). We also implemented opaque enumeration declaration and redeclaration and a support for the standard library \lstinline|std::underlying_type_t| template. During the implementation work, we fixed a number of bugs in the \Project, including a bug which caused the lookup for a double nested name to fail. We also found a few defects in other projects (see Section~\ref{sec:defects}).
 
-We have not implemented the non-standard \lstinline|__attribute__((packed))| extension; however, it is likely that it will be implemented in the future, as it is quite known among the practitioners and the C semantics also supports it. We also do not have precise semantics for the enumerator initializers, which should be different kinds of constant expression depending on the fixedness of the enumeration's underlying type (see also Section~\ref{sec:impl:constexpr}). Most of the implementation was merged into upstream in April 2017, but a few features are still implemented only in our (publicly-available) fork of the Project.
+We have not implemented the non-standard \lstinline|__attribute__((packed))| extension; however, it is likely that it will be implemented in the future, as it is quite known among the practitioners and the C semantics also supports it. We also do not have precise semantics for the enumerator initializers, which should be some kind of a constant expression, depending on the fixedness of the enumeration's underlying type (see also Section~\ref{sec:impl:constexpr}). Most of the implementation was merged into upstream in April 2017, but a few features are still implemented only in our fork of the Project\footnote{https://github.com/h0nzZik/c-semantics}.
 
 \section{Zero initialization of class types}\label{chp:implZeroInit}
 
 When we were choosing the features to implement as a part of this thesis, we did not intend to implement anything class-related at all. Later, when most of the enumerations-related language features was implemented, the maintainer of the \Project suggested\footnote{\url{https://github.com/kframework/c-semantics/pull/275\#issuecomment-294241691}}
-that we could implement zero-initialization on class types (see Section~\ref{chap:lang:init}). Since we wanted to gain a deeper understanding of both the C++ language and the \Project before attempting to tackle the problem of generalized constant expressions, and the implementation part of the zero-initialization of class-types seemed to be relatively straightforward, we agreed. However, the implementation of this feature turned out to be far more challenging than we thought.
+that we could implement zero-initialization on class types (see Section~\ref{chap:lang:init}). Since we wanted to gain a deeper understanding of both the C++ language and the \Project before attempting to tackle the problem of generalized constant expressions, and since the implementation part of the zero-initialization of class-types seemed to be relatively straightforward, we agreed. However, the implementation of this feature turned out to be far more challenging than we thought.
 
 \subsection{A bug: nondeterminism}
 
-The first problem we encountered was quite surprising. It took us many hours, perhaps a few tens of hours, to identify it; however, the bug was quite easy to fix. The \Project contained two rules as in Figure~\ref{fig:nondetRules}, which had to differentiate between two cases in list-initialization: when the initializer list is empty, the object should be value-initialized (as in~\stdN{n4296}{\S 8.5.4/3.4}, the first rule), and when it is non-empty, the object should be constructed with a constructor (as in~\stdN{n4296}{\S 8.5.4/3.6}, the second rule). However, the second rule could apply even when the initializer list was empty, which was the bug.
+The first problem we encountered was quite surprising. It took us many hours, perhaps a few tens of hours, to identify it; however, the bug was quite easy to fix. The \Project contained two rules as in Figure~\ref{fig:nondetRules}, which had to differentiate between two cases in list-initialization:
+\begin{enumerate}
+\item when the initializer list is empty, the object should be value-initialized (as in~\stdN{n4296}{\S 8.5.4/3.4} - the first rule in the figure, and
+\item and when it is non-empty, the object should be constructed with a constructor (as in~\stdN{n4296}{\S 8.5.4/3.6}) - the second rule.
+\end{enumerate}
+However, the second rule could apply even when the initializer list was empty, which was the bug.
 
 \begin{figure}[ht]
 \begin{lstlisting}
@@ -1454,14 +1441,14 @@ rule #figureInit(/*...*/, ExpressionList(L::List),/*...*/)
 
 The bug was hard to identify because when both rules could apply, the \K framework usually applied the first. However, when we began the implementation of the zero initialization on class types, the non-determinism manifested. When the newly-written zero-initialization code contained a bug which should cause the compilation to get stuck, then the second rule applied, thus bypassing our newly-written code.
 
-If we had had a deeper understanding of how non-determinism works in \K, and had we considered the possibility of the existence of non-deterministic behavior in the translation semantics, we would probably found the bug sooner. Once we knew about this non-determinism, it was easy to fix it\footnote{\url{https://github.com/kframework/c-semantics/pull/287}}.
+If we had had a deeper understanding of how non-determinism works in \K, and had we considered the possibility of the existence of non-deterministic behavior in the translation semantics, we would probably found the bug sooner. Once we knew about this non-deter\-minism, it was easy to fix it\footnote{\url{https://github.com/kframework/c-semantics/pull/287}}.
 
 %TODO ani jsem se nepokusil porozumet presneji tomu, proc se to nekdy projevuje a nekdy ne
 %TODO zminit ze by to ale nemuselo stat tolik casu, kdybych vedel, ze problem s nedeterminismem muze nastat; pak bych asi mozna vyzkousel ty vlastnosti K, ktere umozni nedetermismus detekovat.
 
 \subsection{Another bug: no default initialization}
 
-The second problem caused some classes to not be default-initialized. The semantics contained a rule responsible for zero-initializing an object of a class type with subsequent default-initialization; the rule aimed to skip the default-initialization phase for classes with trivial default-constructor, but the phase was skipped in the other case instead. This caused an assertion failure for code in~Figure~\ref{fig:defaultCtor}. This bug was also easy to fix\footnote{Fixed in PR~\url{https://github.com/kframework/c-semantics/pull/291}. Note that the accompanying test-case tests default-initialization without preceding zero-initialization, which is not exactly what the patch fixes. This is probably due to the fact that in the time of fixing this, zero initialization of classes was not implemented yet, and therefore the correct test-case would not execute properly.}.
+The second problem caused some classes to not be default-initialized. The semantics contained a rule responsible for zero-initialization with subsequent default-initialization of an object of a class type. The rule should skip the default-initialization phase for classes with trivial default-constructor, but instead, it skipped the phase in the other case. This caused an assertion failure for code in~Figure~\ref{fig:defaultCtor}. This bug was also easy to fix\footnote{Fixed in PR~\url{https://github.com/kframework/c-semantics/pull/291}. Note that the accompanying test-case tests default-initialization without preceding zero-initialization, which is not exactly what the patch fixes. This is probably due to the fact that in the time of fixing this, zero initialization of classes was not implemented yet, and therefore the correct test-case would not execute properly.}.
 
 \begin{figure}[ht]
 \begin{lstlisting}[language=c++]
@@ -1481,11 +1468,13 @@ int main() {
 
 \subsection{Implementation}
 
-To zero-initialize an object of a class type means to zero-initialize all its non-static members, its base classes and also all the padding among the subobjects. The initialization of non-static members was straightforward because we could reuse already existing syntax for member access and create computational items like
+To zero-initialize an object of a class type means to zero-initialize all its non-static members, its base classes and also all the padding among the subobjects. The initialization of non-static members was straightforward because we could reuse already existing syntax for member access. Therefore, the rules we wrote could create computational items like
 \begin{lstlisting}
 zeroInit(Base . no-template Name(C, X), T)
 \end{lstlisting}
-which zero-initialize a (non-templated) member variable \texttt{X} (of type T) of an object \texttt{Base} of a class-type \texttt{C}. This syntax with dot member access is similar to the syntax of C++. In order to implement the zero-initialization of base-classes, we needed to create a means of obtaining a base-class subobject; in order to test the implementation, we needed to fix the semantics of accessing a non-static member variable of a base class (see Figure~\ref{fig:baseClassMemberAccess}). The fix \footnote{\url{https://github.com/kframework/c-semantics/pull/292}} was reviewed by the maintainer of the Project and is likely to be merged soon.
+which applies the zero-initialize procedure on a (non-templated) member variable \texttt{X} (of type T) of an object \texttt{Base} of a class-type \texttt{C}.
+
+In order to implement the zero-initialization of base-classes, we needed to create a means of obtaining a base-class subobject; in order to test the implementation, we needed to fix the semantics of accessing a non-static member variable of a base class (see Figure~\ref{fig:baseClassMemberAccess}). The fix\footnote{\url{https://github.com/kframework/c-semantics/pull/292}} was reviewed by the maintainer of the Project and is likely to be merged soon.
 
 \begin{figure}[ht]
 \begin{lstlisting}
