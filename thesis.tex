@@ -7,7 +7,7 @@
 %\showoldstufftrue
 
 %%%%%
-\documentclass{fithesis3}
+\documentclass[nolot,nolof]{fithesis3}
 \usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
 \usepackage{cleveref}
@@ -128,7 +128,7 @@ In addition, we fixed several bugs in the Project, including one hard-to-debug n
 %"ukazalo se"
 %(TODO zminit, ze za tim je ten 'constexpr' keyword).
 
-The purpose of this text is to describe the implementation of the aforementioned features. It is organized as follows. First, the \K framework is described in such level of detail, which is enough for the reader to understand the implementation of the features and which enables him to experiment with simple language definitions. Second, basic concepts of the C++ language are outlined, followed by a deeper discussion of the selected language features. Third, the general architecture of the \Project is described; fourth, the implementation of the language features is described. The final sections of the text contain an evaluation of the implementation, with a discussion of possible future work.
+The purpose of this text is to describe the implementation of the aforementioned features. It is organized as follows. First, the \K framework is described in such level of detail, which allows a reader to understand the implementation of the features and which enables her to experiment with simple language definitions. Second, basic concepts of the C++ language are outlined, followed by a deeper discussion of the selected language features. Third, we explain the general architecture of the \Project. Fourth, the implementation of the language features is described. The final sections of the text contain an evaluation of the implementation, with a discussion of possible future work.
 
 %TODO Říct, že přehled souvisejících věcí je v tom článku z PLDI'15.
 % at first, the project of C/C++ semantics is introduced; then the concepts involved are described in greater depth; then a~general architecture of the project of C/C++ semantics is outlined, followed by a~more detailed description of the parts related to the selected features. A discussion of details of the implementation...
@@ -142,7 +142,7 @@ The purpose of this text is to describe the implementation of the aforementioned
 \chapter{K framework} \label{chap:k}
 
 This chapter intends to give a~brief overview of the \K framework.
-The level of detail here is necessary to understand the description of the Implementation section and does not go much deeper; an inquisitive reader is encouraged to go through the K tutorial. % And read the 
+The level of detail here is just necessary to understand the description of implementation in Chapter~\ref{chap:implement}; an inquisitive reader is encouraged to go through the K tutorial\footnote{\url{http://www.kframework.org/index.php/K_Tutorial}}.
 
 %% Taky bych chtel popsat, jake nastroje K framework nabizi, z ceho se sklada apod. Ale ze aktualni prochazi rekonstrukci, takze nektere vlastnosti nefunguji. Pdf dokumentace ze semantiky. Obycejny interpreter, model checker, ...
 %
@@ -164,7 +164,7 @@ For imperative languages, the configurations may consists of a~,,program'' part 
 
 \section{Terms}
 
-The program part can be represented as a~term. \K allows to define a~multisorted algebraic signature $(S, \Sigma)$; closed terms over this signature form a~(multisorted) term algebra. One may then choose a~particular sort $s \in \Sigma$ and declare the set of all programs to be the set of all closed terms of the sort $s$.
+The program part can be represented as a~term. \K allows to define a~multisorted algebraic signature $(S, \Sigma)$, where $S$ is a set of sorts and $\Sigma$ is an $S^*$-sorted set of symbols; closed terms over this signature form a~(multisorted) term algebra. One may then choose a~particular sort $s \in S$ and declare the set of all programs to be the set of all closed terms of the sort $s$.
 
 Sorts are defined using \texttt{syntax} keyword. The definition
 \begin{lstlisting}
@@ -189,6 +189,8 @@ to describe the signature of groups. \K also supports subsorting; the following 
 syntax Real ::= Int
 \end{lstlisting}
 
+\K provides a~set of pre-defined sorts, which include \texttt{Id} (the sort of C-like identifiers), \texttt{Int}, \texttt{Bool}, \texttt{List}, and \texttt{Map}. Using these sorts, an algebraic signature of an imperative language can be defined as in Figure~\ref{impSyntax}. From the definition, \textit{arithmetic expressions} (represented by the sort \texttt{AExp}) are integers, identifiers, and sums of other arithmetic expressions; boolean expressions are boolean constant, comparisons of arithmetic expressions etc.
+
 \begin{figure}[ht]
 \begin{lstlisting}
 syntax AExp  ::= Int | Id
@@ -206,18 +208,18 @@ syntax Stmt  ::= Block
                | Stmt Stmt
 syntax Pgm   ::= Stmt
 \end{lstlisting}
-\caption[An algebraic signature of an imperative language]{A definition of an algebraic signature of an imperative language.}
+\caption{A definition of syntax of a simple imperative language.}
 \label{impSyntax}
 \end{figure}
 
-\K provides a~set of pre-defined sorts, which include \texttt{Id} (the sort of C-like identifiers), \texttt{Int}, \texttt{Bool}, \texttt{List}, and \texttt{Map}. Using these sorts, an algebraic signature of an imperative language can be defined as in Figure~\ref{impSyntax}. From the definition, \textit{arithmetic expressions} (represented by the sort \texttt{AExp}) are integers, identifiers, and sums of other arithmetic expressions; the arithmetic expressions can be compared to create \textit{boolean expressions}, and so on.
 
 \section{Configurations}
 
-A part of a~program configuration can be stored in a~\textit{cell}, which can be thought of as a~labeled multiset~\cite{hathhorn-ellison-rosu-2015-pldi}. Cells may contain terms of a~given sort or other cells. In a~source code of a~language definition in \K, cells are written in an XML-style notation.
+A program configuration is a cell, which can contain nested cell; a cell 
+%A part of a~program configuration can be stored in a~\textit{cell}, which
+can be thought of as a~labeled multiset~\cite{hathhorn-ellison-rosu-2015-pldi}. Cells may contain terms of a~given sort or other cells. In a~source code of a~language definition in \K, cells are written in an XML-style notation.
 
-Figure~\ref{impConfiguration} contains a~snippet of such source code. The keyword \texttt{configuration} here defines three cells (\texttt{T}, \texttt{k}, and \texttt{state}), a~single structure for all 
-configurations, and an initial configuration. Every cell in the definition has some content: the \texttt{state} cell contains \lstinline|.Map|, which has a~constructor of sort \texttt{Map}, representing an empty map; the \texttt{k} cell contains a~term of sort \texttt{Pgm} consisting of a~variable with name 
+Figure~\ref{impConfiguration} contains a~snippet of such source code. The keyword \texttt{configuration} here defines three cells (\texttt{T}, \texttt{k}, and \texttt{state}), and an initial configuration of the language. This initial configuration also determines the structure or \textit{shape} of all configurations of the language. Every cell in the definition has some content: the \texttt{state} cell contains \lstinline|.Map|, which is a~nullary constructor of sort \texttt{Map}, representing an empty map; the \texttt{k} cell contains a~term of sort \texttt{Pgm} consisting of a~variable with name 
 \texttt{\$PGM}, and the \texttt{T} cell contains the other two cells. The initial configuration for program \texttt{P} is just like that, except that the variable \texttt{\$PGM} is replaced by a~term, representing the program \texttt{P}.
 
 \begin{figure}
@@ -227,7 +229,7 @@ configuration <T>
                 <state> .Map </state>
               </T>
 \end{lstlisting}
-\caption{A definition of the initial configuration of the language Imp.}
+\caption{A definition of an initial configuration of a simple imperative language.}
 \label{impConfiguration}
 \end{figure}
 
@@ -242,10 +244,10 @@ We have said earlier that the programmer may choose a~sort, whose terms will rep
 
 \section{Implementations of \K}
 
-Before going further, let us note that in the time of writing there exist two implementations of \K: UUIC-\K\footnote{\url{https://github.com/kframework/k}}, developed by University of Illinois in Urbana-Campaign, and RV-\K\footnote{\url{https://github.com/runtimeverification/k}}, developed by RuntimeVerification, Inc. The former is intended to be the reference implementation, the latter is optimized for RV's tools based on the c-semantics. RV-\K differs from UIUC-\K in a few aspects. One of the differences is that the RV-\K requires the configuration to contain a~cell with an \texttt{exit} attribute: the cell contains the value returned by \krun. Because of that, it does not supports the examples included in the official \K tutorial. However, all examples in this chapter from this point further work with both implementations.
+Before going further, let us note that in the time of writing there exist two implementations of \K: UIUC-\K\footnote{\url{https://github.com/kframework/k}}, developed by University of Illinois in Urbana-Campaign, and RV-\K\footnote{\url{https://github.com/runtimeverification/k}}, developed by RuntimeVerification, Inc. The former is intended to be the reference implementation, the latter is optimized for RV's tools based on the Project. Both implementations provide the same set of command (e.g. \kompile, \krun); however, RV-\K differs from UIUC-\K in several aspects. One of the differences is that the RV-\K requires the configuration to contain a~cell with an \texttt{exit} attribute: the cell contains the value returned by \krun. Because of that, it does not supports the examples included in the official \K tutorial. However, all examples in this chapter from this point further work with both implementations.
 
 \section{Parsing}
-It can be seen from the Figure~\ref{impSyntax} that definitions of algebraic signatures in \K looks similar to definitions of context-free grammars using a~BNF notation. This is not a~coincidence; in fact, \K allows to specify the \textit{concrete syntax} with use of special \textit{attributes}. This subsection describes some of the parsing facilities \K provides; the \Project does not use them, but the description enables the reader to easily experiment with the provided examples.
+It can be seen from Figure~\ref{impSyntax} that definitions of algebraic signatures in \K looks similar to definitions of context-free grammars using a~BNF notation. This is not a~coincidence. In fact, \K allows to specify the \textit{concrete syntax} with use of special \textit{attributes}. This subsection describes some of the parsing facilities provided by \K. The \Project does not use them, but the description enables the reader to easily experiment with the provided examples.
 
 \begin{figure}
 \begin{lstlisting}
@@ -264,45 +266,48 @@ module ARITH
                 </T>
 endmodule
 \end{lstlisting}
-\caption[Syntax and configuration of a language of arithmetic expressions]{File \texttt{arith.k}. Note the \texttt{ret} cell with an \texttt{exit} attribute.}
+\caption{File \texttt{arith.k}. Note the \texttt{ret} cell with the \texttt{exit} attribute.}
 \label{arithSource}
 \end{figure}
 
-Figure~\ref{arithSource} contains a~definition of a~simple language of arithmetic expressions. The definition contains a~few things we have not described yet. First, it is split into two modules; the \texttt{ARITH-SYNTAX} module contains everything which is needed to generate a~parser, while the \texttt{ARITH} module contains everything else. Second, one of the sort constructors is separated from the previous one by a~\lstinline|>| sign; that causes the preceding productions in the concrete syntax grammar to have a~higher priority than the following ones and thus to bind tighter. Third, some constructors have \textit{attributes} attached; the attribute \texttt{left} causes a~binary constructor to be left-associative, and the attribute \texttt{bracket} means that the corresponding unary constructor should be parsed as a~pair of brackets.
+Figure~\ref{arithSource} contains a~definition of a~simple language of arithmetic expressions. The definition contains a~few things we have not described yet. First, it is split into two modules. The \texttt{ARITH-SYNTAX} module contains everything which is needed to generate a~parser, while the \texttt{ARITH} module contains everything else. Second, one of the sort constructors is separated from the previous one by the~\lstinline|>| sign. This causes the preceding productions in the concrete syntax grammar to have a~higher priority than the following ones and thus to bind tighter. Third, some constructors have \textit{attributes} attached; the attribute \texttt{left} causes a~binary constructor to be left-associative, and the attribute \texttt{bracket} means that the corresponding unary constructor should be parsed as a~pair of brackets.
 %TODO mozna se to podoba Parsing Expression Grammar
 
-When stored in a~file with name \texttt{arith.k}, the definition may be compiled using UIUC-\K (the first command) or using RV-\K (the second one):
-\begin{lstlisting}[language=bash]
+When stored in a~file with name \texttt{arith.k}, the definition may be compiled using the \kompile command, provided either by UIUC-\K
+\begin{lstlisting}
 $ kompile arith.k
+\end{lstlisting}
+or by RV-\K:
+\begin{lstlisting}
 $ kompile -O2 arith.k
 \end{lstlisting}
-The \krun command will use the module \texttt{ARITH-SYNTAX} to generate the parser and the module \texttt{ARITH} to generate an interpreter. The names of the modules used can be specified by command-line arguments; if they are not specified (as above), \K infers them from the filename. Both parser and interpreter are stored in a~directory \texttt{arith-kompiled}.
+The \krun command will use the module \texttt{ARITH-SYNTAX} to generate a parser and the module \texttt{ARITH} to generate an interpreter. The names of the modules used to generated the parser and the interpreter are automatically inferred from the filename, but they can also be specified explicitly using command-line arguments. Both parser and interpreter are stored in a~directory \texttt{arith-kompiled}.
 
 The compiled definition can be used to parse and execute a~program written in the arithmetic language.
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}
 $ cat addition.arith
 1 + 2 + 3
 $ krun addition.arith
 <T> <k> 1 + 2 + 3 </k> <ret> 0 </ret> </T>
 \end{lstlisting}
-The command parses the given source file, creates an initial configuration, walks in the generated transition system until it reaches a~terminal configuration, and pretty-prints it. The generated transition system contains only one configuration (the initial one), as the current language definition of Arith does not have any semantic rules.
+The command parses the given source file, creates its initial configuration, walks in the generated transition system until it reaches a~terminal configuration, and pretty-prints it. The generated transition system contains only one configuration (the initial one), as the current language definition of Arith does not have any semantic rules.
 
-The pretty-printing implies that the abstract syntax is \textit{unparsed} back to the concrete one; therefore, from the output above one can not conclude that the file was parsed correctly, as changing the left associativity to the right one (by changing \texttt{left} attributes to \texttt{right} ones) would not alter the output. However, \krun can be instructed to output a~textual version of its internal representation:
-\begin{lstlisting}[language=bash]
+The pretty-printing implies that the abstract syntax is \textit{unparsed} back to the concrete one. Therefore, from the output above one can not conclude that the file was parsed in the way programmer intended, as changing the left associativity to the right one (by changing \texttt{left} attributes to \texttt{right} ones) would not alter the output. However, \krun can be instructed to output a~textual version of its internal representation:
+\begin{lstlisting}
 $ krun --output addition.kast
-<T>`(`<k>`(`_+__ARITH-SYNTAX`(`_+__ARITH-SYNTAX`(
+`<T>`(`<k>`(`_+__ARITH-SYNTAX`(`_+__ARITH-SYNTAX`(
 #token("1","Int"),#token("2","Int")),#token("3","Int"))),
 `<ret>`(#token("0","Int")))
 \end{lstlisting}
-The output is easily readable for a~machine; to parse it, the generated concrete syntax parser is not needed. It is less readable for humans, though. From the output one can easily get
+The output is easily readable for a~machine. However, it is less readable for humans. From the output one can get
 \begin{lstlisting}
 +( +( 1, 2 ), 3 )
 \end{lstlisting}
-simply be keeping only the content of \texttt{k} cell, removing superfluous characters and adding spaces. One can see that this expression, when interpreted as in prefix-notation, correspond to the content of \texttt{addition.c}. From a~different example on Figure~\ref{arithMixed} one can see that the division has a~priority over addition and the parentheses bind the tightest.
+simply be keeping only the content of \texttt{k} cell, removing superfluous characters and adding spaces. One can see that this expression, when interpreted as in prefix-notation, correspond to the content of \texttt{addition.c}. From a~different example in Figure~\ref{arithMixed}, one can see that the division has a~priority over addition and the parentheses bind the tightest.
 
 
 \begin{figure}
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}
 $ cat simple.arith
 5/2 + (1 + 3) / 2
 $ krun simple.arith
@@ -318,7 +323,7 @@ _+__ARITH-SYNTAX`(#token("1","Int"),#token("3","Int")),
 \end{figure}
 
 \section{Rules}
-So far, the definition of language Arith was able to generate only trivial transition systems with one configuration and no transitions. To generate configurations from the initial one, \K provides a~concept of \textit{semantic rules}. In their simplest version, the rules have the form of $\varphi \Rightarrow \psi$, where $\varphi$, $\psi$ are \textit{patterns} - configurations with free variables, where every variable free in $\psi$ have to be free in $\varphi$. We say that a~pattern $\varphi$ \textit{matches} a~concrete configuration $\var{Cfg}$, when $\varphi$ may be turned into $\var{Cfg}$ by substituting free variables of $\varphi$ with concrete terms. In that case we say that the variables \textit{bind} to the corresponding terms. When $\varphi$ matches a~configuration $\var{Cfg}$, a~transition is generated into a~new configuration $\var{Cfg^\prime}$, which is the result of substituting the free variables of $\psi$ with the bound terms.
+So far, the definition of language Arith was able to generate only trivial transition systems with one configuration and no transitions. To generate configurations from the initial one, \K provides a~concept of \textit{semantic rules}. In their simplest version, the rules have the form of $\varphi => \psi$, where $\varphi$, $\psi$ are \textit{patterns} - configurations with free variables, where every variable free in $\psi$ have to be free in $\varphi$. We say that a~pattern $\varphi$ \textit{matches} a~concrete configuration $\var{Cfg}$, when $\varphi$ may be turned into $\var{Cfg}$ by substituting free variables of $\varphi$ with concrete terms. In that case we say that the variables \textit{bind} to the corresponding terms. When $\varphi$ matches a~configuration $\var{Cfg}$, a~transition is generated into a~new configuration $\var{Cfg^\prime}$, which is the result of substituting the free variables of $\psi$ with the bound terms.
 
 \subsection{Basic rules}
 For example, the module \texttt{ARITH} of the language Arith may be extended with the following rule:
@@ -329,7 +334,7 @@ rule <T><k>I1:Int + I2:Int</k><ret>R:Int</ret></T>
 The left-hand side of the rewriting operator (\lstinline|=>|) contains three free variables (\texttt{I1}, \texttt{I2}, \texttt{R}), all of which required to have a sort \texttt{Int}. The variables \texttt{I1}, \texttt{I2} are used as the two parameters of the constructor~\lstinline|+|, while the variable \texttt{R} represents the content of the \texttt{ret} cell. On the right-hand side, \texttt{I1} and \texttt{I2} are given as parameters to built-in function~\lstinline|+Int|, which implements the addition of two integers; the variable~\texttt{R} is used in the same place as on the left side, thus leaving the \texttt{ret} cell unchanged.
 
 The compiled definition takes two numbers and adds them together:
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}
 $ kompile arith.k
 $ cat simple.arith
 1 + 2
@@ -337,7 +342,7 @@ $ krun simple.arith
 <T> <k> 3 </k> <ret> 0 </ret> </T>
 \end{lstlisting}
 Here \krun again printed the final configuration. It is possible to print an $i$-th configuration with use of the \texttt{depth} switch:
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}
 $ krun --depth 0 simple.arith
 <T> <k> 1 + 2 </k> <ret> 0 </ret> </T>
 $ krun --depth 1 simple.arith
@@ -1033,7 +1038,7 @@ The project of C/C++ semantics in \K is hosted on GitHub\footnote{\url{https://g
 The main user interface of the Project consists of a~script \kcc~\cite{hathhorn-ellison-rosu-2015-pldi}, which implements a~compiler based on the C/C++ semantics. The script mimics the interface of the GNU GCC compiler and supports many of GCC's command-line parameters. Therefore, it is possible to use it to build programs instead of GCC; however, the generated executables are many times slower than the ones built by GCC.
 
 \begin{figure}[ht]
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}
 $ cat hello.C
 extern "C" int puts(char const *s);
 int main() {
@@ -1052,7 +1057,7 @@ It has been said in Chapter~\ref{chap:k} that in the \K framework, a~semantics o
 It is possible to specify an exact number of computational steps to take by setting the variable \texttt{DEPTH} to the desired value. In this particular example, the executable is able to print only an incomplete portion of the text; then an error message is printed (Figure~\ref{fig:runCompiledProgramWithDepth}). The full list of accepted environment variables can be obtained by setting the environment variable \texttt{HELP}.
 
 \begin{figure}[ht]
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}
 $ env DEPTH=675 ./hello
 Hello woError: Execution failed.
 \end{lstlisting}
@@ -1082,7 +1087,7 @@ The language definitions are composed of many modules; some modules are included
 All the \K source files are contained in the \textit{semantics} directory in the Project repository (Figure~\ref{fig:directoryStructure}). The directory contains subdirectories \texttt{c11} and \texttt{cpp14}, which contain source files for the respective languages; it also contains a subdirectory \texttt{common}, which contains (some) source files common to both languages. The directory of each language contains \texttt{language} and \texttt{library} subdirectories, where the former is split into subdirectories containing sources for translation semantics, execution semantics, and both. From this point further, the term \textit{C++ semantics} will denote the content of \texttt{semantics/cpp14} subdirectory of the Project.
 
 \begin{figure}[ht]
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}
 $ tree -L 3 -d semantics
 semantics
 |-- common
@@ -1228,7 +1233,7 @@ rule <k> sendString(FD::Int, S::String) => .K ...</k>
 
 When an executable generated by \kcc is run in an environment with the variable \texttt{VERBOSE} set, the executable prints the final configuration in a text form to the standard output. For the ,,hello world'' program above (Figure~\ref{helloWorldSource}), the configuration produced by
 the command
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}
 $ env VERBOSE=1 DEPTH=675 ./hello
 \end{lstlisting}
 has about 600 kilobytes. The excerpt in the Figure~\ref{exampleConfigurationOutput} contains a~thread with two \textit{computational items} on the top of its \texttt{K} cell. From that point, if the execution had not been stopped, the first computational item (\texttt{sendString}) would have sent the rest of the \texttt{Hello world} string to the standard output, then it would have been removed and the second computational item (\texttt{sent}) would have been processed.
@@ -1813,11 +1818,11 @@ The project of C/C++ semantics is made of multiple modules, which are introduced
 Main user interface of the Project consists of a~script named kcc, which implements a~semantics-based compiler. The script mimincs the interface of the gnu GCC compiler and supports many of GCC's command-line parameters. It is possible to use it to build programs instead of GCC; however, the generated executables are many times slower then the ones built with GCC.
 
 The Figure~\ref{fig:cpp-program-example} contains a~simple program, consisting of one C and one C++ source file. When compiled with GCC, it first compiles both source files separately, storing the resulting object code in separate object files, and then links the object files to final executable. The kcc script invoked by command
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}
 $ kcc foo.c main.cpp -o hello
 \end{lstlisting}
 works similarly. Analogically to GCC, the build process can be decomposed into the following commands:
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}
 $ kcc -c foo.c -o foo.o
 $ kcc -c main.cpp -o main.o
 $ kcc foo.o main.o -o hello
@@ -1830,7 +1835,7 @@ During the translation, kcc first uses the GCC compiler (\lstinline|gcc -E|) to 
 
 In the linking phase, kcc first joins all the compiled object files together. The joined object file is then krun using combined C and C++ \textit{execution semantics} module, but with use of a~K ocaml backend. This backend first compiles the program to an ocaml source file, which is then compiled with regular ocaml compiler (ocamlopt) to native code "FIXME: Tohle asi není pravda" stored in ELF format. The resulting executable can be then run as if compiled by GCC.
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}
 $ ./hello
 \end{lstlisting}
 
