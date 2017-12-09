@@ -70,13 +70,7 @@ faculty = {fi},
 \newcommand{\kcc}{\texttt{kcc}\xspace}
 \newcommand{\Project}{Project\xspace}
 \newcommand{\stdN}[2]{\cite[#2]{#1}\xspace}
-%\newcommand{\stdFourteen}[1]{\cite[#1]{n4296}\xspace}
-%\newcommand{\stdSeventeen}[1]{\cite[#1]{n4659}\xspace}
 
-\newcommand{\std}[2]{%
-        \ifstrequal{#1}{14}{\stdN{n4296}{#2}}{}, %
-        \ifstrequal{#1}{17}{\stdN{n4659}{#2}}{}%
-}
 
 % Notes about the 'k' package
 % \ka{rule x => y} - inline K in ascii format
@@ -87,6 +81,8 @@ faculty = {fi},
 \lstset {
 	basicstyle=\footnotesize\ttfamily
 }
+
+\hyphenation{pa-ra-met-rized}
 
 \begin{document}
 
@@ -360,39 +356,49 @@ The rule can be even more simplified with use of an anonymous free variable, den
 rule <T> <k> I1:Int + I2:Int => I1 +Int I2 </k>
          <ret> _ </ret> </T>
 \end{lstlisting}
-It is also possible to use the rewriting operator multiple times in one semantic rule:
+
+It is also possible to use the rewriting operator multiple times in one semantic rule (Figure~\ref{fig:twoRewrites}).
+
+\begin{figure}[ht]
 \begin{lstlisting}
 rule <T> <k> (I1:Int => 0) + (I2:Int => I1 +Int I2) </k>
          <ret> _ </ret> </T> requires I1 =/=Int 0
 rule <T> <k> (0 + I:Int) => I </k> <ret> _ </ret> </T>
 \end{lstlisting}
-A \texttt{requires} clause causes a~rule to apply only if a~certain condition holds; in this particular example, the rule should not apply if the variable \texttt{I1} is bound to zero. Without the clause, the rule would be able to apply indefinitely, without any effect.
+\caption{An addition implemented using two rules. The first of the rules contain two occurrences of the rewrite operator.}
+\label{fig:twoRewrites}
+\end{figure}
+A \texttt{requires} clause specifies a side condition of the rule; the rule then can apply only if the condition holds. In this particular example, the rule should not apply if the variable \texttt{I1} is bound to zero. Without the clause, the rule would be able to apply indefinitely.
 
  
 \subsection{Configuration abstraction}
 
-Semantic rules usually need to be aware only of a~few configuration cells. In \K, the semantics rules have to mention only the cells they really need to mention. The \K tool then, from the definition of configuration, infers the context in which such local rewriting takes place. The rule for addition can be written as in Figure~\ref{ruleAddInKCell}.
-\begin{figure}
+Semantic rules usually need to be aware only of a~few configuration cells. In \K, the semantics rules have to mention only the cells important for the transition. The \K tool then, from the definition of a configuration, infers the context in which such local rewriting takes place. The rule for addition can be written as in Figure~\ref{ruleAddInKCell}. Such semantics rules are not only shorter and easier to write, but they are also independent on most of the configuration. Hence, when the structure of a configuration changes, the rules may remain the same. This feature is called \textit{configuration abstraction}.
+%TODO ono to funguje i v pripade, ze mame vetsi nasobnost nekterych bunek
+
+
+\begin{figure}[ht]
 \begin{lstlisting}
 rule <k> I1:Int + I2:Int => I1 +Int I2 </k>
 \end{lstlisting}
 \caption{A rule for addition of two integers.}
 \label{ruleAddInKCell}
 \end{figure}
-Such semantics rules are not only shorter and easier to write, but they are also independent on most of the configuration; when the structure of configuration changes, the rules may remain the same. This feature is called \textit{configuration abstraction}.
-%TODO ono to funguje i v pripade, ze mame vetsi nasobnost nekterych bunek
-
 
 \section{Computations}
-When creating a language definition, it is often needed to compute something first, and then use the result of the computation to compute something else. In \K, the notion of \textit{first} and \textit{then} is formalized in terms of \textit{computations} and their \textit{chaining}. Computations have the sort \texttt{K}; all user-defined sorts are automatically subsorted to \texttt{K}. Computations can be composed using the~\lstinline|~>| constructor, which is associative. The sort \texttt{K} has a nullary constructor \texttt{.K}, which represents an empty computation and acts as a unit with respect to~\lstinline|~>|. Thus \texttt{K} with~\lstinline|~>| and \texttt{.K} form a monoid.
+When creating a language definition, it is often needed to compute something first, and then use the result of the computation to compute something else. For example, when evaluating an \lstinline|if| statement, the condition has to be evaluated first, and only then the statement can be rewritten to its if-block or else-block. In \K, the notion of \textit{first} and \textit{then} is formalized in terms of \textit{computations} and their \textit{chaining}. Computations have the sort \texttt{K}; all user-defined sorts are automatically subsorted to \texttt{K}. Computations can be composed using the~\lstinline|~>| constructor, which is associative. The sort \texttt{K} has a nullary constructor \texttt{.K}, which represents an empty computation and acts as a unit with respect to~\lstinline|~>|. Thus \texttt{K} with~\lstinline|~>| and \texttt{.K} form a monoid.
 
-In practice, the monoidal structure means that any term consisting of computations and the~\lstinline|~>| constructor behave as a \textit{chain} of computations, with hidden empty computations everywhere inside. One can then insert a computation \texttt{c} to any position in the chain simply by rewriting an empty computation on that position \texttt{c}. It also allows replacing the rule~\ref{ruleAddInKCell} with
+In practice, the monoidal structure means that any term consisting of computations and the~\lstinline|~>| constructor behave as a \textit{chain} of computations, with hidden empty computations everywhere inside. One can then insert a computation \texttt{c} to any position in the chain simply by rewriting an empty computation on that position to \texttt{c}. It also allows replacing the rule of Figure~\ref{ruleAddInKCell} with the rule in Figure~\ref{fig:ruleAddInTopOfKCell} without losing any existing behavior. If the old rule matches a configuration with a term \lstinline|C| in the \texttt{k} cell, then the new rule matches the term \lstinline|C ~> .K|, as the anonymous variable binds to the empty computation. But the new rule matches also the term \lstinline|C| because, due the monoidal structure, configurations \lstinline|C| and \lstinline|C ~> .K| are equal.
+
+\begin{figure}[ht]
 \begin{lstlisting}
 rule (<k> I1:Int + I2:Int => I1 +Int I2) ~> _</k>
 \end{lstlisting}
-without losing any existing behavior. If the old rule matches a configuration with a term \lstinline|C| in the \texttt{k} cell, then the new rule matches the term \lstinline|C ~> .K|, as the anonymous variable binds to the empty computation. But the new rule matches also the term \lstinline|C| because, due the monoidal structure, configurations \lstinline|C| and \lstinline|C ~> .K| are equal.
-On the other hand, the new rule adds some behaviors, because it matches not only when the \texttt{k} cell contains exactly an addition of two integers, but also when it contains any sequence of computations, where the first computation is an addition of two integers. The first computation in the list is called \textit{the top}.
-The parentheses in the new rule are needed, as the constructor \lstinline|~>| binds tighter than the operator~\lstinline|=>|.
+\caption{A rule for addition in the top of the \texttt{k} cell.}
+\label{fig:ruleAddInTopOfKCell}
+\end{figure}
+
+On the other hand, the new rule adds some behaviors, because it matches not only when the \texttt{k} cell contains exactly an addition of two integers, but also when it contains any sequence of computations, where the first computation is an addition of two integers. The first computation in the list is called \textit{the top}.The parentheses in the new rule are needed, as the constructor \lstinline|~>| binds tighter than the operator~\lstinline|=>|.
 
 % Nerozumim presne, jak funguji ty tri tecky
 
@@ -400,18 +406,19 @@ The rules of the form
 \begin{lstlisting}
 rule <k> SomeRewritingHere ~> _ </k>
 \end{lstlisting}
-can be also written as
+(for example the rule of Figure~\ref{fig:ruleAddInTopOfKCell}) can be also written as
 \begin{lstlisting}
 rule SomeRewritingHere
 \end{lstlisting}
-For example, the rule
-\begin{lstlisting}
-rule (<k> I1:Int + I2:Int => I1 +Int I2) ~> _</k>
-\end{lstlisting}
-can be also written as
+(i.e. as the rule of Figure~\ref{fig:simpleAdd}).
+
+\begin{figure}[ht]
 \begin{lstlisting}
 rule I1:Int + I2:Int => I1 +Int I2
 \end{lstlisting}
+\caption{A really simple rule for addition of two integers.}
+\label{fig:simpleAdd}
+\end{figure}
 
 \section{Strictness and evaluation strategies} \label{sec:k:strictness}
 
@@ -419,9 +426,9 @@ How to compute the sum of three numbers, say $1 + 2 + 3$? In the language Arith,
 
 \subsection{Sort predicates}
 
-For every sort \texttt{Srt} \K automatically generates a~\textit{sort predicate} \texttt{isSrt} of sort \texttt{Bool}. The predicate takes any term and returns \texttt{true} if the term is of sort \texttt{Srt}, otherwise returns \texttt{false}. One may override the default implementation of a sort predicate by writing a custom rule.
+For every sort \texttt{Srt}, \K automatically generates a~\textit{sort predicate} \texttt{isSrt} of sort \texttt{Bool}. The predicate takes any term and returns \texttt{true} if the term is of sort \texttt{Srt}, otherwise returns \texttt{false}. One may override the default implementation of a sort predicate by writing a custom rule.
 
-So far, the definition of Arith language can not evaluate nested expressions, as the built-in function~\texttt{+Int} can be applied only on terms of sort Int. Moreover, the left side of the rule requires the involved terms to be of sort \texttt{Int} With use of sort predicate, a rule
+So far, the definition of Arith language can not evaluate nested expressions, as the built-in function~\texttt{+Int} can be applied only on terms of sort Int. Moreover, the left side of the rule of Figure~\ref{fig:simpleAdd} requires the involved terms to be of sort \texttt{Int}. With use of sort predicates, a rule
 \begin{lstlisting}
 rule <l> E1:AExp + E2:AExp => -1 </l>
 requires notBool isInt(E1) orBool notBool isInt(E2)
@@ -445,10 +452,10 @@ rule I1:Int + I2:Int => I1 +Int I2
 \caption{Heating and cooling rules, written manually.}
 \label{manualHeatCool}
 \end{figure}
-The idea here is that the left addend is evaluated first, then the right addend is evaluated and finally, the two integers are added using the built-in function \texttt{+Int}. One way to interpret the rules is that the first two rules extract an unevaluated expression out of the addition, which creates a hole in the term, the extracted expression is then evaluated, and the third and fourth rule plug the evaluated expression back into the hole. The constructors \texttt{holdAddR} and \texttt{holdAddL} are used to represent the original term without the extracted subterm; the sort \texttt{KItem} is a bit special, but it is subsorted to the sort \texttt{K} as any user-defined sort. The process of extracting a subterm is known as \textit{heating}, while the opposite process is \textit{cooling}. 
+The idea here is that the left addend is evaluated first, then the right addend is evaluated and finally, the two integers are added using the built-in function \texttt{+Int}. One way to interpret the rules is that the first two rules extract an unevaluated expression out of the addition, which creates a hole in the term, the extracted expression is then evaluated, and the third and fourth rule plug the evaluated expression back into the hole. The constructors \texttt{holdAddR} and \texttt{holdAddL} are used to represent the original term without the extracted subterm; the sort \texttt{KItem} is a bit special, but it is subsorted to the sort \texttt{K} as any user-defined sort. The process of extracting a subterm is known as \textit{heating}, while the opposite process is called \textit{cooling}. 
 
 \subsection{Evaluation contexts}
-Heating and cooling rules are very common; they are also tedious to write manually. In \K, the idea of evaluating a certain subterm first can be expressed in terms of \textit{evaluation contexts}. With use of a keyword \texttt{context}, the \K code
+Heating and cooling rules are very common and also tedious to write manually. In \K, the idea of evaluating a certain subterm first can be expressed in terms of \textit{evaluation contexts}. With use of keywors \texttt{context} and \texttt{HOLE}, the \K code
 \begin{lstlisting}
 syntax KItem ::= holdAddR(AExp)
 rule E1:AExp + E2:AExp => E1 ~> holdAddR(E2)
@@ -459,7 +466,7 @@ can be equivalently expressed as:
 \begin{lstlisting}
 context HOLE:AExp + E:AExp [result(Int)]
 \end{lstlisting}
-The \texttt{context} declaration means exactly that: whenever the top of a \texttt{k} cell contains an addition of two \texttt{AExp}s and the first one is not of sort \texttt{Int}, extract the first one, push it on the top of the \texttt{k} cell and replace the addition with some placeholder; when the extracted subterm gets evaluated to \texttt{Int}, plug it back to the original context.
+The \texttt{context} declaration means exactly that: whenever the top of a \texttt{k} cell contains an addition of two \texttt{AExp}s and the first one is not of sort \texttt{Int} (as specified using the \texttt{result} attribute), extract the first one, push it on the top of the \texttt{k} cell and replace the addition with some placeholder; when the extracted subterm gets evaluated to \texttt{Int}, plug it back to the original context.
 
 With use of context, the code on Figure~\ref{manualHeatCool} can be equivalently expressed as
 \begin{lstlisting}
@@ -524,7 +531,7 @@ rule eval(E1:AExp / E2:AExp) => eval(E1) /Int eval(E2)
 \label{figAnEvalFunction}
 \end{figure}
 
-In the preceding text, a number of built-in functions was used (e.g. \texttt{andBool}, \texttt{=/=Int} and \texttt{/Int}). Functions can appear in side conditions (the \texttt{requires} clause) or right-hand sides of the rewriting operator. Their application does not create any transitions in the transition system and unlike constructors, functions cannot be pattern-matched. Custom functions can be defined with \texttt{syntax} keyword and a \texttt{function} attribute; their behavior is defined using the rewriting operator. See Figure~\ref{figAnEvalFunction} for an example. 
+In the preceding text, a number of built-in functions was used (e.g. \texttt{andBool}, \texttt{=/=Int}, and \texttt{/Int}). Functions can appear in side conditions (the \texttt{requires} clause) or on right-hand sides of the rewriting operator. Their application does not create any transitions in the transition system and unlike constructors, functions cannot be pattern-matched. Custom functions can be defined with \texttt{syntax} keyword and the attribute \texttt{function}; their behavior is defined using the rewriting operator. See Figure~\ref{figAnEvalFunction} for an example. 
 %Since both constructors and functions are defined using \texttt{syntax} keyword, both of them can be referred to as \textit{syntactic constructs}.
 
 %TODO mohu citovat "A Complete Semantics of K", coz je nejaky tech report, ktery se vali v GitHub repozitari nekoho okolo K?
@@ -559,6 +566,8 @@ In the preceding text, a number of built-in functions was used (e.g. \texttt{and
 
 C++ is a general-purpose programming language~\cite{bjarne-cpp} originally created by Bjarne Stroustrup in the years between 1979 and 1983~\cite{bjarne-faq}. After some time, many independent implementations emerged, and in 1998 the language was standardized as ISO/IEC 14882:1998 international standard (\cite{ISOcpp98}); that version is now known as C++98. The language changed a lot since that time. New compilers emerged (e.g Clang), compilers implemented a lot of experimental features (e.g. Clang's Modules\footnote{\url{https://clang.llvm.org/docs/Modules.html}}), many core language and standard library defects were fixed and the memory model was standardized. The language is gradually evolving and once in a while, the C++ Standards Committee~\cite{wg21home} emits an ISO standard. In the time of writing, the newest C++ standard is C++17~\cite{ISOcpp17}, which was technically completed in March 2017 and should be officially published in December 2017.
 
+In this chapter, we describe some fundamentals of the C++ language and some parts of the language relevant to our thesis. Note that the chapter is not intended to be an introduction to the C++ for programmers. Instead, everything is described from the language (and/or a compiler writer) point of view here.
+
 \section{Standard documents}
 Although the most widely known documents created by the committee are the international standards, the committee is working all the time. The committee produces a large number of documents, most of which are publicly available~\cite{wg21papers}; also, every document is assigned a unique identifier, which is then used to reference the document. Among the publicly available documents are also \textit{workings drafts} of the ISO standard. The working draft is hosted on GitHub\footnote{\url{https://github.com/cplusplus/draft/}}; it therefore possible to build it directly from its \LaTeX{ }source or to download the emitted releases on the Release page.
 
@@ -577,19 +586,31 @@ Objects are intended to hold \textit{values}. An object of a type \texttt{T} can
 %Although the standard often refers to values, it does not specify what a \textit{value} is (at least until \cite{n4700}).
 One can think of a value as of a \textit{datum} together with its \textit{interpretation}; an interpretation of a datum is some concrete, real-world entity\footnote{This notion of \textit{concrete entity} is something different than \textit{C++ entity} as defined in the C++ language~\stdN{n4296}{\S 3/3}. }. 
 %Types help to interpret values.
-More in-depth discussion about entities and their computer representations can be found in the first chapter of \cite{progelements}.
+More in-depth discussion about entities and their computer representations can be found in the first chapter of~\cite{progelements}.
 
 %n4700 6.9/4 object representation of an object
 %Objects and values.
-A \texttt{variable} can be either an object or a \textit{reference} \stdN{n4700}{\S 6/6}. Reference is not an object; unlike objects, references do not need to occupy storage and do not have an identity.
-%Declaration...\std{14}{\S 3.1/1-2}
-%Expressions, value categories \std{14}{\S 3.10}
+A \texttt{variable} can be either an object or a \textit{reference}~\stdN{n4700}{\S 6/6}. Reference is not an object; unlike objects, references do not need to occupy storage and do not have an identity.
+%Declaration...\stdN{n4296}{\S 3.1/1-2}
+%Expressions, value categories \stdN{n4296}{\S 3.10}
 
 An \textit{expression} is a language construct, which can be evaluated to get a value and to cause a side-effect. Every expression has an associated \textit{value category}: it can be either a \textit{glvalue}, which means that an evaluation of the expression determines an identity of an object (or function or bitfield), or a \textit{prvalue}, which means that the evaluation initializes an object or computes a value~\stdN{n4700}{6.10/1}. The category of \textit{glvalue}s is further divided into \textit{lvalue}s and \textit{xvalue}s. 
 
 \section{Enumerations}
 
-Many languages implement enumerated types as a means for programmers to define a finite set of related values. Enumerations in the C++ language are based on enumerations from the C language. In this section, we give a brief presentation of the C++ enumerations, as defined in~\cite{n4296}. Note that this text is concerned with what the language allows, rather than what is considered to be a good practice. For a discussion about the latter, we point the reader to the relevant section of CppCoreGuidelines\footnote{\url{http://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines}}. 
+Many languages implement enumerated types as a means for programmers to define a finite set of related values (as in Figure~\ref{fig:daysInWeek}). Enumerations in the C++ language are based on enumerations from the C language. In this section, we give a brief presentation of the C++ enumerations, as defined in~\cite{n4296}. Note that this text is concerned with what the language allows, rather than what is considered to be a good practice. For a discussion about the latter, we point the reader to the relevant section of CppCoreGuidelines\footnote{\url{http://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines}}. 
+
+\begin{figure}[ht]
+\begin{lstlisting}
+enum class Weekday { Monday, Tuesday, /*...*/ };
+Weekday next(Weekday d) {
+    /* ... */
+}
+\end{lstlisting}
+\caption{Days in a week.}
+\label{fig:daysInWeek}
+\end{figure}
+
 %TODO move this into literature
 \subsection{Unscoped enumerations}
 
@@ -602,15 +623,15 @@ enum E e = B;
 \label{CStyleEnumDeclaration}
 \end{figure}
 
-Figure~\ref{CStyleEnumDeclaration} shows a basic C-style declaration of an enumeration \texttt{E}, with a subsequent declaration of an object of the enumeration's type. Both declarations are valid in both C and C++. In C++14, the C-style enumerations are called \textit{unscoped enumerations}. An enumeration may contain an unbounded number of named values, called \textit{enumerators}. Here, \texttt{E} contains two enumerators: \texttt{A} and \texttt{B}. In C++14, enumerators of an unscoped enumeration are called \textit{unscoped enumerators} and they are declared in the scope which contains the enumeration declaration (or, in the terms of the standard, the \textit{enum-specifier}~\std{\S 7.2/11}). Therefore, it is possible to refer to them simply as in this example.
+Figure~\ref{CStyleEnumDeclaration} shows a basic C-style declaration of an enumeration \texttt{E}, with a subsequent declaration of an object of the enumeration's type. Both declarations are valid in both C and C++. In C++14, the C-style enumerations are called \textit{unscoped enumerations}. An enumeration may contain an unbounded number of named values, called \textit{enumerators}. Here, \texttt{E} contains two enumerators: \texttt{A} and \texttt{B}. In C++14, enumerators of an unscoped enumeration are called \textit{unscoped enumerators} and they are declared in the scope which contains the enumeration declaration (or, in the terms of the standard, the \textit{enum-specifier}~\stdN{n4296}{\S 7.2/11}). Therefore, it is possible to refer to them simply as in this example.
 
-Because of this simplicity, it is not possible to declare two unscoped enumerations with the same enumerator, in the same scope. It is still possible to create the second enumeration in a different scope, though; the enumeration may even have the same name, as in the Figure~\ref{fig:collidingEnumerators}. If that happens, the old enumerator is \textit{shadowed} with the new one, but it is still possible to access the old one using the scope resolution operator (i.e. \texttt{::B} in this example).
+However, due to this behavior, it is not possible to declare two unscoped enumerations with the same enumerator, in the same scope. It is still possible to create the second enumeration in a different scope, though; the enumeration may even have the same name, as in the Figure~\ref{fig:collidingEnumerators}. If that happens, the old enumerator is \textit{shadowed} with the new one, but it is still possible to access the old one using the scope resolution operator (i.e. \texttt{::B} in this example).
 \begin{figure}
 \begin{lstlisting}
 enum E{B};
 // enum F{B}; // an error
 int main() { 
-    enum E{A,B};
+    enum E{B};
     return (int)B;
 }  
 \end{lstlisting}
@@ -619,11 +640,11 @@ int main() {
 \end{figure}
 
 
-When a name of an enumeration (or a struct) is used in C, for example in a declaration of a variable of that enumeration type, it is necessary to use the \texttt{enum} keyword (as in Figure~\ref{CStyleEnumDeclaration}). In C++, this is not necessary, as a name of an enumeration (\texttt{enum-name}) denotes a type (it is a \texttt{type-name}, see~\std{14}{Annex A.1}). It is still possible to do it the C way, though; the type names accompanied by the keyword \texttt{enum} or \texttt{struct} (or similar) are called \textit{elaborated type specifiers}\std{14}{\S 3.4.4}.
+When a name of an enumeration (or a struct) is used in C, for example in a declaration of a variable of that enumeration type, it is necessary to use the \texttt{enum} keyword (as in Figure~\ref{CStyleEnumDeclaration}). In C++, this is not necessary, as a name of an enumeration (\texttt{enum-name}) denotes a type (it is a \texttt{type-name}, see~\stdN{n4296}{Annex A.1}). It is still possible to do it in the C way, though. The type names accompanied by the keyword \texttt{enum} or \texttt{struct} (or similar) are called \textit{elaborated type specifiers}~\stdN{n4296}{\S 3.4.4}.
 
 \subsection{Scoped enumerations}
 
-The revision C++11 introduced \texttt{scoped enumerations}. They are declared using the phrase \texttt{enum class} or \texttt{enum struct}, and enumerators of a scoped enumeration are called \textit{scoped enumerators}. Scoped enumerations differ from the plain enumerations in a number of aspects; the most significant difference is what they have their name for: scoped enumerators are declared in the scope of their enumeration\std{14}{\S 7.2/11}. Because of that, the enumerators have to be referred to using the scope resolution operator (at least outside the enumeration declaration, see Figure~\ref{fig:scopedEnumDecl}). However, unscoped enumerators can be referred to this way, too (\std{14}{\S 5.1.1/11}).
+The revision C++11 introduced \texttt{scoped enumerations}. They are declared using the phrase \texttt{enum class} or \texttt{enum struct}, and enumerators of a scoped enumeration are called \textit{scoped enumerators}. Scoped enumerations differ from the plain enumerations in a number of aspects; the most significant difference is what they have their name for: scoped enumerators are declared in the scope of their enumeration~\stdN{n4296}{\S 7.2/11}. Because of that, the enumerators have to be referred to using the scope resolution operator (at least outside the enumeration declaration, see Figure~\ref{fig:scopedEnumDecl}). However, unscoped enumerators can be referred to in the same style as well~\stdN{n4296}{\S 5.1.1/11}.
 
 %In C, enumerators have an integral type; in C++14, the
 
@@ -650,7 +671,7 @@ std::underlying_type_t<E> x = 5;
 \label{fig:stdUnderlyingType}
 \end{figure}
 
-An enumeration's underlying type can be explicitly specified \std{14}{\S 7.2/5}. This is achieved by appending a colon followed by a name of an integral type right after the \texttt{enum-name} in the declaration, as shown in Figure~\ref{fig:explicityleSpecifiedUnderlyingType}. The usual reason why would anyone want to specify an enum's underlying type is to limit the enumeration's size, perhaps because of hardware constraints. Before C++11, this was often achieved through an extension of a particular compiler; for example, the GNU GCC compiler provides a special attribute \texttt{packed}, which causes an enumeration's size to be as small as possible (Figure~\ref{fig:packedEnum}).
+An enumeration's underlying type can be explicitly specified~\stdN{n4296}{\S 7.2/5}. This is achieved by appending a colon followed by the name of an integral type right after the \texttt{enum-name} in the declaration, as shown in Figure~\ref{fig:explicityleSpecifiedUnderlyingType}. The usual reason why would anyone want to specify an enum's underlying type is to limit the enumeration's size, perhaps because of hardware constraints. Before C++11, this was often achieved through an extension of a particular compiler. For example, the GNU GCC compiler provides a special attribute \texttt{packed}, which causes an enumeration's size to be as small as possible (Figure~\ref{fig:packedEnum}).
 
 \begin{figure}
 \begin{lstlisting}[language=C++]
@@ -669,13 +690,13 @@ enum E { A, B } __attribute__((packed));
 \label{fig:packedEnum}
 \end{figure}
 
-If the underlying type of a scoped enumeration is not explicitly specified, it is automatically defined to \texttt{int}. All scoped enumerations, as well as unscoped enumerations with explicitly specified underlying type, are said to have a \textit{fixed underlying type}. This stands in contrast to unscoped enumeration without an explicitly specified underlying type. Their underlying type is not fixed, but it is an \textit{implementation-defined} integral type, which can represent all values of the enumeration~\std{14}{\S 7.2/7}. That also suggests that the underlying type is not known prior the closing brace of the declaration.
+If the underlying type of a scoped enumeration is not explicitly specified, it is automatically defined to \texttt{int}. All scoped enumerations, as well as unscoped enumerations with explicitly specified underlying type, are said to have a \textit{fixed underlying type}. This stands in contrast to unscoped enumeration without an explicitly specified underlying type. Their underlying type is not fixed, but it is an \textit{implementation-defined} integral type, which can represent all values of the enumeration~\stdN{n4296}{\S 7.2/7}. That also suggests that the underlying type is not known prior the closing brace of the declaration.
 
 The fact that the standard does not specify the exact underlying type for enumerations whose underlying type is not fixed is also the reason why in pre-C++11 (including C11), the enumerations whose size matters to the programmer have to be declared with use of compiler-specific language constructs (as in Figure~\ref{fig:packedEnum}). Without that, the compiler could simply choose the underlying type (and thus the size) of the enumeration (with respect to some standard-given restrictions); in practice, the chosen underlying type is often \texttt{int}.
 
 \subsection{Values of an enumeration}
 
-The standard also defines the set of values of an enumeration; those are the values, which can be written or read from an object of the enumeration's type. For an enumeration whose underlying type is not fixed, the set of values limits the choice of the underlying type; it is defined such that the values of all its enumerators and all values between the enumerators are also values of the enumeration. The definition is rather technical, though; an inquisitive reader shall find it in~\std{14}{\S 7.2/8}. For an enumeration with fixed underlying type, the values of the enumeration are exactly the values of its underlying type. 
+The standard also defines the set of values of an enumeration; those are the values, which can be written or read from an object of the enumeration's type. For an enumeration whose underlying type is not fixed, the set of values limits the choice of the underlying type; it is defined such that the values of all its enumerators and all values between the enumerators are values of the enumeration. The definition is rather technical, though; an inquisitive reader shall find it in~\stdN{n4296}{\S 7.2/8}. For an enumeration with a fixed underlying type, the values of the enumeration are exactly the values of its underlying type. 
 
 \begin{figure}
 \begin{lstlisting}
@@ -694,11 +715,11 @@ int foo(E e) {
 \label{fig:enumNotReallyUnreachable}
 \end{figure}
 
-This behavior may be a source of confusion for programmers who do not know this; in past, it certainly was for the author of this text. The programmer may write a code similar to the one in Figure~\ref{fig:enumNotReallyUnreachable}, which assumes that the value of \texttt{e} has to be either \texttt{E::A} or \texttt{E::B}. This assumption may be justified if the programmer knows the set of values which may be returned from the function \texttt{giveMeAnEnum}. The programmer may try to go one step further and say: ,,If the function \texttt{giveMeAnEnum} tries to return something different than \texttt{E::A} or \texttt{E::B}, than the behavior is already undefined in \textit{that} point; therefore, we do not need to handle that situation in \texttt{foo}.'' Such a reasoning is flawed, because the function \texttt{giveMeAnEnum} may return e.g \lstinline|static_cast<E>(-117)|, which is guaranteed to be well-defined, because \lstinline|-117| is a valid value of \texttt{int}, which is the underlying type of \texttt{E} here. The programmer's reasoning would be valid if the enumeration \texttt{E} was a plain unscoped enumeration without an explicitly specified underlying type (i.e if we removed the \texttt{class} keyword). We will not go into detail here, as the reasoning would depend on the technical parts of~\std{14}{\S 7.2/8}.
+This behavior may be a source of confusion for programmers who do not know this; in past, it certainly was for the author of this text. The programmer may write a code similar to the one of Figure~\ref{fig:enumNotReallyUnreachable}, which assumes that the value of \texttt{e} has to be either \texttt{E::A} or \texttt{E::B}. This assumption may be justified if the programmer knows the set of values which may be returned from the function \texttt{giveMeAnEnum}. The programmer may try to go one step further and say: ,,If the function \texttt{giveMeAnEnum} tries to return something different than \texttt{E::A} or \texttt{E::B}, than the behavior is already undefined in \textit{that} point; therefore, we do not need to handle that situation in \texttt{foo}.'' Such a reasoning is flawed, because the function \texttt{giveMeAnEnum} may return e.g.~\lstinline|static_cast<E>(-117)|, which is guaranteed to be well-defined, because \lstinline|-117| is a valid value of \texttt{int}, which is the underlying type of \texttt{E} here. The programmer's reasoning would be valid if the enumeration \texttt{E} was a plain unscoped enumeration without an explicitly specified underlying type (i.e.~if we removed the \texttt{class} keyword). We will not go into detail here, as the reasoning would depend on the technical parts of~\stdN{n4296}{\S 7.2/8}.
 
 \subsection{Enumerators}
 
-Declaration of an enumerator may contain an optional \textit{initializer}, which has to be implicitly convertible to an integral type\footnote{It is more complicated, but this is enough here.}. If the initializer is not specified, the value of the enumerator is zero if it is the first enumerator; otherwise, it is the value of the previous enumerator plus one. When an enumeration is fully defined (i.e. \enquote{following the closing brace of an enum-specifier}), the type of each enumerator is the type of the enumerator~\std{14}{\S 7.2/5}. For example, in the declaration of variable \texttt{e} in the Figure~\ref{fig:scopedEnumDecl}, the type of the expression \lstinline|E::B| is \texttt{E}.
+Declaration of an enumerator may contain an optional \textit{initializer}, which has to be implicitly convertible to an integral type\footnote{It is more complicated, but this is enough here.}. If the initializer is not specified, the value of the enumerator is zero if it is the first enumerator; otherwise, it is the value of the previous enumerator plus one. When an enumeration is fully defined (i.e. \enquote{following the closing brace of an enum-specifier}), the type of each enumerator is the type of the enumeration~\stdN{n4296}{\S 7.2/5}. For example, in the declaration of variable \texttt{e} in the Figure~\ref{fig:scopedEnumDecl}, the type of the expression \lstinline|E::B| is \texttt{E}.
 
 \begin{figure}
 \begin{lstlisting}
@@ -715,20 +736,20 @@ void goo() {
 \end{figure}
 
 
-This is different from C, where enumerators have the type \texttt{int}. Still, unscoped enumerations can be implicitly converted to \texttt{int}~\std{14}{\S 7.2/10}, so they behave somewhat similarly to C. This conversion does not work for scoped enumerations. The other conversion (from integer types to enumerations) is not defined neither for scoped nor unscoped enumerations (Figure~\ref{fig:noConversionFromIntToEnum}).
+This is different from C, where enumerators have the type \texttt{int}. Still, in C++, unscoped enumerations can be implicitly converted to \texttt{int}~\stdN{n4296}{\S 7.2/10}, so they behave somewhat similarly to C (Figure~\ref{fig:unscopedEnumToInt}). This conversion does not work for scoped enumerations. The other conversion (from integer types to enumerations) is not defined neither for scoped nor unscoped enumerations (Figure~\ref{fig:noConversionFromIntToEnum}).
 
 \begin{figure}
 \begin{lstlisting}
 enum E { A };
 void foo(int x) { E e = x; }
 \end{lstlisting}
-\caption{C++ does not allow an implicit conversion from int to enum. However, this is a valid C code.}
+\caption{A C++ compiler would not compile this code, as C++ does not allow an implicit conversion from int to enum. However, this is a valid C code.}
 \label{fig:noConversionFromIntToEnum}
 \end{figure}
 
-An initializer of an enumerator may refer to previously declared enumerators of the same enumeration (see~\ref{fig:scopedEnumDecl}). Inside the enumeration declaration (prior its closing brace), the type of its enumerators is not the type of the enumerator, but always an integral type\footnote{We discuss this in more detail in Chapter~\ref{chap:contribToOtherProjects}}.
+An initializer of an enumerator may refer to previously declared enumerators of the same enumeration (see Figure~\ref{fig:scopedEnumDecl}). Inside the enumeration declaration (prior its closing brace), the type of its enumerators is not the type of the enumerator, but always an integral type\footnote{We discuss this in more detail in Chapter~\ref{chap:contribToOtherProjects}.}.
 %Because of the stronger-than-C type system,
-In some cases, it would be even inconvenient if the types of enumerators were types of their enumerations. For example, the declaration in Figure~\ref{fig:scopedEnumDecl} declares an enumerator \texttt{B} with the initializer \lstinline|A + 3|. If the type of \texttt{A} in this expression were \texttt{E}, then the expression would be ill-formed, because the scoped enumeration does not convert to int, so it cannot be added to an int.
+In some cases, it would be even inconvenient if the types of enumerators were types of their enumerations. For example, the declaration in Figure~\ref{fig:scopedEnumDecl} declares an enumerator \texttt{B} with the initializer \lstinline|A + 3|. If the type of \texttt{A} in this expression were \texttt{E}, then the expression would be ill-formed. Scoped enumerations do not convert to \texttt{int}, therefore the enumerator \lstinline|A| could not be added to an \texttt{int}.
 
 %
 %\begin{figure}
@@ -741,11 +762,11 @@ In some cases, it would be even inconvenient if the types of enumerators were ty
 %
 
 \subsection{Incomplete types}
-Some types cannot be used to define objects; those are called \textit{incomplete}~\std{14}{\S 3.1/5}. A type may be incomplete at one point and complete at another point in a translation unit. Incomplete types are still useful; they may be used in function declarations to denote its parameters and return values, to define objects of pointer type or references. There are two categories of incomplete types: void types (e.g. \texttt{volatile void}) and incompletely-defined types. It is not allowed to apply the operator \texttt{sizeof} to an incomplete type. A programmer may choose to use incompletely-defined types to limit the number of dependencies between header files. An enumeration whose underlying type is not fixed is incomplete until the closing brace of its declaration.
+Some types cannot be used to define objects; those are called \textit{incomplete}~\stdN{n4296}{\S 3.1/5}. A type may be incomplete at one point and complete at another point in a translation unit. Incomplete types are still useful; they may be used in function declarations to denote its parameters and return values, to define objects of pointer type or references. There are two categories of incomplete types: void types (e.g. \texttt{volatile void}) and incompletely-defined types. It is not allowed to apply the operator \texttt{sizeof} to an incomplete type. A programmer may choose to use incompletely-defined types to limit the number of dependencies between header files. An enumeration whose underlying type is not fixed is incomplete until the closing brace of its declaration.
 
 \subsection{Opaque enumerations}
 
-Enumerations with fixed underlying type can be declared \textit{opaque}, that is, without the list of enumerators (see Figure~\ref{fig:opaqueEnumDeclarations}). An enumeration declared using an \textit{opaque-enum-declaration} is a complete type (it is not an incomplete type); therefore, it can be used almost as a fully declared enumeration, except that its enumerators are not available. Such an enumeration needs to have a fixed underlying type (see Figure~\ref{fig:opaqueEnumNotFixedUT}). An opaque enumeration can be fully redeclared later in the program~\std{14}{\S 7.2/3}.
+Enumerations with fixed underlying type can be declared \textit{opaque}, that is, without the list of enumerators (see Figure~\ref{fig:opaqueEnumDeclarations}). An enumeration declared using an \textit{opaque-enum-declaration} is a complete type (it is not an incomplete type); therefore, it can be used almost as a fully declared enumeration, except that its enumerators are not available. Such an enumeration needs to have a fixed underlying type (see Figure~\ref{fig:opaqueEnumNotFixedUT}). An opaque enumeration can be fully redeclared later in the program~\stdN{n4296}{\S 7.2/3}.
 
 \begin{figure}
 \begin{lstlisting}[language=C++]
@@ -761,7 +782,7 @@ enum class E3;
 \begin{lstlisting}[language=C++]
 enum E;
 \end{lstlisting}
-\caption{Not a~valid declaration, because \enquote{opaque-enum-declaration declaring an unscoped enumeration shall not omit the enum-base}~\std{14}{\S 7.2/2}}
+\caption{Not a~valid declaration, because \enquote{opaque-enum-declaration declaring an unscoped enumeration shall not omit the enum-base}~\stdN{n4296}{\S 7.2/2}}
 \label{fig:opaqueEnumNotFixedUT}
 \end{figure}
 
@@ -823,7 +844,7 @@ It is important to note that all the previous categories consider only the form 
 
 \subsection{Aggregates}
 
-The C++ language enables programmers to declare \textit{classes}. From the programming methodology standpoint, not all classes are the same kind: for example, some classes are designed to hold values (e.g. \texttt{std::complex}); other ones encapsulate behavior and while the identities of their instances are really important to programmers, their values are not. Classes can also be categorized from another perspective: some of them maintain a non-trivial \textit{invariant}, thus restricting the set of possible values their member variables may hold (e.g. \texttt{std::vector}); other classes consider their members to be independent of each other (e.g. \texttt{std::pair}), and the set of possible values of such class is then equal to the Cartesian product of the possible values of its members. Such types are commonly known as \textit{product types}\footnote{More formal treatment of product types can be found in \cite[Chapter~1.5]{hottbook}.}. In C++, the notion of types composed freely from other types is present in the form of \textit{aggregates}:
+The C++ language enables programmers to declare \textit{classes}. From the programming methodology standpoint, not all classes are the same kind: for example, some classes are designed to hold values (e.g. \texttt{std::complex}); other ones encapsulate behavior and while the identities of their instances are really important to programmers, their values are not. Classes can also be categorized from another perspective: some of them maintain a non-trivial \textit{invariant}, thus restricting the set of possible values their member variables may hold (e.g. \texttt{std::vector}); other classes consider their members to be independent of each other (e.g. \texttt{std::pair}), and the set of possible values of such class is then equal to the Cartesian product of the possible values of its members. Such types are commonly known as \textit{product types}\footnote{More formal treatment of product types can be found in~\cite[Chapter~1.5]{hottbook}.}. In C++, the notion of types composed freely from other types is present in the form of \textit{aggregates}:
 \begin{displayquote}[\stdN{n4296}{\S 8.5.1/1}]
 An aggregate is an array or a class (Clause 9) with no user-provided constructors (12.1), no private or
 protected non-static data members (Clause 11), no base classes (Clause 10), and no virtual functions (10.3).
@@ -903,7 +924,7 @@ The variable \texttt{b1} is not aggregate-initialized, as the class \texttt{B} i
 In contrast, the variable \texttt{b2} is only default-initialized; the value of \lstinline|b2.m| is one as in the previous case, but the value of \lstinline|b1.n| indeterminate.
 
 \subsection{Zero initialization}
-The exact meaning of \textit{zero-initialization} is described in \stdN{n4296}{\S 8.5/6}. References are not initialized at all, scalars are initialized to the value of zero converted to the particular scalar type, arrays are zero-initialized element-wise and objects of non-union class types are zero-initialized by zero-initializing all non-static data its members, base class subobjects and padding. We do not deal with union classes in this thesis.
+The exact meaning of \textit{zero-initialization} is described in~\stdN{n4296}{\S 8.5/6}. References are not initialized at all, scalars are initialized to the value of zero converted to the particular scalar type, arrays are zero-initialized element-wise and objects of non-union class types are zero-initialized by zero-initializing all non-static data its members, base class subobjects and padding. We do not deal with union classes in this thesis.
 
 In addition to the cases described in previous paragraphs, zero initialization happens in a two more situations.
 \begin{itemize}
@@ -919,13 +940,13 @@ In C++, expressions are used almost everywhere. However, not every kind of expre
 \begin{lstlisting}
 enum class E { A = getchar() };
 \end{lstlisting}
-\caption{A ,,wild'' expression in a context that requires a constant expression.}
+\caption{A ,,wild'' expression in a context that requires a constant expression. This is not a valid C++ code.}
 \label{fig:getcharInEnum}
 \end{figure}
 
 \subsection{The intuition}
 
-The standard defines a couple terms with respect to constant expressions; this subsection attempts to give the reader an intuition which is behind them. The term \textit{core constant expression} (\std{14}{\S 5.20.2}) is used to represent an expression, which can be evaluated easily, using only the information the compiler has during the compilation. The term \textit{constant expressions} (\std{14}{\S 5.20/5}) denotes a core constant expression, whose value is meaningful in the compilation time.
+The standard defines a couple terms with respect to constant expressions; this subsection attempts to give the reader an intuition which is behind them. The term \textit{core constant expression}~\stdN{n4296}{\S 5.20.2} is used to represent an expression, which can be evaluated easily, using only the information the compiler has during the compilation. The term \textit{constant expressions}~\stdN{n4296}{\S 5.20/5} denotes a core constant expression, whose value is meaningful in the compilation time.
 
 \begin{figure}
 \begin{lstlisting}
@@ -1016,14 +1037,14 @@ Although C/C++ standards do not go to implementation details, they contain the i
 %TODO K Labels
 
 %\section{Build notes}
-The project of C/C++ semantics in \K is hosted on GitHub\footnote{\url{https://github.com/kframework/c-semantics}}. It can be built easily by simply following the build instructions in the repository; however, the process deserves a~few things to be mentioned here.
-%TODO preformulovat lepe ^^^^^
+The project of C/C++ semantics in \K is hosted on GitHub\footnote{\url{https://github.com/kframework/c-semantics}}. It can be built easily by simply following the build instructions in the repository. However, the process deserves a~few things to be mentioned here.
 
 \begin{itemize}
 \item The Project depends on RuntimeVerification's implementation of the \K framework. The RV-\K builds and runs without problems, with a minor exception: it requires the lexical parser flex\footnote{\url{https://github.com/westes/flex}} to be present in the system.
-\item The Project uses clang as a~library to parse C++ sources; the currently required version 3.9 is a~bit outdated. It is not a problem, as clang can be built easily and the \Project can be configured to use clang installed in any directory.
-\item The officially supported operating system is Ubuntu 16.4 LTS, which already contains prebuilt clang libraries in the required version. But the Project works on Fedora 26 without any problems.
-\item The building process can take up to thirty minutes on this text's author's machine.
+\item The Project uses Clang\footnote{\url{http://clang.llvm.org/}} as a~library to parse C++ sources. The currently required version 3.9 is a~bit outdated, but can be built easily.
+\item The officially supported operating system is Ubuntu 16.04 LTS, which already contains prebuilt clang libraries in the required version. But the Project works also on Fedora 26 without any problems.
+\item The building process can take up to thirty minutes on a machine with an Intel Pentium CPU B970 @ 2.30\,GHz.
+% with 12\,GiB of RAM.
 \end{itemize}
 
 %TODO fedora build steps
@@ -1035,7 +1056,7 @@ The project of C/C++ semantics in \K is hosted on GitHub\footnote{\url{https://g
 \section{Basic usage}
 
 %TODO kde se kcc nachazi?
-The main user interface of the Project consists of a~script \kcc~\cite{hathhorn-ellison-rosu-2015-pldi}, which implements a~compiler based on the C/C++ semantics. The script mimics the interface of the GNU GCC compiler and supports many of GCC's command-line parameters. Therefore, it is possible to use it to build programs instead of GCC; however, the generated executables are many times slower than the ones built by GCC.
+The main user interface of the Project consists of a~script \kcc~\cite{hathhorn-ellison-rosu-2015-pldi}, which implements a~compiler based on the C/C++ semantics. The script mimics the interface of the GNU GCC compiler and supports many of GCC's command-line parameters. Therefore, it is possible to use it to build programs instead of GCC (see Figure~\ref{helloWorldSource}). However, the generated executables are many times slower than the ones built by GCC.
 
 \begin{figure}[ht]
 \begin{lstlisting}
@@ -1052,7 +1073,7 @@ Hello world
 \label{helloWorldSource}
 \end{figure}
 
-It has been said in Chapter~\ref{chap:k} that in the \K framework, a~semantics of a programming language L assigns to every program in L a~set of program configuration with a~transition system over them. The executable file \texttt{hello} generated by \kcc (as shown in Figure~\ref{helloWorldSource}) is a~Perl script, which walks through the transition system in a~step-by-step manner. The walk starts in an initial configuration and ends in a~configuration for which no further transition is defined. The script then examines the final configuration and stops, possibly printing an error message whenever the walk ended abnormally.
+As we said in Chapter~\ref{chap:k}, in the \K framework a~definition of a programming language L assigns to every program in L a~set of program configuration with a~transition system over them. An executable generated by \kcc is a~Perl script, which walks through the transition system in a~step-by-step manner. The walk starts in the initial configuration and ends in a~configuration for which no further transition is defined. The script then examines the final configuration and stops, possibly printing an error message whenever the walk ended abnormally.
 
 It is possible to specify an exact number of computational steps to take by setting the variable \texttt{DEPTH} to the desired value. In this particular example, the executable is able to print only an incomplete portion of the text; then an error message is printed (Figure~\ref{fig:runCompiledProgramWithDepth}). The full list of accepted environment variables can be obtained by setting the environment variable \texttt{HELP}.
 
@@ -1082,7 +1103,7 @@ three language definitions:
 \item the definition of C++14 translation semantics, which we will refer to as \textit{C++ translation semantics}, or simply \textit{translation semantics}; and
 \item the definition of C11/C++14 execution semantics; which we will refer to as \textit{execution semantics}.
 \end{itemize}
-The language definitions are composed of many modules; some modules are included in multiple language definitions. All the language definitions have to be compiled by \kompile; the compilation of both \clangKast and the language definitions is driven by a Makefile.
+Both C and C++ translation semantics are used to translate C/C++ source files into an executable; the execution semantics is used to execute the generated executables. The language definitions are composed of many modules; some modules are included in multiple language definitions. All the language definitions have to be compiled by \kompile. The compilation of both \clangKast and the language definitions is driven by a Makefile.
 
 All the \K source files are contained in the \textit{semantics} directory in the Project repository (Figure~\ref{fig:directoryStructure}). The directory contains subdirectories \texttt{c11} and \texttt{cpp14}, which contain source files for the respective languages; it also contains a subdirectory \texttt{common}, which contains (some) source files common to both languages. The directory of each language contains \texttt{language} and \texttt{library} subdirectories, where the former is split into subdirectories containing sources for translation semantics, execution semantics, and both. From this point further, the term \textit{C++ semantics} will denote the content of \texttt{semantics/cpp14} subdirectory of the Project.
 
@@ -1110,125 +1131,9 @@ semantics
 \label{fig:directoryStructure}
 \end{figure}
 
-When \kcc is invoked on a~C++ program, a~Clang-based tool \clangKast (from directory \texttt{cpp-parser}) is used to convert each source file into the \K's internal representation (\K AST). Every converted file is then individually used as a program, which is interpreted (using the \K tool \krun) by the \textit{C++ translation semantics}; the resulting terminal configuration can be thought of as an equivalent of an object file. The outputs are then joined together with runtime library and the result is wrapped in a~generated Perl script. When the script is executed, it interprets (with \krun) the linked program using the \textit{C11/C++14 execution semantics}, possibly passing the script's command line arguments to the program.
-%
-%\subsection{Structure of configurations}
-%
-%% TODO ma byt sekce 'motivation' o tom, co me motivovalo/motivuje, nebo proc by
-%% se o to mel zajimat ctenar? Dulezita vec je o tom high-level uvazovani.
-%
-%In \K, a~language semantics is defined by specifying an abstract syntax, a~structure of configurations over the syntax, and rewrite rules over the configurations and the syntax.
-%
-%\paragraph{Abstract syntax}
-%The abstract syntax is defined using \texttt{syntax} keyword and BNF-like notation. For example, the
-%source file \texttt{semantics/c11/library/io.k} contains a~syntax declaration
-%%[language=k] - but that is ugly
-%\begin{lstlisting}
-%syntax KItem ::= sendString(Int, String)
-%\end{lstlisting}
-%which declares all terms with label \texttt{sendString}, one parameter of sort \texttt{Int}, and one of sort \texttt{String}, to be of sort \texttt{KItem}. Terms of that sort represent computational items; however, terms with label \texttt{sendString} are never parsed as a~part of the program and their purpose is purely semantic. 
-%%From the abstract syntax, \K is able to infere a~concrete text representation; however, this feature is not used in the Project.
-%
-%%Here is an example configuration:
-%%\begin{displaymath}
-%%\mall{black}{T}{\mall{black}{k}{K} \mmiddle{black}{classes}{\mall{black}{class}{\mall{black}{cenums}{Map} \mall{black}{class-id}{K}}}}
-%%\end{displaymath}
-%%The configuration is enclosed in a~top-level cell \texttt{T}, which contains two cells: \texttt{k} and \texttt{classes}. The former cell contains a~term of sort \texttt{K}, which represents a~computation; the latter contains one \texttt{class} cell and possibly something else, which is left out.
-%
-%\begin{figure}
-%%[language=k] - but that is ugly
-%\begin{lstlisting}
-%configuration
-%<global/>
-%<result-value> 139:EffectiveValue </result-value>
-%<T><exec>
-%  <threads color="yellow" thread="">
-%    <thread multiplicity="*" color="yellow" type="Map">
-%      <thread-id color="yellow"> 0 </thread-id>
-%      <k color="green">
-%        loadObj(unwrapObj($PGM:K))
-%        ~> initMainThread
-%        ~> pgmArgs($ARGV:List)
-%        ~> callMain(/* left out */)
-%      </k>
-%      <thread-local/>
-%  </thread></threads>
-%</exec></T>
-%\end{lstlisting}
-%\caption{A source code of a~simplified configuration definition (see \texttt{semantics/c11/language/execution/configuration.k} for full version).}
-%\label{exampleConfigurationDefinition}
-%\end{figure}
-%
-%\paragraph{Configurations}
-%Configurations are defined as shown in listing~\ref{exampleConfigurationDefinition}; from the example, a~number of observations can be made:
-%\begin{itemize}
-%\item The definition consists of a~\texttt{configuration} keyword followed by a~list of nested cells; the cells does not need to be enclosed in a~top cell.
-%\item Configurations consist of multiple cells; a~cell can be thought of as a~labeled multiset ~\cite{hathhorn-ellison-rosu-2015-pldi}. Cells may contain other cells, integers, lists, maps and arbitrary terms (including program ASTs).
-%\item A~cell can be included in its supercell a~multiple times; the multiplicity can be adjusted with the attribute \texttt{multiplicity}.
-%\item Cells are usually defined in place of their use, but they may also be defined elsewhere, which is the case for \texttt{global} and \texttt{thread-local}.
-%\item Computations are contained in the \texttt{k} cell.
-%\item The content of a~cell in its definition definition specifies the cell's initial value. For example, the \texttt{k} cell here initially contains a~sequence of computations, parametrized by parsed program and command-line arguments.
-%\item \K allows each cell to have a~color, and provides a~tool, \kdoc , to generate a~colorful documentation from a~language definition. The tool is broken, though.
-%\end{itemize}
-%%TODO udelat z predchoziho seznamu normalni anglicke vety
-%
-%
-%% TODO budu se muset odkazovat na konkretni verze tech naostroju i semantiky.
-%\paragraph{Rewriting rules}
-%Rewriting rules specify the transition relation on configurations. Rules usually consists of a~\texttt{rule} keyword, followed by a~list of configuration cells, and a~\texttt{requires} clause. Inside the cells, a~rewriting may take place, which is then denoted by ,,\lstinline|=>|''. If there are more rewritings inside one rule, they all happen at once; in the C/C++ semantics, this is often used when declaring an entity.
+When \kcc is invoked on a~C++ program, the Clang-based tool \clangKast (whose sources are contained in the directory \path{cpp-parser}) is used to convert each source file into the \K's internal representation (\K AST). Every converted file is then individually used as a program, which is interpreted (using the \K tool \krun) by the \textit{C++ translation semantics}; the resulting terminal configuration can be thought of as an equivalent of an object file. The objects files are then linked together with and the result is wrapped into a~Perl script. When the script is executed, it interprets (with \krun) the linked program using the \textit{C11/C++14 execution semantics}, possibly passing the script's command line arguments to the program.
 
-
-
-%TODO zminit rozdil mezi :: a~: typovanim
-%
-% The basic form of rewriting rules is
-%\begin{displaymath}
-%\varphi \Rightarrow \psi \mathbb{if} b \, ,
-%\end{displaymath}
-%where $\varphi, \psi$ are terms (aka \textit{patterns}) with shared set of free varables. A configuration $\mathcal{C_1}$ \textit{rewrites} to configuration $\mathcal{C_2}$ (under the rule $r$), if and only if the free variables  
-%%TODO configuration is a~term, too
-%
-%\footnote{The semantics of patterns is formalized in \textit{matching logic}.}
-%
-% An example\ref{exampleRewriteRule}.
-%% Each rule consists of a~\texttt{rule} keyword,  The rules Due to a~mechanism known as \textit{configuration abstraction}, the rules
-
-
-\begin{figure}
-%[language=k] - but that is ugly
-\begin{lstlisting}
-rule <k> sendString(FD::Int, S::String) => .K ...</k>
-     <options> Opts::Set </options>
-     requires lengthString(S) <=Int 0
-     orBool (NoIO() in Opts)
-\end{lstlisting}
-\end{figure}
-
-
-\subsection{Can we see it?}
-
-
-\begin{figure}[ht]
-\begin{lstlisting}
-`<generatedTop>`(...
-  `<thread>`(
-    `<thread-id>`(#token("0","Int")),
-    `<k>`(
-      sendString(
-        #token("1","Int"),
-        #token("\"rld\\n\"","String")
-      ) ~>
-      sent(
-        #token("1","Int"),
-        #token("\"Hello world\\n\"","String")
-      )...
-    )...
-  )...
-)
-\end{lstlisting}
-\caption{An excerpt of a generated configuration. Large portions of the configuration were replaced by ellipsis (\ldots); the formatting (whitespaces) was added manually.}
-\label{exampleConfigurationOutput}
-\end{figure}
+%\subsection{Can we see it?}
 
 
 When an executable generated by \kcc is run in an environment with the variable \texttt{VERBOSE} set, the executable prints the final configuration in a text form to the standard output. For the ,,hello world'' program above (Figure~\ref{helloWorldSource}), the configuration produced by
@@ -1238,15 +1143,29 @@ $ env VERBOSE=1 DEPTH=675 ./hello
 \end{lstlisting}
 has about 600 kilobytes. The excerpt in the Figure~\ref{exampleConfigurationOutput} contains a~thread with two \textit{computational items} on the top of its \texttt{K} cell. From that point, if the execution had not been stopped, the first computational item (\texttt{sendString}) would have sent the rest of the \texttt{Hello world} string to the standard output, then it would have been removed and the second computational item (\texttt{sent}) would have been processed.
 
-The Project contains some rules, which give semantics to the \texttt{sendString} term.
-The rule in the Figure~\ref{fig:exampleCSemanticsRule} is one of them; it basically encodes the following piece of semantic information: \enquote{To send a~non-empty string means to send its first character and then to send the rest, unless the IO is disabled}. The Chapter~\ref{chap:k} contains everything needed to understand this rule, except a small detail: the ellipsis (\lstinline|...|) in the \texttt{k} cell behaves exactly as \lstinline|~> _| and expresses the notion of \enquote{we do not care what is in the rest of this cell}. We provide an explanation of the rule only as a means for the reader to check his understanding. The rule says: ,,Every configuration, in which
+\begin{figure}[hp]
+\begin{lstlisting}
+`<generatedTop>`(...`<thread>`(
+    `<thread-id>`(#token("0","Int")),
+    `<k>`(sendString(#token("1","Int"),
+        #token("\"rld\\n\"","String")
+      ) ~> sent(#token("1","Int"),
+        #token("\"Hello world\\n\"","String")
+)...)...)...)
+\end{lstlisting}
+\caption{An excerpt of a generated configuration. Large portions of the configuration were replaced by ellipsis (\ldots); the formatting (whitespaces) was added manually.}
+\label{exampleConfigurationOutput}
+\end{figure}
+
+The Project contains two some rules which give semantics to the \texttt{sendString} term.
+The rule in the Figure~\ref{fig:exampleCSemanticsRule} basically encodes the following piece of semantic information: \enquote{To send a~non-empty string means to send its first character and then to send the rest, unless the IO is disabled}. The ellipsis (\lstinline|...|) in the \texttt{k} cell behaves exactly as \lstinline|~> _| and expresses the notion of \enquote{we do not care what is in the rest of this cell}. The rule says: ,,Every configuration, in which
 \begin{enumerate}
 \item there is an \texttt{options} cell containing a~set not containing a \texttt{NoIO()} term, and in which
 \item there is also a~\texttt{k} cell having on its top a~\texttt{sendString} item parametrized with an integer and a~non-empty string \texttt{S},
 \end{enumerate}
-can be rewritten to another configuration by rewriting the \texttt{sendString} item to \texttt{\#putc} of the first character, followed by (\lstinline|~>|) the same \texttt{sendString} item, but without the first character of the string.''
+can be rewritten to another configuration by rewriting the \texttt{sendString} item to \texttt{\#putc} of the first character, followed by (\lstinline|~>|) the same \texttt{sendString} item, but without the first character of the string.'' The rule for the base case is shown in Figure~\ref{fig:exampleCSemanticsRule2}.
 
-\begin{figure}[ht]
+\begin{figure}[hp]
 \begin{lstlisting}
 rule <k> sendString(FD::Int, S::String)
       => #putc(FD, ordChar(firstChar(S)))
@@ -1256,9 +1175,22 @@ rule <k> sendString(FD::Int, S::String)
      requires lengthString(S) >Int 0
      andBool notBool (NoIO() in Opts)
 \end{lstlisting}
-\caption{A semantics rule from file(...).}
+\caption{A semantics rule from file \protect\path{semantics/c11/library/io.k}.}
 \label{fig:exampleCSemanticsRule}
 \end{figure}
+
+\begin{figure}[hp]
+\begin{lstlisting}
+rule <k> sendString(FD::Int, S::String) => .K ...</k>
+     <options> Opts::Set </options>
+     requires lengthString(S) <=Int 0
+     orBool (NoIO() in Opts)
+\end{lstlisting}
+\caption{The base-case for \texttt{sendString}.}
+\label{fig:exampleCSemanticsRule2}
+\end{figure}
+
+
 
 
 %Tady se bude hodit zminit kast.
@@ -1280,13 +1212,13 @@ rule <k> sendString(FD::Int, S::String)
 
 \section{Sorts, syntax, semantics}
 
-The \Project contains three types of modules: \textit{sort} modules, which only define sorts; \textit{syntax} modules, which define sort constructors and functions; and \textit{semantic} modules, which contains mostly semantics rules usually a few definitions of sorts and syntactic construct used only by that module. This structure reduces intermodule dependencies, because semantic modules need to depend only on syntactic modules, and syntactic modules only on sort modules.
+The \Project contains three kinds of modules: \textit{sort} modules, which only define sorts; \textit{syntax} modules, which define sort constructors and functions; and \textit{semantic} modules, which contains mostly semantics rules usually a few definitions of sorts and syntactic construct used only by that module. This structure reduces intermodule dependencies, because semantic modules need to depend only on syntactic modules, and syntactic modules only on sort modules.
 
 \section{Value categories}\label{sec:proj:values}
 
 In order to represent expressions of different value categories, the C++ semantics define sorts \texttt{LVal}, \texttt{XVal} and \texttt{PRVal} for lvalues, xvalues and prvalues, respectively. Each one of those sorts has a \textit{value} constructor, which represents an evaluated expression, and a subsort with an \textit{expression} constructor, which represents an unevaluated expression. For example, \textit{prvalue}s are represented by the sort \texttt{PRVal} as shown in the Figure~\ref{fig:prvSyntax}. All value sorts are subsorted to the sort \texttt{Val}. The C++ semantics also defines a function \texttt{isEvalVal}, which rewrites to \texttt{true} for terms representing an evaluated expression.
 
-\begin{figure}
+\begin{figure}[hp]
 \begin{lstlisting}
 syntax PRVal  ::= prv(CPPValue, Trace, CPPTypeExpr)
 syntax PRExpr ::= pre(Expr, Trace, CPPTypeExpr)
@@ -1508,7 +1440,7 @@ that we could implement zero-initialization on class types (see Section~\ref{cha
 
 The first problem we encountered was quite surprising. It took us many hours, perhaps a few tens of hours, to identify it; however, the bug was quite easy to fix. The \Project contained two rules as in Figure~\ref{fig:nondetRules}, which had to differentiate between two cases in list-initialization: when the initializer list is empty, the object should be value-initialized (as in~\stdN{n4296}{\S 8.5.4/3.4}, the first rule), and when it is non-empty, the object should be constructed with a constructor (as in~\stdN{n4296}{\S 8.5.4/3.6}, the second rule). However, the second rule could apply even when the initializer list was empty, which was the bug.
 
-\begin{figure}
+\begin{figure}[ht]
 \begin{lstlisting}
 rule #figureInit(/*...*/, ExpressionList(.List),/*...*/)
      => #valueInit(/*...*/)
@@ -1555,7 +1487,7 @@ zeroInit(Base . no-template Name(C, X), T)
 \end{lstlisting}
 which zero-initialize a (non-templated) member variable \texttt{X} (of type T) of an object \texttt{Base} of a class-type \texttt{C}. This syntax with dot member access is similar to the syntax of C++. In order to implement the zero-initialization of base-classes, we needed to create a means of obtaining a base-class subobject; in order to test the implementation, we needed to fix the semantics of accessing a non-static member variable of a base class (see Figure~\ref{fig:baseClassMemberAccess}). The fix \footnote{\url{https://github.com/kframework/c-semantics/pull/292}} was reviewed by the maintainer of the Project and is likely to be merged soon.
 
-\begin{figure}
+\begin{figure}[ht]
 \begin{lstlisting}
 struct Base1 { int x; };
 struct Base2 { int y; };
@@ -1632,7 +1564,7 @@ In the time of writing, the implementation of generalized constant expression is
 
 %https://github.com/kframework/c-semantics/issues/302
 
-\begin{figure}
+\begin{figure}[ht]
 \begin{lstlisting}
 constexpr int fact(int n) {
 	int f = 1;
@@ -1688,7 +1620,7 @@ In this section, we give a brief overview of the defects we found, including the
 
 \subsection{A GCC redeclaration bug}
 We discovered a new bug in the C++ parser of the GCC compiler. When an opaque enumeration is redeclared using fully qualified name (as in Figure~\ref{fig:gccRedeclarationBug}), the compiler rejects it, although such code is valid (and the clang compiler compiles it without problems).
-We reported the bug to the official bugzilla\footnote{\url{https://gcc.gnu.org/bugzilla/show_bug.cgi?id=83132}}; the bug was then confirmed by a GCC c++ developer, who had subsequently shown that the bug works not only for enumerations, but also for classes. The bug affects many versions of the GCC compiler, including the version 7.2, which was the latest in the time of writing.
+We reported the bug to the official bugzilla\footnote{\url{https://gcc.gnu.org/bugzilla/show_bug.cgi?id=83132}}; the bug was then confirmed by a GCC C++ developer, who had subsequently shown that the bug works not only for enumerations, but also for classes. The bug affects many versions of the GCC compiler, including the version 7.2, which was the latest in the time of writing.
 
 \begin{figure}[ht]
 \begin{lstlisting}
@@ -1719,7 +1651,7 @@ int z = int(A); // 3
 \end{figure}
 
 The Figure~\ref{fig:clangInconsistencyBug} shows a forward-declaration of an enumeration \texttt{E} in the namespace \texttt{N}, followed by a redeclaration of the enumeration; the redeclaration itself is contained in the scope of the global namespace. In which scope are the enumerators \texttt{A}, \texttt{B} declared? The standard says:
-\begin{displayquote}[\std{14}{\S 7.2/11}]
+\begin{displayquote}[\stdN{n4296}{\S 7.2/11}]
 Each enum-name and each unscoped enumerator is declared in the scope that immediately contains the
 enum-specifier.
 \end{displayquote}
@@ -1749,19 +1681,20 @@ enum class E {
 \label{fig:typeOfAQualifiedEnumerator}
 \end{figure}
 
-The contradiction can be illustrated on the code in Figure~\ref{fig:typeOfAQualifiedEnumerator}. The problem is that the standard gives two different answers to the question: ,,What is the type of the expression \lstinline|E::A| in the declaration of \texttt{B}?''. An answer can be based on \std{14}{\S 7.2/5}, which says:
+The contradiction can be illustrated on the code in Figure~\ref{fig:typeOfAQualifiedEnumerator}. The problem is that the standard gives two different answers to the question: ,,What is the type of the expression \lstinline|E::A| in the declaration of \texttt{B}?''. An answer can be based on~\stdN{n4296}{\S 7.2/5}, which says:
 \begin{displayquote}
 \textelp{} Following the closing brace of an enum-specifier, each enumerator has the type of its enumeration. If the underlying type is fixed, \textbf{the type of each enumerator prior to the closing brace is the underlying type} and the constant-expression in the enumerator-definition shall be a converted constant expression of the underlying type \textelp{}
 \end{displayquote}
 Therefore, the type of \lstinline|E::A| should be \texttt{int}, which is the default underlying type of scoped enumerations. However, the standard also says:
-\begin{displayquote}[\std{14}{\S 5.1.1/11}]
+\begin{displayquote}[\stdN{n4296}{\S 5.1.1/11}]
 A nested-name-specifier that denotes an enumeration (7.2), followed by the name of an enumerator of that enumeration, is a qualified-id that refers to the enumerator. The result is the enumerator. \textbf{The type of the result is the type of the enumeration.} The result is a prvalue.
 \end{displayquote}
-So the type of \lstinline|E::A| should be \texttt{E}. This is clearly a defect in the standard. The only way to satisfy both requirements is to make the types \texttt{E} and \texttt{int} the same, which would directly contradict the standard, because ,,Each enumeration defines a type that is different from all other types.''\std{14}{\S 7.2/5}.
+So the type of \lstinline|E::A| should be \texttt{E}. This is clearly a defect in the standard. The only way to satisfy both requirements is to make the types \texttt{E} and \texttt{int} the same, which would directly contradict the standard, because ,,Each enumeration defines a type that is different from all other types.''\stdN{n4296}{\S 7.2/5}.
+%TODO better quotation
 
-One possible solution to this conflict is to change \std{14}{\S 5.1.1/11} to say
+One possible solution to this conflict is to change~\stdN{n4296}{\S 5.1.1/11} to say
 that the type of the result is the type of the \textbf{enumerator},
-or to remove the relevant sentence completely. That is also how compilers seem to implement it: if \lstinline|E::A| had the type of an enumeration, such enumerator declaration would be ill-formed (\std{14}{\S 5.1.1/5}). Our language definition also takes this approach.
+or to remove the relevant sentence completely. That is also how compilers seem to implement it: if \lstinline|E::A| had the type of an enumeration, such enumerator declaration would be ill-formed~\stdN{n4296}{\S 5.1.1/5}. Our language definition also takes this approach.
 
 This issue was first discussed on StackOverflow\footnote{\url{https://stackoverflow.com/q/42369314/6209703}}, than it was raised in the ISO C++ Google Group\footnote{\url{https://isocpp.org/forums/iso-c-standard-discussion?place=msg\%2Fstd-discussion\%2Fj63Em3eUa5c\%2FDwdIEjBJAgAJ}}. Later we also reported this (incorrectly) as an editorial issue of the standard\footnote{\url{https://github.com/cplusplus/draft/issues/1845}} and it seems that someone is already working on that.
 
