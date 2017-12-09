@@ -1,4 +1,6 @@
 %%%%% Definitions of If- toggles
+\newif\ifPaperVersion
+
 \newif\ifshowkexamples
 \newif\ifshowoldstuff
 
@@ -7,7 +9,10 @@
 %\showoldstufftrue
 
 %%%%%
-\documentclass[nolot,nolof]{fithesis3}
+\ifPaperVersion
+\documentclass[nolot,nolof,nocover,printed]{fithesis3}
+\else
+\documentclass[nolot,nolof,cover,digital]{fithesis3}
 \usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
 \usepackage{cleveref}
@@ -53,6 +58,8 @@ advisor = {Jan Strejček},
 gender = {m},
 type = {mgr},
 faculty = {fi},
+date = {2017/12/12},
+assignment = {assignment.pdf},
 %abstract = {Here will be an abstract},
 %thanks = {Special thanks to...}
 %bib = {references.bib}
