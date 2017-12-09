@@ -1,8 +1,11 @@
 %%%%% Definitions of If- toggles
 \newif\ifPaperVersion
 
+%\PaperVersiontrue
+
 \newif\ifshowkexamples
 \newif\ifshowoldstuff
+
 
 %%%%% 
 %\showkexamplestrue
@@ -10,9 +13,12 @@
 
 %%%%%
 \ifPaperVersion
+% Use monochrome?
 \documentclass[nolot,nolof,nocover,printed]{fithesis3}
 \else
-\documentclass[nolot,nolof,cover,digital]{fithesis3}
+\documentclass[nolot,nolof,cover,digital,color]{fithesis3}
+\fi % PaperVersion
+
 \usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
 \usepackage{cleveref}
@@ -571,7 +577,7 @@ In the preceding text, a number of built-in functions was used (e.g. \texttt{and
 
 \chapter{C++}
 
-C++ is a general-purpose programming language~\cite{bjarne-cpp} originally created by Bjarne Stroustrup in the years between 1979 and 1983~\cite{bjarne-faq}. After some time, many independent implementations emerged, and in 1998 the language was standardized as ISO/IEC 14882:1998 international standard (\cite{ISOcpp98}); that version is now known as C++98. The language changed a lot since that time. New compilers emerged (e.g Clang), compilers implemented a lot of experimental features (e.g. Clang's Modules\footnote{\url{https://clang.llvm.org/docs/Modules.html}}), many core language and standard library defects were fixed and the memory model was standardized. The language is gradually evolving and once in a while, the C++ Standards Committee~\cite{wg21home} emits an ISO standard. In the time of writing, the newest C++ standard is C++17~\cite{ISOcpp17}, which was technically completed in March 2017 and should be officially published in December 2017.
+C++ is a \enquote{general-purpose programming language}~\cite{bjarne-cpp} originally created by Bjarne Stroustrup in the years between 1979 and 1983~\cite{bjarne-faq}. After some time, many independent implementations emerged, and in 1998 the language was standardized as ISO/IEC 14882:1998 international standard (\cite{ISOcpp98}); that version is now known as C++98. The language changed a lot since that time. New compilers emerged (e.g Clang), compilers implemented a lot of experimental features (e.g. Clang's Modules\footnote{\url{https://clang.llvm.org/docs/Modules.html}}), many core language and standard library defects were fixed and the memory model was standardized. The language is gradually evolving and once in a while, the C++ Standards Committee~\cite{wg21home} emits an ISO standard. In the time of writing, the newest C++ standard is C++17~\cite{ISOcpp17}, which was technically completed in March 2017 and should be officially published in December 2017.
 
 In this chapter, we describe some fundamentals of the C++ language and some parts of the language relevant to our thesis. Note that the chapter is not intended to be an introduction to the C++ for programmers. Instead, everything is described from the language (and/or a compiler writer) point of view here.
 
