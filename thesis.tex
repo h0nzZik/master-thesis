@@ -67,6 +67,7 @@ faculty = {fi},
 date = {2017/12/12},
 assignment = {assignment.pdf},
 %abstract = {Here will be an abstract},
+keywords = {C++, semantics, enumerations, constant expressions, constexpr, K framework, formal methods},
 %thanks = {Special thanks to...}
 %bib = {references.bib}
 }
@@ -1705,17 +1706,29 @@ This issue was first discussed on StackOverflow\footnote{\url{https://stackoverf
 
 \chapter{Conclusion}
 
-\section{Future work}
-\begin{itemize}
-\item Merge the remaining code into upstream.
-\item Finish the implementation of constant expressions. Working with literal types.
-\item Finish the rest of the C++ semantics (switch, templates, sfinae, lambda functions, automatic type deduction, type traits, virtual inheritance, multiple inheritance, variable templates, variadic templates \ldots), so that \kcc can compile all the programs which can be compiled with GCC/clang.
-\item Somehow deal with C++ versions and defects. C++17? C++20?
-\item What about the concurrency?
-\item Design and implement some ACSL-like assertion language.
-\item Function calls in contracts? Can we check them?
-\item High-level reasoning about templates? And what about Concepts?
-\end{itemize}
+\K is a formal framework in which a programming language can be given an executable semantics. Many tools can be derived from the semantics, including a language interpreter. We extended an existing project of C/C++ semantics in \K with a complete support for C++ \textit{enumerations}, and with an experimental implementation of basic \textit{compile-time function evaluation}. Implementation of the two features was the original goal of this thesis. In addition, we fixed several bugs in the Project and implemented another language feature, a \textit{zero-initialization} of classes. We also found defects in major C++ compilers (one in Clang, one in GCC) and in the standard of the C++ language itself.
+
+However, there is still a plenty of work to do. Some parts of our implementation have been already merged into the upstream, and the first step is to merge the remaining code. Next, the compile-time function evaluation has to be turned into a full, production-ready, standard-conforming implementation of constant expressions, with support for compile-time evaluation of member functions. Finally, almost everything else from the C++ language needs to be implemented, so that \kcc can compile all the programs which can be compiled with GCC or Clang. This contains: a switch statement, concurrency, templates (including sfinae, variadic templates, and variable templates), virtual inheritance, bitfields, RTTI, \ldots .
+
+The longer term goal for the Project is to have a full implementation of the C++ language. It is a moving target, since the language is evolving, defects are begin found and fixed, and every three years a new standard is released. Together with the maintainers of the Project, we will have to decide how to reflect the language's evolution in the Project. Should \kcc have the notion of a language version, as do GCC and Clang have? If so, how to deal with the language defects that are fixed in compilers even before the new standard is released? Or should we take the \enquote{Live at Head}\footnote{\url{https://www.youtube.com/watch?v=tISy7EJQPzI}} approach and keep the project in synchronization with the current draft of the standard?
+
+\K framework can be also used for program verification. We would like to have a specification language, perhaps similar to the specification language ACSL of Frama-C~\cite{Cuoq2012}), which would enable programmers to formally reason about templated code and which would allow function contracts to be given in terms of function calls (see Figure~\ref{fig:contractsExample}). The specification language should also play well with the features that are likely to come in C++20, especially \textit{concepts}. And, of course, we would like to have a means of verifying such contracts. So far, we have not conducted any research in this direction, so this is only a blurry vision for the future; however, this is where we want to go.
+
+\begin{figure}
+\begin{lstlisting}
+template <typename It>
+bool is_sorted(It begin, It end);
+
+/*
+ * \pre valid_range(begin, end);
+ * \post is_sorted(begin, end);
+ */
+template <typename It>
+void sort(It begin, It end);
+\end{lstlisting}
+\caption{An example of a templated code with an ACSL-like function contract. Note that the postcondition of the function \texttt{sort} is given in terms of the function \texttt{is\_sorted}.}
+\label{fig:contractsExample}
+\end{figure}
 
 \ifshowoldstuff
 
