@@ -739,7 +739,7 @@ void foo(int x) { E e = x; }
 \label{fig:noConversionFromIntToEnum}
 \end{figure}
 
-An initializer of an enumerator may refer to previously declared enumerators of the same enumeration (see Figure~\ref{fig:scopedEnumDecl}). Inside the enumeration declaration (prior its closing brace), the type of its enumerators is not the type of the enumerator, but always an integral type\footnote{We discuss this in more detail in Chapter~\ref{chap:contribToOtherProjects}.}.
+An initializer of an enumerator may refer to previously declared enumerators of the same enumeration (see Figure~\ref{fig:scopedEnumDecl}). Inside the enumeration declaration (prior its closing brace), the type of its enumerators is not the type of the enumerator, but always an integral type\footnote{We discuss this in more detail in Chapter~\ref{chap:defects}.}.
 %Because of the stronger-than-C type system,
 In some cases, it would be even inconvenient if the types of enumerators were types of their enumerations. For example, the declaration in Figure~\ref{fig:scopedEnumDecl} declares an enumerator \lstinline|B| with the initializer \lstinline|A + 3|. If the type of \lstinline|A| in this expression were \lstinline|E|, then the expression would be ill-formed. Scoped enumerations do not convert to \lstinline|int|, therefore the enumerator \lstinline|A| could not be added to an \lstinline|int|.
 
@@ -1508,17 +1508,12 @@ Despite the fact that the implementation of generalized constant expressions is 
 
 Enumerations are fully implemented and most of the implementation is already merged in the upstream repository. Zero initialization of class types is also fully implemented, modulo some features which are not yet supported in the Project at all; it is ready to be merged into the upstream. In terms of generalized constant expressions, we have an elegant implementation of compile-time function evaluation, which is able to evaluate functions with recursion or nontrivial control-flow. The implementation is incomplete, not adhering to the standard and not production ready; however, it is based on good principles and can serve as a~basis for future development.
 
-\chapter{Relation to other projects}\label{chap:contribToOtherProjects}
-%What works and what does not. The bugs we have found in compilers. Ambiguity or contradictions in the standard. The one thing we implement the same way GCC and clang does, but technically is incorrect.
-
-%TODO prejmenovat lepe.
-
-\section{Defects found in other projects}\label{sec:defects}
+\chapter{Defects found in other projects}\label{chap:defects}
 During the work, we discovered a~few defects in major C++ compilers and also in the C++ standard. While most of them was already known among the experts, some of them are new; such defects were reported.
 % which were reported /* ... */.
 In this section, we give a~brief overview of the defects we found, including the ones which were already known but not fixed yet.
 
-\subsection{A GCC redeclaration bug}
+\section{A GCC redeclaration bug}
 We discovered a~new bug in the C++ parser of the GCC compiler. When an opaque enumeration is redeclared using fully qualified name (as in Figure~\ref{fig:gccRedeclarationBug}), the compiler rejects it, although such code is valid (and the clang compiler compiles it without problems).
 We reported the bug to the official bugzilla\footnote{\url{https://gcc.gnu.org/bugzilla/show_bug.cgi?id=83132}}; the bug was then confirmed by a~GCC C++ developer, who had subsequently shown that the bug works not only for enumerations, but also for classes. The bug affects many versions of the GCC compiler, including the version 7.2, which was the latest in the time of writing.
 
@@ -1531,7 +1526,7 @@ enum ::E : int{};
 \label{fig:gccRedeclarationBug}
 \end{figure}
 
-\subsection{A Clang inconsistency bug}
+\section{A Clang inconsistency bug}
 
 %We also found a~new bug in Clang. The bug concerns an enum-related feature which is defective in the standard; both GCC and clang implement it the other way than the standard says. In the community, the compilers's behavior is considered the correct one, although the standard says something else; however, the Clang behavior is not internally consistent, which. We present here both the Clang bug and the standard defect, because the defect is still present in the C++17 standard as well as in the current draft\footnote{\url{https://github.com/cplusplus/draft}, (November 2017)}.
 
@@ -1564,7 +1559,7 @@ The problems with opaque declarations of unscoped enumerations are known at leas
 %TODO how we implement that?
 %TODO reference C++ Standard Core Language Active Issues, Revision 97
 
-\subsection{Type of an enumeration}
+\section{Type of an enumeration}
 
 We found a~contradiction in the C++14 standard; the contradiction is still present in C++17 as well as in an early C++20 draft (N4700).
 % and the standard draft repository (https://github.com/cplusplus/draft/, retrieved 23.11.2017).
