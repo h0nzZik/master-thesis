@@ -58,8 +58,7 @@
 title = {An Executable Formal Semantics of C++},
 TeXtitle = {An Executable Formal Semantics of C++},
 author = {Jan Tušil},
-keywords = {C++ semantics k-framework},
-TeXkeywords = {C++ semantics k-framework},
+keywords = {C++, semantics, K framework, enumerations, constant expressions, initialization, formal methods},
 advisor = {Jan Strejček},
 gender = {m},
 type = {mgr},
@@ -69,11 +68,10 @@ assignment = {assignment.pdf},
 abstract = {Modern programming languages are really expressive, but also complex.
 	When a particular programming language is given a formal semantics in the framework called \K,
 	a large variety of tools can be derived from it, including an interpreter or a model checker.
-	In this thesis we extend an experimental formal semantics of C++ in \K with a support for three language features: enumerations, zero-initialization of classes, and compile-time function evaluation. 
+	In this thesis we extend an experimental formal semantics of C++ in \K with a~support for three language features: enumerations, zero-initialization of classes, and compile-time function evaluation. 
 	
-	The thesis consists of the following parts. First, because \K is not widely known, we provide a mini-tutorial on how \K can be used to write an interpreter of a simple language. Second, we briefly explain the relevant C++ features from the language point of view. Third, we describe our implementation and its limitations. Fourth, we discuss the defects in major C++ compilers we found during the implementation effort.
+	The thesis consists of the following parts. First, because \K is not widely known, we provide a mini-tutorial on how \K can be used to write an interpreter of a simple language. Second, we briefly explain the relevant C++ features from the language point of view. Third, we describe our implementation and its limitations. Fourth, we discuss some defects in major C++ compilers which we found during the implementation effort.
 },
-keywords = {C++, semantics, enumerations, constant expressions, constexpr, K framework, formal methods},
 %thanks = {Special thanks to...}
 %bib = {references.bib}
 }
@@ -946,14 +944,16 @@ In contrast, the variable \texttt{b2} is only default-initialized; the value of 
 \subsection{Zero initialization}
 The exact meaning of \textit{zero-initialization} is described in~\stdN{n4296}{\S 8.5/6}. References are not initialized at all, scalars are initialized to the value of zero converted to the particular scalar type, arrays are zero-initialized element-wise and objects of non-union class types are zero-initialized by zero-initializing all non-static data its members, base class subobjects and padding. We do not deal with union classes in this thesis.
 
-In addition to the cases described in previous paragraphs, zero initialization happens in a two more situations.
+In addition to the cases described in the previous paragraphs, zero initialization also happens in two another situations.
 \begin{itemize}
 \item When initializing a character array with a string literal that is not long enough, the rest of the array is zero-initialized.
 \item Before other initializations of variables with non-static storage duration. Programmers may know this in a simplified form as a rule \enquote{in C/C++, global variables are initialized to zero}.
 \end{itemize}
 This thesis is not concerned with these two situations.
 
-\section{Constant expressions}
+\section{Generalized constant expressions}
+%This sections describes 
+
 In C++, expressions are used almost everywhere. However, not every kind of expression can be used everywhere: one can hardly imagine the code in Figure~\ref{fig:getcharInEnum} to be valid. The expressions used in an enum declaration or as a \texttt{case} label of a \texttt{switch} statement have to be computable in the compilation time. Expressions of that kind are generally known as \textit{constant expressions}; they are defined in~\stdN{n4296}{\S 5.20}.
 
 \begin{figure}
@@ -964,28 +964,11 @@ enum class E { A = getchar() };
 \label{fig:getcharInEnum}
 \end{figure}
 
-\subsection{The intuition}
+\subsection{Constexpr}
 
-The standard defines a couple terms with respect to constant expressions; this subsection attempts to give the reader an intuition which is behind them. The term \textit{core constant expression}~\stdN{n4296}{\S 5.20.2} is used to represent an expression, which can be evaluated easily, using only the information the compiler has during the compilation. The term \textit{constant expressions}~\stdN{n4296}{\S 5.20/5} denotes a core constant expression, whose value is meaningful in the compilation time.
+The language contains a specifier \lstinline|constexpr|, which can be used in some declarations of functions and variables~\stdN{n4296}{\S 7.1.5}. The use of this specifier in a declaration means that the value of the declared entity can be used in a constant expression. Of course, the language imposes some restrictions on such entities. When a variables is declared as \lstinline|constexpr|, its initializer has to be a constant expression, otherwise the program is ill-formed. The restrictions on functions are more complicated; one of them is that the return type and the types of all parameters shall be \textit{literal} (i.e. constexpr-manipulatible)~\stdN{n4296}{\S 7.1.5/3}.
 
-\begin{figure}
-\begin{lstlisting}
-constexpr int const & id(int const &x) { return x; }
-void test() {
-	int const a = 7;
-	//constexpr int const & b = id(a); // 1
-	constexpr int c = id(a); // 2
-	static int const d = 8;
-	constexpr int const &e = id(d); // 3
-}
-\end{lstlisting}
-\caption{...}
-\label{fig:constexprIntuition}
-\end{figure}
-
-The Figure~\ref{fig:constexprIntuition} can serve as an example here. The function \texttt{id} takes one parameter, which is a reference to a constant integer, and returns it back. The expression \lstinline|id(a)| is then a \textit{core constant expression}, as it can be easily evaluated (its value is equivalent to the value of the expression \lstinline|a|). It is not a \textit{constant expression}, because its value refers to a non-static local variable, and the memory location of a (non-static) is unknowable in the compile time (such memory location does not even exist in the execution time, or the variable may be instantiated multiple times in recursive calls). Therefore, its value cannot be used as the initializer of a constexpr reference (1).
-
-How is then possible that it may be used in the declaration (2)? Note that the variable is not initialized simply by the expression \lstinline|id(a)|, but with the rvalue-to-lvalue conversion of the result of that \lstinline|id(a)|; such composed expression is a \texttt{constant expression}. In other words, the declaration of \texttt{c} does is not concerned with the identity of the object it is initialized with, but only with the object's value - and that value is known in the compile time, as the variable \texttt{a} is initialized with the constant expression \texttt{7}. The declaration (3) works because the variable \texttt{d} was declared \texttt{static}.
+Variables declared with this specifier are implicitly \lstinline|const|. Constant expressions may read variables which are declared \lstinline|const| and initialized with a constant expression, regardless of whether the variable is declared \lstinline|constexpr| or not. Thus, in some cases, the meaning of \lstinline|constexpr| is really the same as the meaning of \lstinline|const| (e.g. in Figure~\ref{fig:constMayBeEnough}).
 
 \begin{figure}[ht]
 \begin{lstlisting}
@@ -997,6 +980,8 @@ int main() {
 \caption{Sometimes, \texttt{const} is enough.}
 \label{fig:constMayBeEnough}
 \end{figure}
+
+However, \lstinline|const| does not require the initializer to be a constant expression. The initializer may, for example, depend on a function parameter or call a non-constexpr function. When such variable is used in the context of a constant expression, the program is ill-formed (Figure~\ref{fig:constIsNotEnough}).
 
 \begin{figure}[ht]
 \begin{lstlisting}
@@ -1011,7 +996,36 @@ error: enumerator value is not a constant expression
 note: initializer of 'x' is not a constant expression
 \end{lstlisting}
 \caption{Sometimes, \texttt{const} is not enough.}
+\label{fig:constIsNotEnough}
 \end{figure}
+
+When a variable is declared as \lstinline|constexpr|, the compiler has to try to evaluate its initializer in order to check whether it is a constant expression. In practice, although not mandated by the standard, when a \lstinline|constexpr| variable is created in the time of execution (e.g. because it is a local variable in a function which is being called), it is initialized with the result of the compile-time evaluation of the initializer. This way a run-time cost can be avoided, even when compiler optimalizations are turned off. We encourage the reader to play with \lstinline|constexpr| using GodBolt's Compiler Explorer\footnote{\url{https://gcc.godbolt.org/}} and examine the generated assembly.
+
+
+
+
+\subsection{Constant expressions}
+
+The standard defines a couple terms with respect to constant expressions; this subsection attempts to give the reader an intuition which is behind them. The term \textit{core constant expression}~\stdN{n4296}{\S 5.20.2} is used to represent an expression, which can be evaluated easily, using only the information the compiler has during the compilation. The term \textit{constant expressions}~\stdN{n4296}{\S 5.20/5} denotes a core constant expression, whose value is meaningful in the compilation time.
+
+\begin{figure}
+\begin{lstlisting}
+constexpr int const & id(int const &x) { return x; }
+void test() {
+	int const a = 7;
+	//constexpr int const & b = id(a); // 1
+	constexpr int c = id(a); // 2
+	static int const d = 8;
+	constexpr int const &e = id(d); // 3
+}
+\end{lstlisting}
+\caption{What is a constant expression?}
+\label{fig:constexprIntuition}
+\end{figure}
+
+The Figure~\ref{fig:constexprIntuition} can serve as an example here. The function \texttt{id} takes one parameter, which is a reference to a constant integer, and returns it back. The expression \lstinline|id(a)| is then a \textit{core constant expression}, as it can be easily evaluated (its value is equivalent to the value of the expression \lstinline|a|). It is not a \textit{constant expression}, because its value refers to a non-static local variable, and the memory location of a (non-static) is unknowable in the compile time (such memory location does not even exist in the execution time, or the variable may be instantiated multiple times in recursive calls). Therefore, its value cannot be used as the initializer of a constexpr reference (1).
+
+How is then possible that it may be used in the declaration (2)? Note that the variable is not initialized simply by the expression \lstinline|id(a)|, but with the rvalue-to-lvalue conversion of the result of that \lstinline|id(a)|; such composed expression is a \texttt{constant expression}. In other words, the declaration of \texttt{c} does is not concerned with the identity of the object it is initialized with, but only with the object's value - and that value is known in the compile time, as the variable \texttt{a} is initialized with the constant expression \texttt{7}. The declaration (3) works because the variable \texttt{d} was declared \texttt{static}.
 
 %a non-volatile glvalue of integral or enumeration type that refers to a complete non-volatile const
 %object with a preceding initialization, initialized with a constant expression
@@ -1020,37 +1034,7 @@ note: initializer of 'x' is not a constant expression
 %This can be seen in Figure~\ref{fig:constMayBeEnough}; the enumerator \texttt{E::A} is initialized with the initializer \texttt{x}, which has to be constant expression
 
 
-\ifshowoldstuff
-
-
-TODO popsat deklarace, neuplne typy a~jine zakladni koncepty.
-% Popisu C++ bude trochu odpovidat struktura projektu C/C++ semantiky. Mame tam oddelenou statickou a~dynamickou semantiku. Jak to souvisi se standardem? Je toto oddeleni bezne? Maji to ostatni K semantiky?
 % Taky v te semantice vyznacujeme, co je undefined, unspecified, implementation defined behavior. I semantika enumu to vyuziva
-
-% Kde se nachazi normativni dokumenty? Na jakem je zalozena ta semantika? Neco k jejich strukture?
-
-\section{Standard documents}
-
-About standards. How they are accessible etc.
-
-\section{Phases of translation}
-\label{txt:phases-of-translation}
-% Jeden odstavec neformalniho popisu, jeden odstavec formalniho
-Real-world C++ programs usually consist of multiple source files. To build the program, the source files are compiled one by one and resulting object files are then linked together. It is also possible to link compiled C file with the C++ program. Building a~program is a~multiple-step process.
-
-% Nejaky priklad
-
-Although C/C++ standards do not go to implementation details, they contain the idea of translation phases and separate translation. Translation unit (according to ???) is a~source file with its \textit{include} files included. Section 2.2 of the C++14 standard identifies 9 translation phases; the first five or six of them are usually referred to as \textit{preprocessing phases} (or one \textit{preprocessing phase}) , in the seventh phase the compilation of single translation unit takes place, phase number eight deals with template instantiation and in the ninth phase the whole program is linked together. In C language the phases are similar (but phase eight is missing).
-
-\section{Translation units}
-
-\section{Interoperability with C}
-
-\section{Basic concepts}
-
-% Zminit nekde to, ze C++ hodne mluvi o tom, kdy je program nedefinovany... jak o tom mluvi v "Defining the Undefinedness of C ∗"
-
-\fi %showoldstuff
 
 \chapter{Project overview}
 %TODO zminit to odlisovani sort, syntax a semantics modulu
