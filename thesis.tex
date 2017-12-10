@@ -122,8 +122,7 @@ Although formal methods for software verification are being developed, there are
 % The image is simply print-screen-ed. Je to ok? A muzu rikat, ze jsem ho adoptoval?
 \end{figure}
 
-\K framework has been successfully used to give formal semantics to various languages, including Java~\cite{bogdanas-rosu-2015-popl}, Python, Javascript~\cite{park-stefanescu-rosu-2015-pldi}, Agda~\cite{Tokarcik2015}, and C~\cite{ellison-2012-thesis,hathhorn-ellison-rosu-2015-pldi}, all of which is publicly available. The C semantics has been used to create RV-Match, a~,,tool for checking C programs for
-undefined behavior and other common programmer mistakes''~\cite{guth-hathhorn-saxena-rosu-2016-cav}.  At the time of writing, the C semantics is being extended to support the C++ programming language. The C++ support is also the focus of this thesis. From this point on, when we write ,,\Project'', we mean this project of defining C/C++ language semantics in \K.
+\K framework has been successfully used to give formal semantics to various languages, including Java~\cite{bogdanas-rosu-2015-popl}, Python, Javascript~\cite{park-stefanescu-rosu-2015-pldi}, Agda~\cite{Tokarcik2015}, and C~\cite{ellison-2012-thesis,hathhorn-ellison-rosu-2015-pldi}, all of which is publicly available. The C semantics has been used to create RV-Match, a~\enquote{tool for checking C programs for undefined behavior and other common programmer mistakes}~\cite{guth-hathhorn-saxena-rosu-2016-cav}.  At the time of writing, the C semantics is being extended to support the C++ programming language. The C++ support is also the focus of this thesis. From this point on, when we write \enquote{Project}, we mean this project of defining C/C++ language semantics in \K.
 
 The thesis aimed to implement two language features, \textit{enumerations} and \textit{compile-time evaluation of constexpr functions}, where the latter is an important part of a language trait called \textit{constant expressions}. When we decided to implement the enumerations, we thought that it is a relatively simple language feature: they do not have any special runtime behavior, do not interfere much with other language features, and they exist in the language from its beginning. \textit{Scoped enumerations}, introduced in C++11~\cite{ISOcpp11}, are even simpler both from language and user point of view (the legacy C-style enumerations still need to be supported, though). However, a careful reading of the standard~\cite{n4296} revealed us that the enumerations behave in many ways, some of which we considered to be surprising, as we did not know them from common programming practice.
 %TODO tady bych se jeste neodkazova na n4296
@@ -169,12 +168,11 @@ The level of detail here is just necessary to understand the description of impl
 
 %TODO rozlisovat mezi 'language definition' - tim budu vzdycky oznacovat konkretni semantiku v K, a~proste semantikou.
 
-In the \K framework, languages are described in a~style commonly known as \textit{operational semantics}. For any language $\var{L}$, when $\var{L}$ is given a~particular definition $\var{D}$ in \K framework, then $\var{D}$ assigns to every program in $\var{L}$ a~transition system $( \var{Cfg}, \rightarrow )$. Here $\var{Cfg}$ denotes a~set of program configurations and $\rightarrow$ is a~binary relation over $\var{Cfg}$; the relation is called a~,,transition relation'' and its elements are ,,transitions''. %Transitions correspond to computational steps; the existence of a~transition between two given configurations is determined by some kind of deductive system., or by pattern matching rewriting rules to the configurations (in case of \K).
+In the \K framework, languages are described in a~style commonly known as \textit{operational semantics}. For any language $\var{L}$, when $\var{L}$ is given a~particular definition $\var{D}$ in \K framework, then $\var{D}$ assigns to every program in $\var{L}$ a~transition system $( \var{Cfg}, \rightarrow )$. Here $\var{Cfg}$ denotes a~set of program configurations and $\rightarrow$ is a~binary relation over $\var{Cfg}$; the relation is called a~\enquote{transition relation} and its elements are \enquote{transitions}. %Transitions correspond to computational steps; the existence of a~transition between two given configurations is determined by some kind of deductive system., or by pattern matching rewriting rules to the configurations (in case of \K).
 
 %TODO an image of a~transition system
 
-The configurations are not abstract, but they have an internal structure, which depends on the definition $\var{D}$. 
-For imperative languages, the configurations may consists of a~,,program'' part and a~,,data'' part.
+The configurations are not abstract, but they have an internal structure, which depends on the definition $\var{D}$. For imperative languages, the configurations may consists of a~\enquote{program} part and a~\enquote{data} part.
 
 \section{Terms}
 
@@ -246,7 +244,7 @@ configuration <T>
 \label{impConfiguration}
 \end{figure}
 
-We have said earlier that the programmer may choose a~sort, whose terms will represent the ,,program'' part of the configuration; that happens in the configuration definition. In this particular language definition, the ,,data'' part of the configuration is represented by a~term of sort \lstinline|Map|. %Of course, the programmer may choose to use a~configuration with only one cell to represent both
+We have said earlier that the programmer may choose a~sort, whose terms will represent the \enquote{program} part of the configuration; that happens in the configuration definition. In this particular language definition, the \enquote{data} part of the configuration is represented by a~term of sort \lstinline|Map|. %Of course, the programmer may choose to use a~configuration with only one cell to represent both
 
 
 %TODO a~co je toplevel konfigurace?
@@ -555,9 +553,9 @@ In the preceding text, a number of built-in functions was used (e.g. \lstinline|
 
 % Pozdeji presneji.
 %The transition system contains transition between configurations $C_1$ and $C_2$, if there
-%The rule gets applied whenever the pattern $l$ \textit{matches} the current configuration, i.e. it is possible to substitute free variables in $l$ for ground terms such that the result is identical to the configuration, and $b$ (after the same substitution) holds.  Due to the mechanism called ,,configuration abstraction'', rules can be unified with a~subtree of the configuration, thus avoiding a~use of unnecessary subterms in the rule.
+%The rule gets applied whenever the pattern $l$ \textit{matches} the current configuration, i.e. it is possible to substitute free variables in $l$ for ground terms such that the result is identical to the configuration, and $b$ (after the same substitution) holds.  Due to the mechanism called \enquote{configuration abstraction}, rules can be unified with a~subtree of the configuration, thus avoiding a~use of unnecessary subterms in the rule.
 
-%Many rules care about only a~small fraction of the configuration. \K framework therefore implements a~mechanism called ,,configuration abstraction'', which allows rules to mention only the necessary configuration cells; \K then desugars them. For example, in the above rule it is possible to remove the $<T>$ cell.
+%Many rules care about only a~small fraction of the configuration. \K framework therefore implements a~mechanism called \enquote{configuration abstraction}, which allows rules to mention only the necessary configuration cells; \K then desugars them. For example, in the above rule it is possible to remove the $<T>$ cell.
 
 
 %$\kprefix{k}{\reduce{X:Id}{I}...}{}$
@@ -728,7 +726,7 @@ int foo(E e) {
 \label{fig:enumNotReallyUnreachable}
 \end{figure}
 
-This behavior may be a source of confusion for programmers who do not know this; in past, it certainly was for the author of this text. The programmer may write a code similar to the one of Figure~\ref{fig:enumNotReallyUnreachable}, which assumes that the value of \lstinline|E| has to be either \lstinline|E::A| or \lstinline|E::B|. This assumption may be justified if the programmer knows the set of values which may be returned from the function \lstinline|giveMeAnEnum|. The programmer may try to go one step further and say: ,,If the function \lstinline|giveMeAnEnum| tries to return something different than \lstinline|E::A| or \lstinline|E::B|, than the behavior is already undefined in \textit{that} point; therefore, we do not need to handle that situation in \lstinline|foo|.'' Such a reasoning is flawed, because the function \lstinline|giveMeAnEnum| may return e.g.~\lstinline|static_cast<E>(-117)|, which is guaranteed to be well-defined, because \lstinline|-117| is a valid value of \lstinline|int|, which is the underlying type of \lstinline|E| here. The programmer's reasoning would be valid if the enumeration \lstinline|E| was a plain unscoped enumeration without an explicitly specified underlying type (i.e.~if we removed the \lstinline|class| keyword). We will not go into detail here, as the reasoning would depend on the technical parts of~\stdN{n4296}{\S 7.2/8}.
+This behavior may be a source of confusion for programmers who do not know this; in past, it certainly was for the author of this text. The programmer may write a code similar to the one of Figure~\ref{fig:enumNotReallyUnreachable}, which assumes that the value of \lstinline|E| has to be either \lstinline|E::A| or \lstinline|E::B|. This assumption may be justified if the programmer knows the set of values which may be returned from the function \lstinline|giveMeAnEnum|. The programmer may try to go one step further and say: \enquote{If the function \lstinline|giveMeAnEnum| tries to return something different than \lstinline|E::A| or \lstinline|E::B|, than the behavior is already undefined in \textit{that} point; therefore, we do not need to handle that situation in \lstinline|foo|.} Such a reasoning is flawed, because the function \lstinline|giveMeAnEnum| may return e.g.~\lstinline|static_cast<E>(-117)|, which is guaranteed to be well-defined, because \lstinline|-117| is a valid value of \lstinline|int|, which is the underlying type of \lstinline|E| here. The programmer's reasoning would be valid if the enumeration \lstinline|E| was a plain unscoped enumeration without an explicitly specified underlying type (i.e.~if we removed the \lstinline|class| keyword). We will not go into detail here, as the reasoning would depend on the technical parts of~\stdN{n4296}{\S 7.2/8}.
 
 \subsection{Enumerators}\label{sec:enumerators}
 
@@ -819,7 +817,7 @@ enum E;
 %enum { A };
 %enum : char { B, C };
 %\end{lstlisting}
-%\caption{,,The optional identifier shall not be omitted in the declaration of a~scoped enumeration''(7.2/2), however, it may be omitted in the declaration of an unscoped enumeration.}
+%\caption{\enquote{The optional identifier shall not be omitted in the declaration of a~scoped enumeration}(7.2/2), however, it may be omitted in the declaration of an unscoped enumeration.}
 %\end{figure}
 %
 
@@ -955,7 +953,7 @@ In C++, expressions are used almost everywhere. However, not every kind of expre
 \begin{lstlisting}
 enum class E { A = getchar() };
 \end{lstlisting}
-\caption{A ,,wild'' expression in a context that requires a constant expression. This is not a valid C++ code.}
+\caption{A \enquote{wild} expression in a context that requires a constant expression. This is not a valid C++ code.}
 \label{fig:getcharInEnum}
 \end{figure}
 
@@ -1155,7 +1153,7 @@ has about 600 kilobytes. The excerpt in the Figure~\ref{exampleConfigurationOutp
 \end{figure}
 
 The Project contains two some rules which give semantics to the \lstinline|sendString| term.
-The rule in the Figure~\ref{fig:exampleCSemanticsRule} basically encodes the following piece of semantic information: \enquote{To send a~non-empty string means to send its first character and then to send the rest, unless the IO is disabled}. The ellipsis (\lstinline|...|) in the \lstinline|k| cell behaves exactly as \lstinline|~> _| and expresses the notion of \enquote{we do not care what is in the rest of this cell}. The rule says: ,,Every configuration, in which
+The rule in the Figure~\ref{fig:exampleCSemanticsRule} basically encodes the following piece of semantic information: \enquote{To send a~non-empty string means to send its first character and then to send the rest, unless the IO is disabled}. The ellipsis (\lstinline|...|) in the \lstinline|k| cell behaves exactly as \lstinline|~> _| and expresses the notion of \enquote{we do not care what is in the rest of this cell}. The rule says: ''Every configuration, in which
 \begin{enumerate}
 \item there is an \lstinline|options| cell containing a~set not containing a \lstinline|NoIO()| term, and in which
 \item there is also a~\lstinline|k| cell having on its top a~\lstinline|sendString| item parametrized with an integer and a~non-empty string \lstinline|S|,
@@ -1499,7 +1497,7 @@ In order to support generalized constant expressions in the \Project, three thin
 %The \Project consists of the definition of translation semantics, and the execution semantics. Both have different configurations.
 Before we started the work, the translation semantics was already able to evaluate simple arithmetic or boolean C++ expressions (like \lstinline|1 + 1 == 2|. However, the translation semantics was not able to evaluate function calls. To evaluate them, the configurations of execution semantics contains a set of cells which represents \textit{call stack}, but the configuration of translation semantics does not contain anything like that.
 
-When designing the support for generalized constant expressions, several design alternatives seemed to be viable. One of them was to extend the translation semantics with new rules and configuration cell which would allow to evaluate the not-supported-yet expressions; another alternative was to reuse some of the rules from the execution semantics and modify the configuration accordingly. We decided to first try to reuse as much of existing code as possible, with the perspective that if that fails, we will fall back to other design alternative or try to explore the design space more carefully. It turned out that we could reuse almost everything; although the changes were quite extensive, there were only a few newly added rules and cells, and most of them had the character of ,,move this there'', ,,use this file from the execution semantics in the translation semantics'' and ,,add a \lstinline|require| clause here''.
+When designing the support for generalized constant expressions, several design alternatives seemed to be viable. One of them was to extend the translation semantics with new rules and configuration cell which would allow to evaluate the not-supported-yet expressions; another alternative was to reuse some of the rules from the execution semantics and modify the configuration accordingly. We decided to first try to reuse as much of existing code as possible, with the perspective that if that fails, we will fall back to other design alternative or try to explore the design space more carefully. It turned out that we could reuse almost everything; although the changes were quite extensive, there were only a few newly added rules and cells, and most of them had the character of \enquote{move this there}, \enquote{use this file from the execution semantics in the translation semantics} and \enquote{add a \lstinline|require| clause here}.
 
 \subsection{Configuration}
 %TODO name collisions
@@ -1526,7 +1524,7 @@ syntax Stmt ::= IfStmt(Expr, Stmt, Stmt)
 \label{fig:ifStmt}
 \end{figure}
 
-However, if we tried to execute a function with an \lstinline|IfStmt| during the translation semantics, the translation rules could still apply, which would be a problem. We solved this issue by two means. First, we introduced a nullary\footnote{It may still examine the current configuration using reflection.} boolean function \lstinline|Execution()|, which returns \lstinline|true| in the execution semantics or when executing an expression during the translation semantics, and \lstinline|false| when doing ,,real'' translation. Second, for many syntactic constructs (including \lstinline|IfStmt| and \lstinline|WhileStmt|) we introduced a new version of the construct only for the purpose of the translation semantics (e.g. \lstinline|IfTStmt|, \lstinline|WhileTStmt|) and changed the translation rules to work with these.
+However, if we tried to execute a function with an \lstinline|IfStmt| during the translation semantics, the translation rules could still apply, which would be a problem. We solved this issue by two means. First, we introduced a nullary\footnote{It may still examine the current configuration using reflection.} boolean function \lstinline|Execution()|, which returns \lstinline|true| in the execution semantics or when executing an expression during the translation semantics, and \lstinline|false| when doing \enquote{real} translation. Second, for many syntactic constructs (including \lstinline|IfStmt| and \lstinline|WhileStmt|) we introduced a new version of the construct only for the purpose of the translation semantics (e.g. \lstinline|IfTStmt|, \lstinline|WhileTStmt|) and changed the translation rules to work with these.
 
 \subsection{KResults}
 
@@ -1667,7 +1665,7 @@ enum class E {
 \label{fig:typeOfAQualifiedEnumerator}
 \end{figure}
 
-The contradiction can be illustrated on the code in Figure~\ref{fig:typeOfAQualifiedEnumerator}. The problem is that the standard gives two different answers to the question: ,,What is the type of the expression \lstinline|E::A| in the declaration of \lstinline|B|?''. An answer can be based on~\stdN{n4296}{\S 7.2/5}, which says:
+The contradiction can be illustrated on the code in Figure~\ref{fig:typeOfAQualifiedEnumerator}. The problem is that the standard gives two different answers to the question: \enquote{What is the type of the expression \lstinline|E::A| in the declaration of \lstinline|B|?}. An answer can be based on~\stdN{n4296}{\S 7.2/5}, which says:
 \begin{displayquote}
 \textelp{} Following the closing brace of an enum-specifier, each enumerator has the type of its enumeration. If the underlying type is fixed, \textbf{the type of each enumerator prior to the closing brace is the underlying type} and the constant-expression in the enumerator-definition shall be a converted constant expression of the underlying type \textelp{}
 \end{displayquote}
@@ -1675,8 +1673,7 @@ Therefore, the type of \lstinline|E::A| should be \lstinline|int|, which is the 
 \begin{displayquote}[\stdN{n4296}{\S 5.1.1/11}]
 A nested-name-specifier that denotes an enumeration (7.2), followed by the name of an enumerator of that enumeration, is a qualified-id that refers to the enumerator. The result is the enumerator. \textbf{The type of the result is the type of the enumeration.} The result is a prvalue.
 \end{displayquote}
-So the type of \lstinline|E::A| should be \lstinline|E|. This is clearly a defect in the standard. The only way to satisfy both requirements is to make the types \lstinline|E| and \lstinline|int| the same, which would directly contradict the standard, because ,,Each enumeration defines a type that is different from all other types.''\stdN{n4296}{\S 7.2/5}.
-%TODO better quotation
+So the type of \lstinline|E::A| should be \lstinline|E|. This is clearly a defect in the standard. The only way to satisfy both requirements is to make the types \lstinline|E| and \lstinline|int| the same, which would directly contradict the standard, because \enquote{Each enumeration defines a type that is different from all other types.}\stdN{n4296}{\S 7.2/5}.
 
 One possible solution to this conflict is to change~\stdN{n4296}{\S 5.1.1/11} to say
 that the type of the result is the type of the \textbf{enumerator},
