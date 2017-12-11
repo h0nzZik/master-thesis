@@ -37,6 +37,7 @@
 \usepackage[babel]{csquotes}
 \usepackage{float} % floating figures
 \usepackage{minted}
+\usepackage[toc,page]{appendix}
 %\usepackage{amsmath}
 %\usepackage{amsfonts}
 \usepackage{amssymb} % \rightsquigarrow etc
@@ -1773,6 +1774,16 @@ $\mall{blue}{content}{X > 3}$
 \fi %showkexamples
 
 \fi %showoldstuff 
+
+\begin{appendices}
+\chapter{Appendices in IS MU}
+The archive in IS MU contains
+\begin{itemize}
+\item a file \path{c-semantics-master.zip}, which is the implementation we refer to in the text, and
+\item a file \path{c-semantics.bundle}, which is a git bundle containing a git repository, whose \texttt{master} branch is identical to implementation.
+\end{itemize}
+The Git bundle is basically a snapshot of our fork of the project. The archived implementation is also available in the branch \texttt{jtusil-ms-thesis} of our GitHub repository: \url{https://github.com/h0nzZik/c-semantics/tree/jtusil-ms-thesis}. For completeness, the upstream repository is available at \url{https://github.com/kframework/c-semantics}.
+\end{appendices}
 
 \bibliographystyle{IEEEtran}
 \bibliography{references} 
