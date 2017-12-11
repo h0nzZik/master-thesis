@@ -64,13 +64,13 @@ gender = {m},
 type = {mgr},
 faculty = {fi},
 date = {2017/12/12},
-assignment = {assignment.pdf},
-abstract = {Modern programming languages are really expressive, but also complex.
+assignment = {assignment.pdf, statementOfAnAuthor.pdf},
+abstract = {Modern programming languages are expressive, but also complex.
 	When a~particular programming language is given a~formal semantics in the framework called \K,
 	a~large variety of tools can be derived from it, including an interpreter or a~model checker.
 	In this thesis we extend an experimental formal semantics of C++ in \K with a~support for three language features: enumerations, zero-initialization of classes, and compile-time function evaluation. 
 	
-	The thesis consists of the following parts. First, because \K is not widely known, we provide a~mini-tutorial on how \K can be used to write an interpreter of a~simple language. Second, we briefly explain the relevant C++ features from the language point of view. Third, we describe our implementation and its limitations. Fourth, we discuss some defects in major C++ compilers which we found during the implementation effort.
+	The thesis consists of the following parts. First, because \K is not widely known, we provide a~mini-tutorial on how \K can be used to write a~semantics and generate an interpreter of a~simple language. Second, we briefly explain the relevant C++ features from the language point of view. Third, we describe our implementation and its limitations. Fourth, we discuss some defects in major C++ compilers which we found during the implementation effort.
 },
 %thanks = {Special thanks to...}
 %bib = {references.bib}
@@ -1406,7 +1406,7 @@ In order to implement zero-initialization of class padding, we needed to extend 
 
 We successfully implemented zero initialization of classes, and during the implementation work we fixed a~few bugs in the \Project. The implementation is ready to be merged into upstream and as far as we know, it is complete. The only limitation known to us is that zero-initialization of bit-fields and virtual base classes is not tested, because those language features are still not supported in the C++ semantics.
 
-\section{Generalized constant expressions (constexpr)} \label{sec:impl:constexpr}
+\section{Generalized constant expressions} \label{sec:impl:constexpr}
 
 In order to support generalized constant expressions in the \Project, three things needs to be done. First, the translation semantics has to be modified to allow evaluation of complex expressions, and function calls in particular. Second, the translation semantics needs to capture the precise meaning of constant expressions as defined in the standard. Third, the semantics for constant expressions has to be used in appropriate places, e.g. to evaluate enumerator initializers and case labels. In this thesis, we focus on the first thing.
 
@@ -1601,9 +1601,9 @@ This issue was first discussed on StackOverflow\footnote{\url{https://stackoverf
 
 However, there is still a~plenty of work to do. Some parts of our implementation have been already merged into the upstream, and the first step is to merge the remaining code. Next, the compile-time function evaluation has to be turned into a~full, production-ready, standard-conforming implementation of constant expressions, with support for compile-time evaluation of member functions. Finally, almost everything else from the C++ language needs to be implemented, so that \kcc can compile all the programs which can be compiled with GCC or Clang. This contains: a~switch statement, concurrency, templates (including sfinae, variadic templates, and variable templates), virtual inheritance, bitfields, RTTI, \ldots .
 
-The longer term goal for the Project is to have a~full implementation of the C++ language. It is a~moving target, since the language is evolving, defects are begin found and fixed, and every three years a~new standard is released. Together with the maintainers of the Project, we will have to decide how to reflect the language's evolution in the Project. Should \kcc have the notion of a~language version, as do GCC and Clang have? If so, how to deal with the language defects that are fixed in compilers even before the new standard is released? Or should we take the \enquote{Live at Head}\footnote{\url{https://www.youtube.com/watch?v=tISy7EJQPzI}} approach and keep the project in synchronization with the current draft of the standard?
+The longer term goal for the Project is to have a~full implementation of the C++ language. It is a~moving target, since the language is evolving, defects are being found and fixed, and every three years a~new standard is released. Together with the maintainers of the Project, we will have to decide how to reflect the language's evolution in the Project. Should \kcc have the notion of a~language version, as do GCC and Clang have? If so, how to deal with the language defects that are fixed in compilers even before the new standard is released? Or should we take the \enquote{Live at Head}\footnote{\url{https://www.youtube.com/watch?v=tISy7EJQPzI}} approach and keep the project in synchronization with the current draft of the standard?
 
-\K framework can be also used for program verification. We would like to have a~specification language, perhaps similar to the specification language ACSL of Frama-C~\cite{Cuoq2012}), which would enable programmers to formally reason about templated code and which would allow function contracts to be given in terms of function calls (see Figure~\ref{fig:contractsExample}). The specification language should also play well with the features that are likely to come in C++20, especially \textit{concepts}. And, of course, we would like to have a~means of verifying such contracts. So far, we have not conducted any research in this direction, so this is only a~blurry vision for the future; however, this is where we want to go.
+\K framework can be also used for program verification. We would like to have a~specification language, perhaps similar to the specification language ACSL of Frama-C~\cite{Cuoq2012}, which would enable programmers to formally reason about templated code and which would allow function contracts to be given in terms of function calls (see Figure~\ref{fig:contractsExample}). The specification language should also play well with the features that are likely to come in C++20, especially \textit{concepts}. And, of course, we would like to have a~means of verifying such contracts. So far, we have not conducted any research in this direction, so this is only a~blurry vision for the future. However, this is where we want to go.
 
 \begin{figure}
 \begin{lstlisting}
