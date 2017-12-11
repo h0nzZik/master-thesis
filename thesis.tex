@@ -556,12 +556,12 @@ In the preceding text, a~number of built-in functions was used (e.g. \lstinline|
 
 \chapter{C++}
 
-C++ is a~\enquote{general-purpose programming language}~\cite{bjarne-cpp} originally created by Bjarne Stroustrup in the years between 1979 and 1983~\cite{bjarne-faq}. After some time, many independent implementations emerged, and in 1998 the language was standardized as ISO/IEC 14882:1998 international standard (\cite{ISOcpp98}); that version is now known as C++98. The language changed a~lot since that time. New compilers emerged (e.g Clang), compilers implemented a~lot of experimental features (e.g. Clang's Modules\footnote{\url{https://clang.llvm.org/docs/Modules.html}}), many core language and standard library defects were fixed and the memory model was standardized. The language is gradually evolving and once in a~while, the C++ Standards Committee~\cite{wg21home} emits an ISO standard. In the time of writing, the newest C++ standard is C++17~\cite{ISOcpp17}, which was technically completed in March 2017 and should be officially published in December 2017.
+C++ is a~\enquote{general-purpose programming language}~\cite{bjarne-cpp} originally created by Bjarne Stroustrup in the years between 1979 and 1983~\cite{bjarne-faq}. After some time, many independent implementations emerged, and in 1998 the language was standardized as ISO/IEC 14882:1998 international standard (\cite{ISOcpp98}). That version is now known as C++98. The language changed a~lot since that time. New compilers emerged (e.g Clang), compiler developers implemented a~lot of experimental features (e.g. Clang's Modules\footnote{\url{https://clang.llvm.org/docs/Modules.html}}), many defects both in core language and standard library were fixed, and the memory model was standardized. The language is gradually evolving and once in a~while, the C++ Standards Committee~\cite{wg21home} emits an ISO standard. In the time of writing, the newest C++ standard is C++17~\cite{ISOcpp17}, which was technically completed in March 2017 and should be officially published in December 2017.
 
-In this chapter, we describe some fundamentals of the C++ language and some parts of the language relevant to our thesis. Note that the chapter is not intended to be an introduction to the C++ for programmers. Instead, everything is described from the language (and/or a~compiler writer) point of view here.
+In this chapter, we describe some fundamentals of the C++ language and those parts of the language relevant to our thesis. Note that the chapter is not intended to be an introduction to the C++ for programmers. Instead, everything is described from the language (and/or a~compiler writer) point of view here.
 
 \section{Standard documents}
-Although the most widely known documents created by the committee are the international standards, the committee is working all the time. The committee produces a~large number of documents, most of which are publicly available~\cite{wg21papers}; also, every document is assigned a~unique identifier, which is then used to reference the document. Among the publicly available documents are also \textit{workings drafts} of the ISO standard. The working draft is hosted on GitHub\footnote{\url{https://github.com/cplusplus/draft/}}; it therefore possible to build it directly from its \LaTeX{ }source or to download the emitted releases on the Release page.
+The most widely known documents created by the committee are the international standards. However, the committee produces a~large number of documents, most of which are publicly available~\cite{wg21papers}. Every document is assigned a~unique identifier, which is then used to reference the document. Among the publicly available documents are also \textit{workings drafts} of the ISO standard. The working draft is hosted on GitHub\footnote{\url{https://github.com/cplusplus/draft/}} and it is possible to build it directly from its \LaTeX{ }source or to download the emitted releases on the Release page.
 
 In this thesis we mostly use the document \texttt{n4296}~\cite{n4296}, which is the first draft released after the C++14 ISO standard (\cite{ISOcpp14}); this document is also referenced in the source codes of the \Project. We will also refer to the post-C++17 draft \texttt{n4700}~\cite{n4296}, because its wording is much cleaner then C++14's.
 
@@ -571,12 +571,12 @@ In this thesis we mostly use the document \texttt{n4296}~\cite{n4296}, which is 
 
 %This section describes some of the fundamental concepts of the C++ language.
 
-In C++, the memory consists of one or multiple sequences of contiguous bytes, where every \textit{byte} has a~unique \textit{address}~\stdN{n4700}{\S 4.4/1}. Various constructs of the language can create and destroy \textit{objects} of some \textit{type}; an object occupies a~region of storage, not necessarily contiguous~\stdN{n4700}{\S 4.5/1}. Objects can contain \textit{subobjects}; an object not contained in any other objects is a~\textit{complete object}. Every complete object has to occupy at least one byte of the storage; therefore, we can think of objects as having an \textit{identity} (we can identify them by the first byte of their storage).
+In C++, the memory consists of one or multiple sequences of contiguous bytes, where every \textit{byte} has a~unique \textit{address}~\stdN{n4700}{\S 4.4/1}. Various constructs of the language can create and destroy \textit{objects} of some \textit{type}. An object occupies a~region of storage, not necessarily contiguous~\stdN{n4700}{\S 4.5/1}. Objects can contain \textit{subobjects}; an object not contained in any other objects is a~\textit{complete object}. Every complete object has to occupy at least one byte of the storage; therefore, we can think of objects as having an \textit{identity} (we can identify them by the first byte of their storage).
 
 Objects are intended to hold \textit{values}. An object of a~type \lstinline|T| can be represented by a~sequence of \lstinline|sizeof(T)| objects of type \lstinline|unsigned char|; a~value can be represented as a~set of bits~\stdN{n4296}{\S 3.9/4}.
 %FIXME: this is not true, see \stdN{n4296}{3.9/4}.
 %Although the standard often refers to values, it does not specify what a~\textit{value} is (at least until \cite{n4700}).
-One can think of a~value as of a~\textit{datum} together with its \textit{interpretation}; an interpretation of a~datum is some concrete, real-world entity\footnote{This notion of \textit{concrete entity} is something different than \textit{C++ entity} as defined in the C++ language~\stdN{n4296}{\S 3/3}. }. 
+One can think of a~value as of a~\textit{datum} together with its \textit{interpretation}, where \textit{interpretation of a~datum} is some concrete, real-world entity\footnote{This notion of \textit{concrete entity} is something different than \textit{C++ entity} as defined in the C++ language~\stdN{n4296}{\S 3/3}. }. 
 %Types help to interpret values.
 More in-depth discussion about entities and their computer representations can be found in the first chapter of~\cite{progelements}.
 
@@ -603,10 +603,9 @@ Weekday next(Weekday d) {
 \label{fig:daysInWeek}
 \end{figure}
 
-%TODO move this into literature
 \subsection{Unscoped enumerations}
 
-\begin{figure}
+\begin{figure}[ht]
 \begin{lstlisting}[language=C++]
 enum E { A = 5, B = A + 3 };
 enum E e = B;
@@ -617,7 +616,7 @@ enum E e = B;
 
 Figure~\ref{CStyleEnumDeclaration} shows a~basic C-style declaration of an enumeration \lstinline|E|, with a~subsequent declaration of an object of the enumeration's type. Both declarations are valid in both C and C++. In C++14, the C-style enumerations are called \textit{unscoped enumerations}. An enumeration may contain an unbounded number of named values, called \textit{enumerators}. Here, \lstinline|E| contains two enumerators: \lstinline|A| and \lstinline|B|. In C++14, enumerators of an unscoped enumeration are called \textit{unscoped enumerators} and they are declared in the scope which contains the enumeration declaration (or, in the terms of the standard, the \textit{enum-specifier}~\stdN{n4296}{\S 7.2/11}). Therefore, it is possible to refer to them simply as in this example.
 
-However, due to this behavior, it is not possible to declare two unscoped enumerations with the same enumerator, in the same scope. It is still possible to create the second enumeration in a~different scope, though; the enumeration may even have the same name, as in the Figure~\ref{fig:collidingEnumerators}. If that happens, the old enumerator is \textit{shadowed} with the new one, but it is still possible to access the old one using the scope resolution operator (i.e. \lstinline|::B| in this example).
+However, due to this behavior, it is not possible to declare two unscoped enumerations with the same enumerator, in the same scope. It is still possible to create the second enumeration in a~different scope, though. The enumeration may even have the same name, as in the Figure~\ref{fig:collidingEnumerators}. If that happens, the old enumerator is \textit{shadowed} with the new one, but it is still possible to access the old one using the scope resolution operator (i.e. \lstinline|::B| in this example).
 \begin{figure}
 \begin{lstlisting}
 enum E{B};
@@ -807,7 +806,7 @@ enum E;
 %TODO inicializer je jednou 'integral constant expression' a~podruhe 'converted constant expression'.
 
 \section{Initialization} \label{chap:lang:init}
-As a~part of this thesis, we also implemented a~language feature called \textit{zero initialization} on class types. In this section, we describe how variables are initialized in general, and how \textit{zero initialization} fits into the overall scheme. The details of how we implemented \textit{zero initialization} are in Section~\ref{chp:implZeroInit}.
+As a~part of this thesis, we also implemented a~language feature called \textit{zero initialization} on class types. In this section, we describe how variables are initialized in general, and how \textit{zero initialization} fits into the overall scheme. The details of how we implemented \textit{zero initialization} are present in Section~\ref{chp:implZeroInit}.
 
 \subsection{Initialization forms}
 When an identifier is being declared, an \textit{initializer} can be used to specify an initial value of the identifier~\stdN{n4296}{\S 8.5/1},~\stdN{n4700}{\S 11.6/1}. Initializers have many syntactical forms, all of which are shown in Figure~\ref{fig:initializers}. The form of initialization \lstinline|T x(a);| or \lstinline|T x{a};| is known as \textit{direct initialization}~\stdN{n4296}{\S 8.5/16}; this form is used in the declarations of variables \lstinline|a| and \lstinline|b| in the Figure~\ref{fig:initializers}.
@@ -843,7 +842,7 @@ protected non-static data members (Clause 11), no base classes (Clause 10), and 
 \end{displayquote}
 
 \subsection{Aggregate initialization}
-In newer versions of the language, the restrictions on aggregate classes are more relaxed; for example, an aggregate class may have a~base class, but under the condition that it is non-virtual and public~\stdN{n4700}{\S 11.6.1/1}. Nevertheless, the idea is still the same: an \textit{aggregate} is just something created by a~natural composition of other things. Because of that, the language provides a~special way to initialize an object of an aggregate type - an \textit{aggregate initialization}.
+In newer versions of the language, the restrictions on aggregate classes are more relaxed. For example, an aggregate class may have a~base class, but only under the condition that the base class is non-virtual and public~\stdN{n4700}{\S 11.6.1/1}. Nevertheless, the idea is still the same: an \textit{aggregate} is just something created by a~natural composition of other things. Because of that, the language provides a~special way to initialize an object of an aggregate type - an \textit{aggregate initialization}.
 
 \begin{figure}[ht]
 \begin{lstlisting}
@@ -886,7 +885,7 @@ struct A {
 \label{fig:valueInitMember}
 \end{figure}
 
-To value-initialize an array means to value-initialize all its elements; to value-initialize an object of a~non-class non-array type means to zero-initialize it. Value initialization of an object of a~class type performs default-initialization; the default-initialization is preceded by zero initialization if the class does not have a~user-defined or deleted default constructor.
+To value-initialize an array means to value-initialize all its elements, and to value-initialize an object of a~non-class non-array type means to zero-initialize it. Value initialization of an object of a~class type performs default-initialization; the default-initialization is preceded by zero initialization if the class does not have a~user-defined or deleted default constructor.
 
 \begin{figure}
 \begin{lstlisting}
@@ -1506,7 +1505,7 @@ Despite the fact that the implementation of generalized constant expressions is 
 
 \section{Summary}
 
-Enumerations are fully implemented and most of the implementation is already merged in the upstream repository. Zero initialization of class types is also fully implemented, modulo some features which are not yet supported in the Project at all; it is ready to be merged into the upstream. In terms of generalized constant expressions, we have an elegant implementation of compile-time function evaluation, which is able to evaluate functions with recursion or nontrivial control-flow. The implementation is incomplete, not adhering to the standard and not production ready; however, it is based on good principles and can serve as a~basis for future development.
+Enumerations are fully implemented and most of the implementation is already merged in the upstream repository. Zero initialization of class types is also fully implemented, modulo some features which are not yet supported in the Project at all; it is ready to be merged into the upstream. In terms of generalized constant expressions, we have an elegant implementation of compile-time function evaluation, which is able to evaluate functions with recursion or nontrivial control-flow. The implementation of constant expressions is incomplete, not adhering to the standard and not production ready; however, it is based on good principles and can serve as a~basis for future development.
 
 \chapter{Defects found in other projects}\label{chap:defects}
 During the work, we discovered a~few defects in major C++ compilers and also in the C++ standard. While most of them was already known among the experts, some of them are new; such defects were reported.
