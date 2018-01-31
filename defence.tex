@@ -58,10 +58,17 @@
 
 % Během následující čtvrthodinky nejprve přiblížím kontext mojí práce,
 % poté ukáži, co jsem vlastně dělal, a nakonec shrnu, jak to všechno dopadlo.
-\begin{frame}
+\begin{frame}{Osnova}
 \tableofcontents
 \end{frame}
 
+\AtBeginSection[]
+{
+  \begin{frame}
+    \frametitle{Osnova}
+    \tableofcontents[currentsection]
+  \end{frame}
+}
 
 % O mě, o C++, K framework (přepisování termů), k cemu to, RV, UIUC
 % Moje osobní motivace - ověřování higlevel vlastností programů v C++ (šablony apod).
@@ -74,7 +81,7 @@
 % Některé vlastnosti jsou do jazyka přidávány, jiné z něj odebírány
 % Pro jazyk C++ dokonce vznikla i hezká mapa těchto vlastností.
 \begin{frame}{Jazyk C++}
-\pause
+%\pause
 \includegraphics[trim=100 900 1700 300, clip, width=1.0\linewidth]{img/cppmap.png}
 %TODO link
 \end{frame}
@@ -83,6 +90,8 @@
 \begin{frame}{Jazyk C++}
 \includegraphics[width=1.0\linewidth]{img/cppmap.png}
 \end{frame}
+
+% posud cca 1 minuta
 
 % Jako programátoři děláme chyby. I proto máme spoustu nástrojů,
 % které nám pomáhají chyby odhalovat, či naopak prokazovat jejich absenci.
@@ -98,7 +107,7 @@
 % Jeden z možných přístupů, jak mohou nástroje rozumět programovacímu jazyku,
 % je delegovat toto porozumění na překladač. Překladač přeloží program v C/C++
 % do nízkoúrovňového jazyka (třeba do assembleru) a nástroj už musí rozumět
-% jen tomuto nízkoúrovňovému jazyku.V posledních letech je hodně populární
+% jen tomuto nízkoúrovňovému jazyku. V posledních letech je hodně populární
 % platforma překladačů llvm spolu s jejím C/C++ frontendem, který se jmenuje Clang.
 
 % Tento přístup volí například Divine, Klee, a Symbiotic.
@@ -108,11 +117,13 @@
 
 % Jiným přístupem je mít samostatnou, spustitelnou formální sémantiku daného jazyka.
 
+% 2 min
+
 \begin{frame}{Komplexita C/C++}
 \begin{itemize}
-\item nástroje: clang-tidy, frama-c, cbmc, divine, symbiotic
-\item "Rozumí" nástroje C++ správně?
-\item SV-COMP: nedefinované programy v balíku korektních \footnote[frame]{https://runtimeverification.com/blog/?p=200}
+\pause \item nástroje: clang-tidy, frama-c, cbmc, divine, symbiotic
+\pause \item "Rozumí" nástroje C++ správně?
+\pause \item SV-COMP: nedefinované programy v balíku korektních \footnote[frame]{https://runtimeverification.com/blog/?p=200}
 \pause \item možný přístup: delegovat porozumění jazyku na překladač (clang/llvm)
 \pause \item takto ale nelze ověřit korektnost programu vzhledem k jazyku
 \pause \item jak verifikovat šablony?
@@ -120,27 +131,32 @@
 \end{itemize}
 \end{frame}
 
-% https://runtimeverification.com/blog/?p=200
 
+% Právě k popisu formální sémantiky programovacího jazyka slouží
+% framework zvaný "K". Tento framework umožňuje dát jazyku
+% small-step operační sémantiku, založenou na přepisování termů.
+% Nástroje jako parser, interpreter, či model checker
+% je možné pomocí tohoto frameworku naprogramovat obecně, nezávisle na jazyku.
+% Zrovna tyto zmiňované jsou již naprogramovány a je možné je téměř automaticky instanciovat
+% pro libovolný jazyk, pro který je v K napsaná sémantika.
+% 
 
-% Nebudu zde ukazovat, jakým způsobem se K framework používá
-% prakticky; kdyby vás to zajímalo, v mé práci je tomu věnována
-% celá jedna kapitola.
-
-% OT: K Framework se stále vyvíjí - některé implementační detaily
-% se od odevzdání práce změnily.
 \begin{frame}{K Framework}
 \includegraphics[width=1.0\linewidth]{img/kidea.png}
 \end{frame}
 
-% UIUC, RV
-\begin{frame}{Kdo}
-
-\end{frame}
-
-% Jaké je současné využití.
+% V K již byla popsána sémantika Pythonu, JavaScriptu, C a dalších jazyků.
+% Nad sémantikou jazyka C byl postaven komerční nástroj pro detekci
+% nedefinovaného chování RV-Match a tato sémantika je poslední
+% dva roky rozšiřována o podporu jazyka C++, které je zatím jen v experimentální fázi.
 \begin{frame}{C/C++ @ K}
+\begin{itemize}
+\item Již formalizováno: Python, JavaScript, C
+\pause \item využití C: RV-Match \\
+\includegraphics[width=0.3\linewidth]{img/rvmatch.png}
+\pause \item experimentálně: C rozšiřováno o podporu C++
 
+\end{itemize}
 \end{frame}
 
 % Zadání, cíle, konkrétní věci, nalezené chyby apod.
@@ -191,12 +207,14 @@
 \end{frame}
 
 % Zde budou nějaké děsivé příklady
-\subsection{Intriky}
+%\subsection{Intriky}
 
+
+% Tohle bych mohl mozna presunout do bonusu.
 % Tady bych jenom dodal, že nalezení chyb v překladačíh
 % nebo standardech programovacích jazyků není až tak moc neobvyklé,
 % zvlášť v kontextu formalizace těchto jazyků - JavaScript, Ethereum.
-\subsection{Chyby nalezené v jiných projektech}
+%\subsection{Chyby nalezené v jiných projektech}
 
 % Během práce jsem hodně pracoval se standardem jazyka C++,
 % a když jsem o C++ zjišťoval nové věci, prakticky jsem je zkoušel
