@@ -1,5 +1,6 @@
 \documentclass[11pt]{beamer}
 \usetheme{Boadilla}
+\usepackage{hyperref}
 \usepackage[utf8]{inputenc}
 \usepackage[czech]{babel}
 \usepackage[T1]{fontenc}
@@ -21,6 +22,15 @@
 \lstset {
 	basicstyle=\ttfamily
 }
+
+\newcommand{\backupbegin}{
+   \newcounter{finalframe}
+   \setcounter{finalframe}{\value{framenumber}}
+}
+\newcommand{\backupend}{
+   \setcounter{framenumber}{\value{finalframe}}
+}
+
 
 \begin{document}
 
@@ -122,7 +132,7 @@
 \begin{frame}{Komplexita C/C++}
 \begin{itemize}
 \pause \item nástroje: clang-tidy, frama-c, cbmc, divine, symbiotic
-\pause \item "Rozumí" nástroje C++ správně?
+\pause \item ,,Rozumí'' nástroje C++ správně?
 \pause \item SV-COMP: nedefinované programy v balíku korektních \footnote[frame]{https://runtimeverification.com/blog/?p=200}
 \pause \item možný přístup: delegovat porozumění jazyku na překladač (clang/llvm)
 \pause \item takto ale nelze ověřit korektnost programu vzhledem k jazyku
@@ -155,12 +165,11 @@
 \pause \item využití C: RV-Match \\
 \includegraphics[width=0.3\linewidth]{img/rvmatch.png}
 \pause \item experimentálně: C rozšiřováno o podporu C++
-
 \end{itemize}
 \end{frame}
 
 % Zadání, cíle, konkrétní věci, nalezené chyby apod.
-\section{Obsah práce}
+\section{Cíle práce}
 
 
 % Cílem mé práce bylo rozšířit stávající prototyp
@@ -197,17 +206,132 @@
 % součástí mého oficiální zadání.
 
 % čas: 2min 15s
-\begin{frame}{Cíle práce}
-\begin{itemize}
-\pause \item výčtové typy (\texttt{enum})
-\pause \item vykonávání kódu v době překladu (\texttt{constexpr})
-\pause \item nulová inicializace tříd
-\pause \item oprava stávajících chyb v projektu
-\end{itemize}
+%\begin{frame}{Cíle práce}
+%\begin{itemize}
+%\pause \item výčtové typy (\texttt{enum})
+%\pause \item vykonávání kódu v době překladu (\texttt{constexpr})
+%\pause \item nulová inicializace tříd
+%\pause \item oprava stávajících chyb v projektu
+%\end{itemize}
+%\end{frame}
+
+\begin{frame}[fragile]{Výčtové typy (\texttt{enum})}
+\begin{lstlisting}[language=C++]
+enum E0 { A = 5, B = A + 3 };
+enum E1 : char;
+enum class E2 : unsigned int;
+enum class E3;
+enum E5 { A, B } __attribute__((packed));
+std::underlying_type_t<E5> x = 5;
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{Vykonávání kódu v době překladu (\texttt{constexpr})}
+\begin{lstlisting}
+constexpr int fact(int n) {
+	return n <= 1 ? 1 : n * fact(n - 1);
+}
+int main() {
+	constexpr int f_4 = fact(4);
+	enum class Facts {
+		F_4 = f_4,
+		F_5 = fact(5)
+	};
+	assert(int(Facts::F_4) == 24);
+	assert(int(Facts::F_5) == 120);
+}
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{Nulová inicializace tříd}
+\begin{lstlisting}
+struct S {
+	virtual ~S() = default;
+	int x;
+};
+
+S s1;
+S s2{};
+assert(s1.x == 0); // ok
+assert(s2.x == 0); // fail
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}{Oprava stávajících chyb v projektu}
+\includegraphics[width=0.5\linewidth]{img/bug.jpg}
 \end{frame}
 
 % Zde budou nějaké děsivé příklady
 %\subsection{Intriky}
+
+
+% Co se povedlo, co jsem se naucil, jake jsou moje dalsi plany.
+
+% Možná mohu říci, že práce s K frameworkem sice byla složitá v tom smyslu,
+% že jsem se musel naučit hodně nových věcí, vžít se do nového programovacího paradigmatu
+% apod, ale nebyla potřeba žádná hluboká matematická znalost (žádné fixpointy apod).
+\section{Výsledky \& co dál?}
+
+\begin{frame}{Výsledky}
+\begin{itemize}
+\pause \item \texttt{enum} - vše hotovo, většina je v upstream
+\pause \item \texttt{constexpr} - elegantní proof of concept
+\pause \item nulová inicializace - hotovo
+\pause \item opravy chyb - některé přijaty do upstreamu
+\pause \item nalezené chyby v GCC, Clang, standardu C++
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Co dál?}
+\begin{itemize}
+\pause \item Vše hotové do upstreamu.
+\pause \item Dokončit \texttt{constexpr}.
+\pause \item Šablony, vlákna, bitová pole, fold expressions, \ldots
+\pause \item Jak řešit vývoj jazyka?
+\pause \item Spolupráce s RuntimeVerification inc.
+\pause \item Kontrakty.
+\end{itemize}
+\end{frame}
+
+
+\begin{frame}[fragile=singleslide]{Ochutnávka}
+\begin{lstlisting}
+template <typename It>
+bool is_sorted(It begin, It end);
+
+/*
+ * \pre valid_range(begin, end);
+ * \post is_sorted(begin, end);
+ */
+template <typename It>
+void sort(It begin, It end);
+\end{lstlisting}
+\end{frame}
+
+
+\begin{frame}{Kontrakty}
+\begin{itemize}
+\pause \item Jak jim dát sémantiku?
+\pause \item Volání běžných funkcí v pre/postcondition.
+\pause \item A co když mají efekty? A co když ty jsou ohraničené?
+\pause \item Jak je verifikovat?
+\pause \item Jak využít existující abstrakce? A vzory?
+\end{itemize}
+\end{frame}
+
+
+\begin{frame}{Zdroje}
+\begin{itemize}
+\item Mapa C++ \url{https://fearlesscoder.blogspot.cz/2017/02/the-c17-lands.html}
+K diagram \url{http://fsl.cs.illinois.edu/index.php/From\_Rewriting\_Logic,\_to\_Programming\_Language\_Semantics,\_to\_Program\_Verification} \\
+\item RV-Match logo \url{https://runtimeverification.com/match/}
+\item Brouk \url{http://cliparting.com/free-bug-clipart-30526/}
+\end{itemize}
+\end{frame}
+
+\backupbegin
+
+\section{Bonusy}
 
 
 % Tohle bych mohl mozna presunout do bonusu.
@@ -250,63 +374,21 @@ int z = int(A); // 3
 \end{lstlisting}
 \end{frame}
 
-% Co se povedlo, co jsem se naucil, jake jsou moje dalsi plany.
-
-% Možná mohu říci, že práce s K frameworkem sice byla složitá v tom smyslu,
-% že jsem se musel naučit hodně nových věcí, vžít se do nového programovacího paradigmatu
-% apod, ale nebyla potřeba žádná hluboká matematická znalost (žádné fixpointy apod).
-\section{Vyhodnocení \& co dál?}
-
-\begin{frame}{Výsledky}
-\begin{itemize}
-\pause \item \texttt{enum} - vše hotovo, většina je v upstream
-\pause \item \texttt{constexpr} - elegantní proof of concept
-\pause \item nulová inicializace - hotovo
-\pause \item opravy chyb - některé přijaty do upstreamu
-\pause \item nalezené chyby v GCC, Clang, C++
-\end{itemize}
-\end{frame}
-
-\begin{frame}{Co dál?}
-\begin{itemize}
-\pause \item Vše hotové do upstreamu.
-\pause \item Dokončit \texttt{constexpr}.
-\pause \item Šablony, vlákna, bitová pole, fold expressions, \ldots
-\pause \item Jak řešit vývoj jazyka?
-\pause \item Spolupráce s RuntimeVerification inc.
-\pause \item Kontrakty.
-\end{itemize}
-\end{frame}
-
-
-\begin{frame}[fragile=singleslide]{Ochutnávka}
+\begin{frame}[fragile=singleslide]{C++ standard bug}
 \begin{lstlisting}
-template <typename It>
-bool is_sorted(It begin, It end);
-
-/*
- * \pre valid_range(begin, end);
- * \post is_sorted(begin, end);
- */
-template <typename It>
-void sort(It begin, It end);
+enum class E {
+    A,
+    B = E::A // 1
+};
 \end{lstlisting}
-\end{frame}
-
-
-\begin{frame}{Kontrakty}
-\begin{itemize}
-\pause \item Jak jim dát sémantiku?
-\pause \item Volání běžných funkcí v pre/postcondition.
-\pause \item A co když mají efekty? A co když ty jsou ohraničené?
-\pause \item Jak je verifikovat?
-\pause \item Jak využít existující abstrakce? A vzory?
-\end{itemize}
+Jaký typ má \lstinline|E::A| v (1)?
 \end{frame}
 
 % Btw v C++ sémantice stále ještě není implementován switch.
 % Po otázkách - kdyby chtěli vědět něco dalšího, rád si s nima popovídám.
 % Co jsem se naučil: komunikace na dálku je fuška.
 % S lidma z RV a UIUC se mi spolupracovalo dobře.
+
+\backupend
 
 \end{document}
