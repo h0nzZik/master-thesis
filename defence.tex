@@ -45,16 +45,19 @@
 
 % K cemu je ta semantika dobra? Jak se to testuje? Mame interpreter, ktery ji pouziva.
 
+% TODO čítač stránek, progress bar apod. Mezislajdy mezi sekcemi.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 % Dobrý den, já jsem Honza Tušil a rád bych vám představil svoji diplomovou práci, 
 % ve které jsem se zabýval vytvářením spustitelné formální sémantiky pro jazyk C++.
 \begin{frame}
 \titlepage
 \end{frame}
 
-% TODO čítač stránek, progress bar apod. Mezislajdy mezi sekcemi.
-
 % Během následující čtvrthodinky nejprve přiblížím kontext mojí práce,
-% poté ukáži, co jsem vlastně dělal, a nakonec (shrnu?) jak to všechno dopadlo.
+% poté ukáži, co jsem vlastně dělal, a nakonec shrnu, jak to všechno dopadlo.
 \begin{frame}
 \tableofcontents
 \end{frame}
@@ -66,11 +69,58 @@
 \section{Kontext}
 
 % Moderní programovací jazyky jsou hodně mocné - a hodně složité.
-% 
+% Popis jazyka C++ ve standardu má asi 380 stránek,
+% celý standard i s popisem knihovny má okolo 1400 stránek.
+% Některé vlastnosti jsou do jazyka přidávány, jiné z něj odebírány
+% Pro jazyk C++ dokonce vznikla i hezká mapa těchto vlastností.
 \begin{frame}{Jazyk C++}
-\includegraphics[width=1.0\linewidth]{img/cppmap.png}
+\pause
+\includegraphics[trim=100 900 1700 300, clip, width=1.0\linewidth]{img/cppmap.png}
 %TODO link
 \end{frame}
+
+%(Celá mapa je zde.)
+\begin{frame}{Jazyk C++}
+\includegraphics[width=1.0\linewidth]{img/cppmap.png}
+\end{frame}
+
+% Jako programátoři děláme chyby. I proto máme spoustu nástrojů,
+% které nám pomáhají chyby odhalovat, či naopak prokazovat jejich absenci.
+% V kontextu jazyků C a C++ mohu zmínit třeba (můj oblíbený) nástroj Frama-C.
+%
+% Nicměně důležitá otázka je: rozumí tyto nástroje jazykům C či C++ správně?
+% Není tomu tak vždy. Třeba před dvěma lety se ukázalo, že 14% programů,
+% které byly použity v soutěži verifikačních nástrojů SV-COMP, je z hlediska
+% standardu nedefinovaných - a tedy se (podle definice ze standardu) mohou chovat
+% libovolně. Tedy každý nástroj, který o takovém programu řekl, že je korektní,
+% což byla z hlediska soutěže správná odpověd, vlastně není korektní.
+%
+% Jeden z možných přístupů, jak mohou nástroje rozumět programovacímu jazyku,
+% je delegovat toto porozumění na překladač. Překladač přeloží program v C/C++
+% do nízkoúrovňového jazyka (třeba do assembleru) a nástroj už musí rozumět
+% jen tomuto nízkoúrovňovému jazyku.V posledních letech je hodně populární
+% platforma překladačů llvm spolu s jejím C/C++ frontendem, který se jmenuje Clang.
+
+% Tento přístup volí například Divine, Klee, a Symbiotic.
+% Osobně vidím dvě nevýhody tohoto přístupu: za prvé, nelze takto ověřit korektnost programu
+% vzhledem k programovacímu jazyku; a za druhé, verifikace některých vysokoúrovňových vlastností
+% a konstrukcí se stává téměř, ne-li úplně, nemožná.
+
+% Jiným přístupem je mít samostatnou, spustitelnou formální sémantiku daného jazyka.
+
+\begin{frame}{Komplexita C/C++}
+\begin{itemize}
+\item nástroje: clang-tidy, frama-c, cbmc, divine, symbiotic
+\item "Rozumí" nástroje C++ správně?
+\item SV-COMP: nedefinované programy v balíku korektních \footnote[frame]{https://runtimeverification.com/blog/?p=200}
+\pause \item možný přístup: delegovat porozumění jazyku na překladač (clang/llvm)
+\pause \item takto ale nelze ověřit korektnost programu vzhledem k jazyku
+\pause \item jak verifikovat šablony?
+\pause \item jiný přístup: samostatná formální sémantika
+\end{itemize}
+\end{frame}
+
+% https://runtimeverification.com/blog/?p=200
 
 
 % Nebudu zde ukazovat, jakým způsobem se K framework používá
@@ -148,6 +198,40 @@
 % zvlášť v kontextu formalizace těchto jazyků - JavaScript, Ethereum.
 \subsection{Chyby nalezené v jiných projektech}
 
+% Během práce jsem hodně pracoval se standardem jazyka C++,
+% a když jsem o C++ zjišťoval nové věci, prakticky jsem je zkoušel
+% na malých příkladech. Kladl jsem si otázku, "co se stane, když..."?
+% Tímto způsobem jsem našel chybu v překladači GCC.
+% Kód na slajdu je platný C++ kód, a Clang nebo MSVC jej bez problémů zkompilují,
+% nicméně GCC jej odmítne zparsovat. Chybu jsem nahlásil do bugzilly projektu
+% a jeden z hlavních vývojářů ji potvrdil.
+\begin{frame}[fragile=singleslide]{GCC bug}
+\begin{lstlisting}
+enum E : int;
+enum ::E : int{};
+\end{lstlisting}
+\end{frame}
+
+% Další chybu jsem objevil v překladači clang.
+% Chyba se týká toho, v jakém scope žijí konstanty výčtového typu
+% (v našem případě konstanty A a B).
+%
+% Podle jednoho z vývojářů překladače clang, konkrétně správce
+% C++ frontendu tohoto překladače, se příčina této chyby projevuje
+% i v jiných případech, ve kterých nemá vliv na korektnost, ale jen
+% na výkon překladače.
+\begin{frame}[fragile=singleslide]{Clang bug}
+\begin{lstlisting}
+namespace N { enum E : int; }
+enum N::E : int {A,B};
+namespace N {
+    int x = int(::N::B); // 1
+}
+int y = int(::A); // 2
+int z = int(A); // 3
+\end{lstlisting}
+\end{frame}
+
 % Co se povedlo, co jsem se naucil, jake jsou moje dalsi plany.
 
 % Možná mohu říci, že práce s K frameworkem sice byla složitá v tom smyslu,
@@ -155,12 +239,13 @@
 % apod, ale nebyla potřeba žádná hluboká matematická znalost (žádné fixpointy apod).
 \section{Vyhodnocení \& co dál?}
 
-\begin{frame}{Naplnění cílů}
+\begin{frame}{Výsledky}
 \begin{itemize}
 \pause \item \texttt{enum} - vše hotovo, většina je v upstream
 \pause \item \texttt{constexpr} - elegantní proof of concept
 \pause \item nulová inicializace - hotovo
 \pause \item opravy chyb - některé přijaty do upstreamu
+\pause \item nalezené chyby v GCC, Clang, C++
 \end{itemize}
 \end{frame}
 
